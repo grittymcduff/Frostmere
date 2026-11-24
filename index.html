@@ -1127,11 +1127,13 @@ function drawPlayerSheet(g,t){
   const P=ART.player,im=IMG.player,p=player,sp=Math.hypot(p.vx,p.vy);
   const fx=p.face.x,fy=p.face.y,row=Math.abs(fx)>Math.abs(fy)?(fx<0?1:2):(fy<0?3:0);
   const moving=sp>14&&!(surfaceAt(p.x,p.y)===2&&sp<60);
-  const frame=moving?Math.floor(p.phase/(Math.PI/2))%P.frames:0;
+  const frame=moving&&P.frames>1?1+Math.floor(p.phase/(Math.PI/2))%(P.frames-1):0;
   const bob=moving?Math.abs(Math.sin(p.phase))*1.5:0;
   g.fillStyle='rgba(30,40,75,.38)';ell(g,p.x,p.y,12,4.6);
   g.drawImage(im,frame*P.fw,row*P.fh,P.fw,P.fh,p.x-P.ox,p.y-P.oy-bob,P.w,P.h);
-  p.lantern.x=p.x+(row===1?-12:row===2?12:p.side*11);p.lantern.y=p.y-20;
+  const ln=P.lantern?.[row]?.[frame];
+  if(ln){p.lantern.x=p.x+ln[0];p.lantern.y=p.y+ln[1]-bob;}
+  else{p.lantern.x=p.x+(row===1?-12:row===2?12:p.side*11);p.lantern.y=p.y-20;}
 }
 
 /* ==== js/06_world.js ==== */
@@ -1757,7 +1759,10 @@ const ART={
     fgPine:    {files:['fg_pine.png'], w:320, h:520, ox:160,oy:515},               // dark foreground silhouette
   },
   // Player sprite sheet: rows = down, left, right, up; `frames` walk frames per row.
-  player:{file:'', fw:128, fh:160, frames:4, w:44, h:55, ox:22, oy:52},
+  // Column 1 = standing (idle); columns 2–4 = walk cycle. `lantern` = glow position per [row][column],
+  // in world units from the feet, so the light sits on the painted lantern in every frame.
+  player:{file:'player.png', fw:128, fh:160, frames:4, w:44, h:55, ox:22, oy:52,
+          lantern:[[[8.4, -13.4], [8.1, -13.4], [8.4, -13.4], [8.1, -13.4]], [[-11.7, -16.0], [-11.7, -16.0], [-11.7, -16.0], [-11.7, -16.0]], [[11.3, -16.0], [11.3, -16.0], [11.3, -16.0], [11.3, -16.0]], [[-8.3, -14.8], [-8.3, -14.8], [-8.3, -14.8], [-8.3, -14.8]]]},
   // Optional seamless ground textures (tile), one per area.
   ground:{hub:'', woods:'', hollow:'', reach:''}, groundScale:.5,
 };
