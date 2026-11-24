@@ -22,11 +22,14 @@ SPEC = {  # PNG size (2x) and anchor, mirrors src/content/00_art.js
   'pines':(240,380,120,356),'pinesV':(240,380,120,356),'pinesB':(240,380,120,356),
   'birch':(340,420,170,400),'rocks':(128,104,64,80),'bush':(140,100,70,80),'flowers':(80,60,40,44),
   'crystals':(220,240,110,208),'cabins':(492,436,246,396),'lamp':(72,208,36,192),'crate':(88,96,44,80),
-  'barrel':(80,100,40,84),'snowman':(120,168,60,152),'sign':(120,140,60,124),'firepit':(220,120,110,80),
+  'barrel':(80,100,40,84),'snowman':(120,168,60,152),'sign':(120,140,60,124),'firepit':(220,160,110,100),
   'gate':(380,340,190,300),'stone':(140,220,70,196),'owl':(120,200,60,184),'lectern':(112,144,56,128),
   'ice':(168,240,84,208),'cache':(112,104,56,84),'cacheOpen':(112,104,56,84),'fgPine':(640,1040,320,1030),
 }
 TREE_H = {'pines':343,'pinesV':343,'pinesB':343}  # standard content height for trees
+# target content size for art that tends to come out too small/large: ('w'|'h', pixels)
+FIT = {'firepit':('w',180),'gate':('w',340),'lamp':('h',186),'ice':('h',206),'birch':('h',380),
+       'lectern':('h',124),'sign':('h',118),'snowman':('h',146),'barrel':('h',80),'cache':('w',84),'cacheOpen':('w',84),'crate':('h',76)}
 
 def defringe(a):
     a = a.astype(np.float32)
@@ -63,6 +66,10 @@ def reanchor(img, kind):
     scale = 1.0
     if kind in TREE_H and (bot-top+1) < TREE_H[kind]*0.95:
         scale = TREE_H[kind] / (bot-top+1)
+    if kind in FIT:
+        dim, px_ = FIT[kind]
+        scale = px_ / ((right-left+1) if dim == 'w' else (bot-top+1))
+        scale = min(scale, (W*.98)/(right-left+1), ((H-4) if kind=='firepit' else (ay+1))/(bot-top+1))
     if scale != 1.0:
         crop = crop.resize((round(crop.width*scale), round(crop.height*scale)), Image.LANCZOS)
     c = np.array(crop)[...,3]
@@ -74,6 +81,8 @@ def reanchor(img, kind):
         base_cx = crop.width/2
     out = Image.new('RGBA', (W, H), (0,0,0,0))
     px, py = round(ax - base_cx), round(ay - crop.height + 1)
+    if kind == 'firepit':                      # flat ring: center the pit on the anchor (flames sit there)
+        py = round(ay - 8 - crop.height/2)
     out.alpha_composite(crop, (max(0,min(W-crop.width,px)), max(0,py)))
     return out
 
@@ -110,6 +119,8 @@ if __name__ == '__main__':
     dst = sys.argv[3] if len(sys.argv) > 3 else src
     img = Image.fromarray(defringe(np.array(Image.open(src).convert('RGBA'))))
     img = reanchor(img, kind)
+    if kind == 'ice':                                   # the ice shell is an overlay: make it see-through
+        a = np.array(img); a[...,3] = (a[...,3]*0.62).astype(np.uint8); img = Image.fromarray(a)
     img.save(dst, optimize=True)
     if kind == 'cabins':
         print(json.dumps(cabin_info(img)))

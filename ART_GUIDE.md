@@ -59,7 +59,7 @@ Sizes are the PNG size to export (2× the in-game size). **Anchor** = the pixel 
 | `barrel` | `barrel.png` | 80 × 100 | 40, 84 | Wooden barrel with iron bands, snow on lid |
 | `snowman` | `snowman.png` | 120 × 168 | 60, 152 | Snowman, top hat, red scarf, stick arms, carrot nose |
 | `sign` | `sign.png` | 120 × 140 | 60, 124 | Wooden notice board on a post |
-| `firepit` | `firepit.png` | 220 × 120 | 110, 80 | Ring of stones with crossed logs — **no flames** (animated in code) |
+| `firepit` | `firepit.png` | 220 × 160 | 110, 100 (pit center) | Ring of stones with crossed logs — **no flames** (animated in code) |
 | `gate` | `gate.png` | 380 × 340 | 190, 300 | Stone-pillar archway with wooden beam, red banner, two small hanging lanterns |
 | `stone` | `study_stone.png` | 140 × 220 | 70, 196 | Standing runestone obelisk with a carved, faintly gold glyph of a trend line through dots |
 | `owl` | `owl.png` | 120 × 200 | 60, 184 | Wise brown owl on a wooden perch post, tiny graduation cap, holding a small red book |
