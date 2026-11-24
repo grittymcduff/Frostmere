@@ -1,0 +1,22 @@
+<canvas id="game" aria-label="Frostmere Village game world"></canvas>
+<div id="hud" class="panel"><span class="t1" id="hName"></span><span class="t2" id="hSub"></span><div class="line" id="hLine"></div></div>
+<div class="topbtns"><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="fxBtn" class="panel">✦ Effects</button></div>
+<div id="fx" class="panel hidden">
+  <div class="sub">Layers (code only)</div>
+  <label><input type="checkbox" data-fx="light" checked> Lighting &amp; glow</label>
+  <label><input type="checkbox" data-fx="particles" checked> Particles</label>
+  <label><input type="checkbox" data-fx="wind" checked> Wind sway</label>
+  <label><input type="checkbox" data-fx="prints" checked> Footprints</label>
+  <label><input type="checkbox" data-fx="fg" checked> Foreground depth</label>
+  <label><input type="checkbox" data-fx="grade" checked> Color grade</label>
+  <div class="sub">Time of day</div>
+  <div class="row" id="tod"><button data-t="day">Day</button><button data-t="dusk" class="on">Dusk</button><button data-t="night">Night</button></div>
+  <div class="fps" id="fps"></div>
+</div>
+<div id="log" class="panel hidden" role="dialog" aria-label="Quest log"></div>
+<div id="hint" class="panel">WASD / arrows to move · Shift to jog · tap to walk · drag for joystick · E to interact</div>
+<button id="readBtn" class="panel hidden"><span></span> <kbd>E</kbd></button>
+<div id="card" class="panel hidden" role="dialog" aria-modal="true"></div>
+<div id="toast" class="panel"></div>
+<div id="banner"><b></b><span></span></div>
+<div id="fade"></div>
