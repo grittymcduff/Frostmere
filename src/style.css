@@ -77,11 +77,11 @@
   .mv{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,214,150,.3);background:rgba(0,0,0,.2);color:#ffe2a8;cursor:pointer;font-size:12px}
   .mv:disabled{opacity:.25;cursor:default}
   .xl,.tb,.eqbox,.fig{font-family:Calibri,'Segoe UI',Arial,sans-serif}
-  .xl{background:#fbfbf8;color:#1d1d1d;border-radius:8px;padding:10px 10px 6px;margin:8px 0;font-size:12.5px}
+  .xl{background:#fbfbf8;color:#1d1d1d;border-radius:8px;padding:10px 8px 6px;margin:8px 0;font-size:12px}
   .xlh{font-weight:bold;margin-bottom:4px}.xlh span{font-weight:normal;color:#666}
   .xl table,.tb{border-collapse:collapse;margin:6px 0 8px;width:100%}
-  .xl th{font-style:italic;font-weight:normal;text-align:left;border-bottom:1px solid #333;padding:2px 6px;white-space:nowrap}
-  .xl td{padding:2px 6px;white-space:nowrap;border-bottom:1px solid #e4e4e0}.xl .n,.tb .n{text-align:right;font-variant-numeric:tabular-nums}
+  .xl th{font-style:italic;font-weight:normal;text-align:left;border-bottom:1px solid #333;padding:2px 4px;white-space:nowrap}
+  .xl td{padding:2px 4px;white-space:nowrap;border-bottom:1px solid #e4e4e0}.xl .n,.tb .n{text-align:right;font-variant-numeric:tabular-nums}
   .xl table:first-of-type{width:auto}
   .tb{background:rgba(255,255,255,.04);border-radius:8px;font-size:14px}.tb th{font-weight:normal;opacity:.7;padding:6px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.15)}
   .tb td{padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.06)}

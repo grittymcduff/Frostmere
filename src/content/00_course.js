@@ -31,8 +31,8 @@ const COURSE={
      ]}},
     {id:'hollow',name:'Lantern Hollow',sub:'Modules 4–6 · Assumptions, testing, causation',requires:'woods',
      theme:{tint:'#e3d8ef',tod:'night',lamps:16,birch:6,trees:150,flowers:30,lake:[230,130]},
-     nodes:['m4','m5','m6'],
-     npc:{id:'owl-hollow',name:'Warden Quill',role:'Guide',lines:['The lanterns here mark the classical assumptions, hypothesis tests, and the road from correlation to causation.','These stones open in a later build.']}},
+     nodes:['m4-seven','m4-plots','m5-tests','m5-three','m6-trial','m6-omit'],
+     npc:{id:'owl-hollow',name:'Warden Quill',role:'Modules 4–6 guide',lines:['Lantern Hollow keeps the rules that make regression trustworthy. Six stones ring the pond: two for the classical assumptions, two for hypothesis testing, two for causation and choosing variables.','Remember the theme of this place: a clean-looking table can still be wrong. Assumptions decide which claims are credible; tests measure evidence, not truth; design — not regression — earns the word “causal.”','Same rules as the woods: waypoints before each stone, at most one miss, and a stone that freezes if you rush it.']}},
     {id:'reach',name:'Crystal Reach',sub:'Modules 7–10 · Functional form & model diagnostics',requires:'hollow',
      theme:{tint:'#d2e5f2',tod:'night',lamps:6,birch:4,trees:140,crystals:14,blueTrees:true,bushes:16,lake:[270,150]},
      nodes:['m7','m8','m9','m10'],
@@ -40,9 +40,6 @@ const COURSE={
   ],
 };
 const sealed=(id,m,title,blurb)=>NODES[id]={sealed:true,kicker:`Module ${m}`,title,sealedText:`<b>${title}.</b> ${blurb} This stone's quests are added in a later build.`};
-sealed('m4',4,'The Classical Assumptions','Seven assumptions that make OLS estimates trustworthy.');
-sealed('m5',5,'Hypothesis Testing','t-tests, p-values, confidence intervals, and F-tests as decision evidence.');
-sealed('m6',6,'Regression and Causation','Research designs that move from association toward causation.');
 sealed('m7',7,'Choosing the Functional Form','Linear, log, semilog, polynomial, and lagged models.');
 sealed('m8',8,'Multicollinearity','When explanatory variables tell almost the same story.');
 sealed('m9',9,'Serial Correlation','When today’s residual helps predict tomorrow’s.');

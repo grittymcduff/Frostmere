@@ -83,11 +83,11 @@
   .mv{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,214,150,.3);background:rgba(0,0,0,.2);color:#ffe2a8;cursor:pointer;font-size:12px}
   .mv:disabled{opacity:.25;cursor:default}
   .xl,.tb,.eqbox,.fig{font-family:Calibri,'Segoe UI',Arial,sans-serif}
-  .xl{background:#fbfbf8;color:#1d1d1d;border-radius:8px;padding:10px 10px 6px;margin:8px 0;font-size:12.5px}
+  .xl{background:#fbfbf8;color:#1d1d1d;border-radius:8px;padding:10px 8px 6px;margin:8px 0;font-size:12px}
   .xlh{font-weight:bold;margin-bottom:4px}.xlh span{font-weight:normal;color:#666}
   .xl table,.tb{border-collapse:collapse;margin:6px 0 8px;width:100%}
-  .xl th{font-style:italic;font-weight:normal;text-align:left;border-bottom:1px solid #333;padding:2px 6px;white-space:nowrap}
-  .xl td{padding:2px 6px;white-space:nowrap;border-bottom:1px solid #e4e4e0}.xl .n,.tb .n{text-align:right;font-variant-numeric:tabular-nums}
+  .xl th{font-style:italic;font-weight:normal;text-align:left;border-bottom:1px solid #333;padding:2px 4px;white-space:nowrap}
+  .xl td{padding:2px 4px;white-space:nowrap;border-bottom:1px solid #e4e4e0}.xl .n,.tb .n{text-align:right;font-variant-numeric:tabular-nums}
   .xl table:first-of-type{width:auto}
   .tb{background:rgba(255,255,255,.04);border-radius:8px;font-size:14px}.tb th{font-weight:normal;opacity:.7;padding:6px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.15)}
   .tb td{padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.06)}
@@ -1414,6 +1414,7 @@ ${res.coef.map(c=>row([c.name,x(c.b),x(c.se),x(c.t),x(c.p),x(c.lo),x(c.hi)])).jo
     for(const t of ticks(ymin,ymax,ys_))svg+=`<line x1="${m.l}" x2="${w-m.r}" y1="${py(t)}" y2="${py(t)}" class="gl"/><text x="${m.l-6}" y="${py(t)+4}" text-anchor="end">${round(t,2)}</text>`;
     for(const t of ticks(xmin,xmax,xs_))svg+=`<text x="${px(t)}" y="${h-m.b+14}" text-anchor="middle">${round(t,2)}</text>`;
     xs.forEach((x,i)=>svg+=`<circle cx="${px(x)}" cy="${py(ys[i])}" r="3.4" class="pt"/>`);
+    if(o.hline!==undefined)svg+=`<line x1="${m.l}" x2="${w-m.r}" y1="${py(o.hline)}" y2="${py(o.hline)}" class="fit" stroke-dasharray="5 4"/>`;
     if(o.line){const [b0,b1]=o.line;svg+=`<line x1="${px(xmin)}" y1="${py(b0+b1*xmin)}" x2="${px(xmax)}" y2="${py(b0+b1*xmax)}" class="fit"/>`;}
     svg+=`<text x="${(w+m.l)/2}" y="${h-4}" text-anchor="middle" class="al">${o.xl||'X'}</text><text x="12" y="${(h-m.b)/2}" text-anchor="middle" class="al" transform="rotate(-90 12 ${(h-m.b)/2})">${o.yl||'Y'}</text>`;
     if(o.eq)svg+=`<text x="${w-m.r-4}" y="${m.t+14}" text-anchor="end" class="eq">${o.eq}</text>`;
@@ -1527,8 +1528,8 @@ const COURSE={
      ]}},
     {id:'hollow',name:'Lantern Hollow',sub:'Modules 4–6 · Assumptions, testing, causation',requires:'woods',
      theme:{tint:'#e3d8ef',tod:'night',lamps:16,birch:6,trees:150,flowers:30,lake:[230,130]},
-     nodes:['m4','m5','m6'],
-     npc:{id:'owl-hollow',name:'Warden Quill',role:'Guide',lines:['The lanterns here mark the classical assumptions, hypothesis tests, and the road from correlation to causation.','These stones open in a later build.']}},
+     nodes:['m4-seven','m4-plots','m5-tests','m5-three','m6-trial','m6-omit'],
+     npc:{id:'owl-hollow',name:'Warden Quill',role:'Modules 4–6 guide',lines:['Lantern Hollow keeps the rules that make regression trustworthy. Six stones ring the pond: two for the classical assumptions, two for hypothesis testing, two for causation and choosing variables.','Remember the theme of this place: a clean-looking table can still be wrong. Assumptions decide which claims are credible; tests measure evidence, not truth; design — not regression — earns the word “causal.”','Same rules as the woods: waypoints before each stone, at most one miss, and a stone that freezes if you rush it.']}},
     {id:'reach',name:'Crystal Reach',sub:'Modules 7–10 · Functional form & model diagnostics',requires:'hollow',
      theme:{tint:'#d2e5f2',tod:'night',lamps:6,birch:4,trees:140,crystals:14,blueTrees:true,bushes:16,lake:[270,150]},
      nodes:['m7','m8','m9','m10'],
@@ -1536,9 +1537,6 @@ const COURSE={
   ],
 };
 const sealed=(id,m,title,blurb)=>NODES[id]={sealed:true,kicker:`Module ${m}`,title,sealedText:`<b>${title}.</b> ${blurb} This stone's quests are added in a later build.`};
-sealed('m4',4,'The Classical Assumptions','Seven assumptions that make OLS estimates trustworthy.');
-sealed('m5',5,'Hypothesis Testing','t-tests, p-values, confidence intervals, and F-tests as decision evidence.');
-sealed('m6',6,'Regression and Causation','Research designs that move from association toward causation.');
 sealed('m7',7,'Choosing the Functional Form','Linear, log, semilog, polynomial, and lagged models.');
 sealed('m8',8,'Multicollinearity','When explanatory variables tell almost the same story.');
 sealed('m9',9,'Serial Correlation','When today’s residual helps predict tomorrow’s.');
@@ -2079,6 +2077,292 @@ NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categ
     why:'Drop one category to serve as the baseline: k categories → k − 1 dummies.'},
    {make:r=>{const k=ri(r,3,7);return {type:'num',q:`A bank models loan losses across <b>${k}</b> regions and includes an intercept. How many region dummies should it use?`,a:k-1,tol:0,
     hint:'Categories minus one.',solution:`${k} − 1 = ${k-1}; the omitted region is the baseline.`,why:'Each coefficient then reads as that region’s difference from the baseline region.'};}},
+  ]};
+
+/* ==== content/m4.js ==== */
+/* ==========================================================================
+   MODULE 4 — Regression assumptions for defensible decisions
+   Stones: the Seven Lanterns (the classical assumptions) and the Hall of
+   Residuals (diagnostics, standardized residuals, BLUE, precision).
+   ========================================================================== */
+const SEVEN=['Linearity in the coefficients and correct specification, with an additive error','Zero mean error','No endogeneity: X uncorrelated with the error','No serial correlation','Homoskedasticity: constant error variance','No perfect multicollinearity','Normally distributed errors (optional)'];
+
+const RES_PATTERNS={
+  random:{d:'Random scatter with roughly constant spread — consistent with homoskedasticity',sd:x=>9},
+  spray:{d:'A spray: spread grows as X rises — heteroskedasticity',sd:x=>1+x*.75},
+  funnel:{d:'A funnel: spread shrinks as X rises — heteroskedasticity',sd:x=>1+(31-x)*.75},
+  bowtie:{d:'A bow-tie: spread shrinks, then grows — heteroskedasticity',sd:x=>1.5+Math.abs(x-15.5)*1.3},
+  curve:{d:'A curve: residuals bend systematically — the functional form or a driver is missing',sd:x=>3.5,mean:x=>.14*(x-15.5)**2-11},
+};
+function genResid(r,key){const P=RES_PATTERNS[key],xs=[],es=[];for(let i=0;i<60;i++){const x=rr(r,1,30);xs.push(x);es.push((P.mean?P.mean(x):0)+rngGauss(r)*P.sd(x));}
+  const m=es.reduce((a,b)=>a+b,0)/es.length;return {xs,es:es.map(e=>e-m)};}
+const residPlot=(d,xl='X')=>Exhibit.scatter(d.xs,d.es,{xl,yl:'Residual',hline:0,title:'Residual plot'});
+
+NODES['m4-seven']={kicker:'Module 4 · The classical assumptions',title:'The Seven Lanterns',
+  intro:'Seven lanterns, seven assumptions. When they all burn, OLS earns its reputation. When one goes out, you need to know which claims you can still make — and which you can’t.',
+  lessons:[
+   {title:'The seven, in plain language',
+    teach:`<div class="ex">${SEVEN.map((s,i)=>`${i+1} · ${s}`).join('<br>')}</div>
+    <p><b>Linear</b> means linear in the <b>coefficients</b>, not the variables: Y = β₀ + β₁X², or β₁ln(X), is still fine. Y = β₀ + e^(β₁X) is not.</p>
+    <p>Assumption 7 is optional: OLS can be <b>estimated</b> without normality; it matters for exact small-sample <b>inference</b>.</p>`,
+    practice:[
+     {type:'sort',q:'Is each equation linear in its parameters?',cats:['Linear in parameters','Not linear in parameters'],
+      items:[{t:'Y = β₀ + β₁X²',c:0},{t:'Y = β₀ + β₁ln(X)',c:0},{t:'Y = β₀ + e^(β₁X)',c:1},{t:'Y = β₀ + β₁²X',c:1}],
+      why:'Transforming X is fine as long as each β enters additively and to the first power.'},
+     {type:'mc',q:'Which assumption is <b>not</b> needed just to compute OLS coefficients?',opts:['Normally distributed errors','Linearity in the coefficients','No perfect multicollinearity','An additive error term'],a:0,
+      why:'Normality supports exact t and F inference, especially in small samples — not the estimation itself.'},
+    ]},
+   {title:'What residuals can and can’t tell you',
+    teach:`<p>The population error ε is never observed, so we lean on residuals — but some assumptions can’t be checked that way.</p>
+    <div class="ex"><b>Zero mean:</b> with an intercept, OLS residuals average zero automatically, so that proves nothing.<br><b>Endogeneity:</b> OLS residuals are uncorrelated with the included X’s by construction — a residual plot can’t reveal it.</div>
+    <p>Instead, ask about omitted drivers, reverse causality, measurement error, and how the data were generated. Look for <b>systematic</b> misses: one customer group, big markets, certain periods.</p>`,
+    practice:[
+     {type:'mc',q:'Your residuals average exactly 0. What does that show about Assumption 2?',opts:['Nothing — OLS with an intercept forces that','It proves the error has mean zero','It proves there’s no endogeneity','It proves errors are normal'],a:0,
+      why:'Σeᵢ = 0 is automatic. Look for systematic patterns instead.'},
+     {type:'mc',q:'A price coefficient might be soaking up the effect of an omitted product-quality variable. Which assumption is at risk?',opts:['No endogeneity (Cov(X, ε) = 0)','Homoskedasticity','No serial correlation','Normality'],a:0,
+      why:'If quality sits in ε and moves with price, price is correlated with the error — endogeneity, and a biased coefficient.'},
+    ]},
+  ],
+  puzzles:[
+   {type:'sort',q:'Match each warning sign to the assumption it threatens.',cats:['Endogeneity','Serial correlation','Heteroskedasticity','Perfect multicollinearity'],
+    items:[{t:'An omitted driver that affects Y and moves with an included X',c:0},{t:'This month’s forecast miss predicts next month’s miss',c:1},{t:'Residual spread widens for larger stores',c:2},{t:'The model includes temperature in °F and the same temperature in °C',c:3}],
+    why:'Endogeneity: X correlated with ε. Serial correlation: errors linked across observations. Heteroskedasticity: non-constant error variance. Perfect multicollinearity: one X is an exact linear combination of others.'},
+   {type:'mc',q:'Which equation <b>violates</b> Assumption 1 (linear in the coefficients)?',opts:['Sales = β₀ + e^(β₁·Ads)','Sales = β₀ + β₁·Ads²','Sales = β₀ + β₁·ln(Ads)','ln(Sales) = β₀ + β₁·ln(Ads)'],a:0,
+    why:'A β inside an exponent isn’t linear in the parameters. Transforming the variables — squares, logs — is fine.'},
+   {type:'mc',q:'Under Assumptions 1–6, the Gauss–Markov theorem says OLS is…',opts:['BLUE — the minimum-variance estimator among linear unbiased estimators','Always unbiased, even with omitted variables','Normally distributed in every sample','The only estimator that gives R² above 0.5'],a:0,
+    why:'Best (smallest variance), Linear, Unbiased Estimator. Gauss–Markov does not require normal errors.'},
+   {type:'mc',q:'Serial correlation and heteroskedasticity usually leave coefficients unbiased. So why should a manager care?',opts:['Standard errors, t-tests, and confidence intervals become unreliable — confidence can be overstated','They always flip coefficient signs','They make R² negative','They stop Excel from running'],a:0,
+    why:'The estimates may be centered right, but the reported precision is wrong — that’s decision risk.'},
+   {type:'mc',q:'Your colleague says, “The residual plot looks clean, so there’s no endogeneity.” What’s wrong?',opts:['OLS residuals are uncorrelated with included X’s by construction, so a plot can’t reveal endogeneity','Nothing — clean plots rule it out','Endogeneity only shows up in R²','Residual plots only check normality'],a:0,
+    why:'No endogeneity is a defensibility claim built from theory and design: omitted drivers, reverse causality, measurement error.'},
+  ]};
+
+NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:'The Hall of Residuals',
+  intro:'In the Hall of Residuals, every model leaves a trace. Read the shapes, flag the unusual, and know how much a sample can tell you.',
+  lessons:[
+   {title:'Reading a residual plot',
+    teach:`<p>Plot residuals against X (or against predicted Y). You want a <b>calm, even band</b> around zero.</p>
+    <div class="ex">Even band → consistent with homoskedasticity<br>Spray (widening) · funnel (narrowing) · bow-tie → heteroskedasticity<br>A curve → the model is systematically wrong: functional form or a missing driver</div>
+    <p>Individual misses are expected; <b>systematic</b> error is the warning sign.</p>`,
+    practice:[
+     {make:r=>{const k=pick(['random','spray','funnel']),d=genResid(r,k);const keys=['random','spray','funnel'];return {type:'mc',exhibit:residPlot(d,'Income'),q:'What does this residual plot suggest?',
+      opts:keys.map(x=>RES_PATTERNS[x].d),a:keys.indexOf(k),why:'Spread that changes systematically with X signals heteroskedasticity; an even band is what you hope to see.'};}},
+     {type:'mc',q:'Residuals are positive for almost every large-market store and negative for small ones. Best interpretation?',opts:['The model is systematically wrong by market size — a missing driver or wrong form','Normal random noise','Proof of heteroskedasticity only','The intercept is wrong, nothing else'],a:0,
+      why:'Ask whether the model is systematically wrong for particular groups — that points to specification problems.'},
+    ]},
+   {title:'Standardized residuals and precision',
+    teach:`<p>If errors are roughly normal, about <b>95%</b> of standardized residuals fall between −2 and +2. Flag |z| &gt; 2 for <b>investigation</b> — not automatic deletion.</p>
+    <div class="ex">=IF(ABS(StandardizedResidual)&gt;2,"Investigate","Within range")</div>
+    <p>Precision grows with sample size: the standard error shrinks roughly with <b>1/√n</b>. Quadruple n → about half the SE.</p>`,
+    practice:[
+     {make:r=>{const z=Array.from({length:10},()=>round(rngGauss(r)*1.25,2));const a=z.filter(v=>Math.abs(v)>2).length;return {type:'num',exhibit:Exhibit.table(['Obs','Standardized residual'],z.map((v,i)=>[i+1,fmtNum(v,2)])),
+      q:'How many observations should be flagged “Investigate”?',a,tol:0,hint:'Count values with absolute value above 2.',solution:`${a} with |z| > 2.`,why:'Flags start a review — they don’t prove an error.'};}},
+     {make:r=>{const se=round(rr(r,.4,2.4),2),m=pick([4,9,16]);return {type:'num',q:`A coefficient has SE = <b>${se}</b> with n = 100. Under the same conditions, roughly what SE would you expect with n = <b>${100*m}</b>?`,a:se/Math.sqrt(m),tol:.011,
+      hint:'SE scales with 1/√n.',solution:`${se} / √${m} = ${round(se/Math.sqrt(m),3)}.`,why:'More relevant, comparable data narrow the sampling distribution.'};}},
+    ]},
+  ],
+  puzzles:[
+   {make:r=>{const keys=['random','spray','funnel','bowtie','curve'],k=pick(keys),d=genResid(r,k);return {type:'mc',exhibit:residPlot(d,'Store size'),q:'Diagnose this residual plot.',
+    opts:keys.map(x=>RES_PATTERNS[x].d),a:keys.indexOf(k),why:{random:'An even band around zero is consistent with constant variance.',spray:'Widening spread: the error variance grows with X.',funnel:'Narrowing spread: the error variance falls as X rises.',bowtie:'Spread pinches in the middle and widens at both ends.',curve:'A systematic bend means the model misses a pattern — try a different functional form or a missing driver.'}[k]};}},
+   {make:r=>{const z=Array.from({length:12},()=>round(rngGauss(r)*1.3,2));z[ri(r,0,11)]=round((r()<.5?-1:1)*rr(r,2.2,3.4),2);const a=z.filter(v=>Math.abs(v)>2).length;
+    return {type:'num',exhibit:Exhibit.table(['Store','Standardized residual'],z.map((v,i)=>[i+1,fmtNum(v,2)])),q:'Using the ±2 rule, how many stores get flagged for investigation?',a,tol:0,
+     hint:'Flag any |standardized residual| > 2.',solution:`${a} store${a===1?'':'s'} beyond ±2.`,why:'A flagged store might be an error, a different population, or a rare but valid outcome. Investigate before deciding.'};}},
+   {type:'mc',q:'A store is flagged with a standardized residual of 3.1. What should you do first?',opts:['Investigate it — check records for errors, a different population, or a real shock','Delete it','Ignore the flag','Rerun the model until the flag disappears'],a:0,
+    why:'Large residuals are risk signals, not mistakes to erase. Exclude only with a documented, defensible reason.'},
+   {make:r=>{const se=round(rr(r,1,6),2),n0=pick([25,50,100]),m=4;return {type:'num',q:`With n = ${n0}, a coefficient’s SE is <b>${se}</b>. Roughly what SE would n = <b>${n0*m}</b> produce, other things equal?`,a:se/2,tol:.011,
+    hint:'Quadrupling n divides the SE by √4.',solution:`${se} / 2 = ${round(se/2,3)}.`,why:'Standard errors shrink roughly with 1/√n — precision improves, but bias from a bad specification does not go away with more data.'};}},
+   {type:'mc',q:'Three sampling distributions of β̂: A is centered on β but wide, B is centered on β and narrow, C is centered away from β. Which describes an unbiased, precise estimator?',opts:['B','A','C','None — precision and unbiasedness conflict'],a:0,
+    why:'Unbiased means centered on the true β across samples; precise means tightly clustered. C is biased; A is unbiased but imprecise.'},
+  ]};
+
+/* ==== content/m5.js ==== */
+/* ==========================================================================
+   MODULE 5 — Hypothesis testing
+   Stones: the Tribunal (hypotheses, errors, t-tests, critical values) and
+   the Three Keys (critical value, p-value, confidence interval, F-test).
+   ========================================================================== */
+const tc1=(a,df)=>Stats.tinv(1-a,df), tc2=(a,df)=>Stats.tinv(1-a/2,df);
+function genTestCase(r){ // a multiple regression with a meaningful mix of strong and weak coefficients
+  const n=ri(r,25,40),X=[],Y=[];
+  for(let i=0;i<n;i++){const c=ri(r,1,9),p=rr(r,20,90),inc=rr(r,30,90);X.push([c,p,inc]);Y.push(120-6*c+1.1*p+rr(r,-.3,.6)*inc+rngGauss(r)*18);}
+  return {n,m:Stats.ols(X,Y,['Competitors','Population (000s)','Income ($000s)'])};
+}
+
+NODES['m5-tests']={kicker:'Module 5 · Hypotheses and t-tests',title:'The Tribunal',
+  intro:'In the Tribunal, every coefficient stands trial. H₀ is presumed until the evidence is strong enough to reject it — and every verdict carries a risk of error.',
+  lessons:[
+   {title:'H₀, Hₐ, and choosing the tail',
+    teach:`<p><b>H₀</b> is the benchmark or no-effect claim; <b>Hₐ</b> is what you conclude if the evidence rejects H₀. We <b>reject</b> or <b>fail to reject</b> H₀ — we never prove it.</p>
+    <div class="ex">Expect a positive effect → H₀: β ≤ 0, Hₐ: β &gt; 0 (right tail)<br>Expect a negative effect → H₀: β ≥ 0, Hₐ: β &lt; 0 (left tail)<br>Either direction matters → H₀: β = 0, Hₐ: β ≠ 0 (two tails)</div>
+    <p>Pick the direction from <b>theory and the decision</b>, before you see the estimate.</p>`,
+    practice:[
+     {type:'mc',q:'Theory says more competitors should <b>lower</b> sales. Which hypotheses?',opts:['H₀: β ≥ 0, Hₐ: β < 0','H₀: β ≤ 0, Hₐ: β > 0','H₀: β = 0, Hₐ: β ≠ 0','H₀: β < 0, Hₐ: β ≥ 0'],a:0,
+      why:'The alternative holds the values you expect (negative); the null holds the ones you don’t.'},
+     {type:'mc',q:'You fail to reject H₀: β = 0. What can you say?',opts:['The sample doesn’t give strong enough evidence against H₀','β is exactly zero','The variable should be deleted','The model is wrong'],a:0,
+      why:'Failing to reject is not proof of no effect — the evidence just isn’t strong enough at your α.'},
+    ]},
+   {title:'The t-statistic and the rejection region',
+    teach:`<p>The t-statistic scales the estimate by its uncertainty:</p>
+    <div class="ex">t = (b − β₀) / SE(b) → for H₀: β = 0, t = b / SE(b)<br>df = n − k − 1</div>
+    <p>With df = 29 and α = 0.05: one-tailed critical value 1.699; two-tailed 2.045. Right tail: reject if t &gt; 1.699. Left: if t &lt; −1.699. Two-sided: if |t| &gt; 2.045.</p>
+    <p><b>Type I</b> error = rejecting a true H₀ (probability α). <b>Type II</b> = failing to reject a false H₀.</p>`,
+    practice:[
+     {make:r=>{const b=round(rr(r,-12,12),2)||3.1,se=round(rr(r,1.2,5),2),a=b/se;return {type:'num',q:`b = <b>${b}</b>, SE(b) = <b>${se}</b>. Compute t for H₀: β = 0.`,a,tol:.011,hint:'t = b / SE(b)',solution:`${b} / ${se} = ${round(a,3)}.`,why:'A coefficient can be large yet statistically weak if its SE is large too.'};}},
+     {type:'sort',q:'Classify each mistake.',cats:['Type I error','Type II error'],
+      items:[{t:'Concluding automation cuts costs when it doesn’t',c:0},{t:'Missing a real safety defect',c:1},{t:'Convicting an innocent defendant',c:0},{t:'Rejecting a valuable investment because evidence looked weak',c:1}],
+      why:'Type I rejects a true H₀ (a false positive); Type II fails to reject a false H₀ (a false negative). Which is worse depends on the stakes.'},
+    ]},
+  ],
+  puzzles:[
+   {type:'sort',q:'Choose the right test for each claim.',cats:['Right-tailed','Left-tailed','Two-tailed'],
+    items:[{t:'More residents nearby should raise restaurant sales',c:0},{t:'Each extra competitor should cut sales',c:1},{t:'A new uniform policy might raise or lower productivity — either would matter',c:2},{t:'Higher household income should increase spending',c:0}],
+    why:'One-sided tests follow a directional theory; two-sided tests fit when an effect in either direction matters.'},
+   {make:r=>{const n=33,k=3,df=n-k-1,b=-round(rr(r,4000,12000),0),se=round(rr(r,1500,5500),0),t=b/se,c=tc1(.05,df),rej=t<-c;return {type:'mc',
+    exhibit:Exhibit.eq(`Competition coefficient b = ${b.toLocaleString()} · SE = ${se.toLocaleString()} · n = ${n}, k = ${k} · α = 0.05 · one-tailed critical value = ${round(c,3)}`),
+    q:'Test H₀: β ≥ 0 against Hₐ: β < 0. What’s the verdict?',
+    opts:[`t = ${round(t,2)}; reject H₀ because t < −${round(c,3)}`,`t = ${round(t,2)}; fail to reject H₀ because t > −${round(c,3)}`,`Reject H₀ because b is negative`,`Fail to reject H₀ because the SE is positive`],a:rej?0:1,
+    hints:{2:'A negative estimate isn’t enough — compare t to the critical value.',3:'Compute t = b / SE first.'},
+    why:`t = ${b.toLocaleString()} / ${se.toLocaleString()} = ${round(t,2)}. ${rej?'It falls in the left-tail rejection region, so the evidence supports a negative relationship.':'It doesn’t reach the rejection region, so the evidence isn’t strong enough at α = 0.05.'}`};}},
+   {make:r=>{const n=ri(r,20,60),k=ri(r,1,4);return {type:'num',q:`A regression has n = <b>${n}</b> and k = <b>${k}</b> explanatory variables. What df do you use for its t-tests?`,a:n-k-1,tol:0,hint:'n − k − 1',solution:`${n} − ${k} − 1 = ${n-k-1}.`,why:'The degrees of freedom set the shape of the t-distribution and the critical value.'};}},
+   {type:'mc',q:'A firm tests whether a defect creates a serious safety risk (Hₐ). Which error should it fear most, and what follows?',opts:['Type II — missing a real hazard; it may accept a larger α to reduce false negatives','Type I — always the worst error; use the smallest α possible','Neither — α = 0.05 settles it','Type I — delays are worse than injuries'],a:0,
+    why:'When safety is at stake, a false negative can be catastrophic. α = 0.05 is a starting point, not an automatic rule.'},
+   {make:r=>{const b=round(rr(r,.15,.6),3),se=round(b/rr(r,1.2,5),3),df=ri(r,25,40),t=b/se,c=tc1(.05,df);return {type:'num',
+    exhibit:Exhibit.eq(`Population coefficient b = ${b} · SE = ${se} · df = ${df} · right-tailed critical value (α = 0.05) = ${round(c,3)}`),
+    q:'Compute t for H₀: β ≤ 0 vs Hₐ: β > 0. (Then think: reject or not?)',a:t,tol:.011,hint:'t = b / SE',
+    solution:`${b} / ${se} = ${round(t,3)} — ${t>c?'above':'below'} ${round(c,3)}, so ${t>c?'reject':'fail to reject'} H₀.`,why:'Compare the t-statistic with the critical value for the chosen tail, α, and df.'};}},
+  ]};
+
+NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The Three Keys',
+  intro:'Three keys open the same lock: the critical value, the p-value, and the confidence interval. Use the same test, α, and tail, and they always agree. A fourth key — the F-test — opens the whole model at once.',
+  lessons:[
+   {title:'p-values and confidence intervals',
+    teach:`<p>Excel’s P-value tests <b>H₀: β = 0 against a two-sided Hₐ</b> — nothing else. Reject when p ≤ α.</p>
+    <div class="ex">Confidence interval: b ± t<sub>α/2</sub> × SE(b)<br>Income: 10.21 ± 2.024 × 2.093 = [5.97, 14.45] → 0 is outside → reject H₀</div>
+    <p>Report the interval with the estimate — managers need the plausible range, not just yes or no.</p>`,
+    practice:[
+     {make:r=>{const b=round(rr(r,2,15),3),se=round(rr(r,.8,4),3),df=ri(r,20,45),c=tc2(.05,df),lo=b-c*se;return {type:'num',
+      exhibit:Exhibit.eq(`b = ${b} · SE = ${se} · two-tailed critical value (α = 0.05, df = ${df}) = ${round(c,3)}`),q:'Compute the <b>lower</b> bound of the 95% confidence interval.',a:lo,tol:.02,
+      hint:'b − t × SE',solution:`${b} − ${round(c,3)} × ${se} = ${round(lo,3)}.`,why:`${lo>0?'Zero is below the interval, so you would reject H₀: β = 0.':'Zero sits inside the interval, so you would fail to reject H₀: β = 0.'}`};}},
+     {type:'mc',q:'Excel reports p = 0.031 for a coefficient. At α = 0.05, two-sided test of β = 0:',opts:['Reject H₀','Fail to reject H₀','Accept H₀','The p-value says the effect is large'],a:0,why:'0.031 ≤ 0.05. A small p-value is about evidence, not size.'},
+    ]},
+   {title:'The F-test and significance vs importance',
+    teach:`<p>The <b>F-test</b> asks whether the explanatory variables, jointly, explain anything: H₀: β₁ = β₂ = … = βₖ = 0.</p>
+    <div class="ex">F = (ESS / k) / (RSS / (n − k − 1))<br>Salary: (500.32 / 2) / (99.45 / 17) = 42.7 &gt; F<sub>crit</sub> 3.59 → reject H₀</div>
+    <p>A significant F doesn’t say <b>which</b> variable matters — look at the t-tests. And statistical significance isn’t economic importance: b = 0.03 with p = 0.001 may be too small to act on; b = 12 with p = 0.28 is large but unreliable.</p>`,
+    practice:[
+     {make:r=>{const k=ri(r,2,4),n=ri(r,20,45),ess=round(rr(r,200,900),1),rss=round(rr(r,80,500),1),F=(ess/k)/(rss/(n-k-1));return {type:'num',q:`ESS = <b>${ess}</b>, RSS = <b>${rss}</b>, k = <b>${k}</b>, n = <b>${n}</b>. Compute F.`,a:F,tol:.02,
+      hint:'(ESS/k) / (RSS/(n − k − 1))',solution:`(${ess}/${k}) / (${rss}/${n-k-1}) = ${round(F,3)}.`,why:'F compares explained variation per predictor with unexplained variation per residual df.'};}},
+     {type:'mc',q:'Automation’s coefficient is 0.03 (p = 0.001). The project costs millions. Best reading?',opts:['Statistically clear, but possibly too small to justify the investment','Huge effect — invest now','Unreliable — ignore it','Proof automation causes productivity'],a:0,why:'Evaluate statistical evidence and business magnitude together.'},
+    ]},
+  ],
+  puzzles:[
+   {make:r=>{const {m}=genTestCase(r),ix=pick([1,2,3]),c=m.coef[ix],rej=c.p<=.05;return {type:'mc',exhibit:Exhibit.excel(m,'Annual sales ($000)'),
+    q:`Using the p-value method (two-sided, α = 0.05), what do you conclude about <b>${c.name}</b>?`,
+    opts:[`Reject H₀: β = 0 — p = ${Exhibit.xl(c.p)} ≤ 0.05`,`Fail to reject H₀: β = 0 — p = ${Exhibit.xl(c.p)} > 0.05`,'Reject H₀ because the coefficient is not zero','Fail to reject H₀ because R² is below 0.9'],a:rej?0:1,
+    why:'Excel’s P-value is for a two-sided test of β = 0. Compare it with α; ignore R² for this question.'};}},
+   {make:r=>{const {m}=genTestCase(r),ix=pick([1,2,3]),c=m.coef[ix],t=tc2(.05,m.df);return {type:'num',exhibit:Exhibit.excel(m,'Annual sales ($000)').replace(/<th class="n">Lower 95%<\/th><th class="n">Upper 95%<\/th>/,'').replace(/(<tr><td>[^<]+<\/td>(?:<td class="n">[^<]*<\/td>){4})(?:<td class="n">[^<]*<\/td>){2}<\/tr>/g,'$1</tr>'),
+    q:`The interval columns are hidden. Build the <b>upper</b> 95% bound for <b>${c.name}</b>. Two-tailed critical value (df = ${m.df}) = <b>${round(t,3)}</b>.`,a:c.hi,tol:.02,
+    hint:'b + t × SE, using the Coefficients and Standard Error columns.',solution:`${Exhibit.xl(c.b)} + ${round(t,3)} × ${Exhibit.xl(c.se)} = ${round(c.hi,3)}.`,
+    why:`The 95% interval is [${round(c.lo,3)}, ${round(c.hi,3)}] — ${c.lo>0||c.hi<0?'zero is outside, so reject H₀: β = 0':'zero is inside, so fail to reject H₀: β = 0'}. All three methods agree.`};}},
+   {make:r=>{const {m}=genTestCase(r);return {type:'num',exhibit:Exhibit.excel(m,'Annual sales ($000)').replace(/(<tr><td>Regression<\/td><td class="n">\d+<\/td><td class="n">[^<]*<\/td><td class="n">[^<]*<\/td>)<td class="n">[^<]*<\/td><td class="n">[^<]*<\/td>/,'$1<td class="n">?</td><td class="n">?</td>'),
+    q:'F and Significance F are hidden. Compute the <b>F-statistic</b> from the ANOVA table.',a:m.F,tol:.02,
+    hint:'F = (Regression SS / k) / (Residual SS / residual df) — or Regression MS / Residual MS.',solution:`${Exhibit.xl(m.SSR/(m.k-1))} / ${Exhibit.xl(m.SSE/m.df)} = ${round(m.F,3)}.`,
+    why:`H₀: all slopes are zero. Here F = ${round(m.F,2)} with p = ${Exhibit.xl(m.pF)} — ${m.pF<=.05?'at least one driver adds explanatory power':'no joint evidence at α = 0.05'}. The F-test doesn’t say which one; the t-tests do.`};}},
+   {type:'mc',q:'Your F-test rejects H₀ at 1%, but two of three t-tests are not significant. Which statement is right?',opts:['Jointly the drivers explain something; the t-tests show which have individual evidence','The F-test is wrong','All three drivers matter equally','The model must be discarded'],a:0,
+    why:'The F-test asks whether the group adds explanatory power; it doesn’t identify the responsible coefficient.'},
+   {type:'mc',q:'Infrastructure spending has b = 12 with p = 0.28. A manager wants to cite it as proof of a big payoff. Your response?',opts:['The estimate is large but statistically unreliable — the true effect could be zero','It’s significant because 12 is large','p = 0.28 means a 28% effect','It proves the opposite effect'],a:0,
+    why:'Size without precision is fragile evidence. Report both magnitude and uncertainty before acting.'},
+  ]};
+
+/* ==== content/m6.js ==== */
+/* ==========================================================================
+   MODULE 6 — Regression and causation; choosing independent variables
+   Stones: the Trial Orchard (random assignment, treatment effects) and the
+   Missing Variable (omitted-variable bias, irrelevant variables, criteria).
+   ========================================================================== */
+function genTrial(r){
+  const n=ri(r,4,6),T=[],C=[],eff=ri(r,8,22)*1000;
+  for(let i=0;i<n;i++){T.push(Math.round((125000+eff+rngGauss(r)*5500)/100)*100);C.push(Math.round((125000+rngGauss(r)*5500)/100)*100);}
+  const mean=a=>a.reduce((s,v)=>s+v,0)/a.length;return {T,C,diff:mean(T)-mean(C),mT:mean(T),mC:mean(C)};
+}
+
+NODES['m6-trial']={kicker:'Module 6 · From association to causation',title:'The Trial Orchard',
+  intro:'In the orchard, half the trees get the new fertilizer — by coin flip. Regression measures the size of the effect; the research design is what lets you call it causal.',
+  lessons:[
+   {title:'The counterfactual and random assignment',
+    teach:`<p>Causation needs a credible comparison: what happened versus <b>what would have happened otherwise</b>. We can’t see both outcomes for the same store, so we build a control group.</p>
+    <p><b>Random assignment</b> makes treatment and control similar in size, location, customers, and management — so the main systematic difference is the treatment itself.</p>
+    <div class="ex">Regression estimates the size; the design supplies the causal interpretation.</div>`,
+    practice:[
+     {type:'mc',q:'Why randomize which stores get extra advertising?',opts:['So the groups are similar in everything except the advertising','So the sample is larger','So R² goes up','So Excel can run the model'],a:0,why:'Randomization balances observed and unobserved factors on average.'},
+     {type:'mc',q:'A manager lets regional directors choose which stores get the new loyalty program. Why is a causal claim weaker?',opts:['Directors may pick stores that would have done well anyway','The sample is too small','The program can’t be measured','Regression can’t use 0/1 variables'],a:0,why:'Self-selected treatment means the groups may differ systematically — the coefficient could reflect that, not the program.'},
+    ]},
+   {title:'Treatment dummies measure the difference',
+    teach:`<p>After the experiment, regress the outcome on a 0/1 treatment indicator:</p>
+    <div class="ex">SALESᵢ = β₀ + β₁·TREATMENTᵢ + εᵢ<br>β₀ = control-group average · β₁ = treatment average − control average</div>
+    <p>With 5 stores each: treatment average $143,000, control average $126,400 → β₁ = <b>$16,600</b>. Because assignment was random, that difference is evidence of a causal effect (with only 10 stores, it’s a classroom illustration).</p>`,
+    practice:[
+     {make:r=>{const mT=ri(r,130,160)*1000,mC=ri(r,110,mT/1000-4)*1000;return {type:'num',q:`Treatment stores average <b>$${mT.toLocaleString()}</b> in sales; control stores average <b>$${mC.toLocaleString()}</b>. What is β₁ in SALES = β₀ + β₁·TREATMENT?`,a:mT-mC,tol:1,pre:'$',
+      hint:'Treatment mean − control mean',solution:`${money(mT,0)} − ${money(mC,0)} = ${money(mT-mC,0)}.`,why:'With a single 0/1 regressor, OLS returns the difference in group means.'};}},
+     {type:'mc',q:'In that model, what does β₀ represent?',opts:['The control group’s average sales','The treatment group’s average sales','The total effect of advertising','Nothing meaningful'],a:0,why:'TREATMENT = 0 is the baseline, so the intercept is the control-group mean.'},
+    ]},
+  ],
+  puzzles:[
+   {make:r=>{const d=genTrial(r);return {type:'num',exhibit:Exhibit.table(['Store','Treatment','Sales'],[...d.T.map((v,i)=>[i+1,1,money(v,0)]),...d.C.map((v,i)=>[d.T.length+i+1,0,money(v,0)])]),
+    q:'Stores were randomly assigned to extra advertising (Treatment = 1). Estimate β₁ in SALES = β₀ + β₁·TREATMENT.',a:d.diff,tol:2,pre:'$',
+    hint:'β₁ equals the treatment-group average minus the control-group average.',solution:`${money(d.mT,0)} − ${money(d.mC,0)} ≈ ${money(d.diff,0)}.`,
+    why:'Because treatment was randomly assigned, β₁ has a much stronger causal interpretation than the same number from observational data.'};}},
+   {type:'mc',q:'What gives a regression coefficient a causal interpretation?',opts:['A research design — like random assignment — that creates a credible counterfactual','A p-value below 0.01','An R² above 0.9','Including many control variables'],a:0,
+    why:'Regression is not what makes the conclusion causal; the design is.'},
+   {type:'sort',q:'Which designs support a causal reading of the coefficient?',cats:['Stronger causal design','Association only'],
+    items:[{t:'Coin-flip assignment of a price discount across comparable stores',c:0},{t:'Comparing stores whose managers chose to adopt a new system',c:1},{t:'Random assignment of a training program to half the call-center agents',c:0},{t:'Regressing sales on advertising across all stores last year',c:1}],
+    why:'Random assignment balances other factors; self-selection and ordinary observational data leave confounders in play.'},
+   {type:'mc',q:'Why can’t you just compare a store’s sales with and without extra advertising?',opts:['You can’t observe the same store both ways at the same time — you need a comparison group','Because sales are measured in dollars','Because advertising has no effect','You can, if you run the regression twice'],a:0,
+    why:'The counterfactual for the same unit is unobservable, so a control group stands in for it.'},
+   {type:'mc',q:'A 10-store experiment finds β₁ = $16,600. What’s the honest caveat?',opts:['With so few stores, the estimate is noisy — check its standard error before acting','Nothing; randomization makes it exact','The effect must be negative','Random assignment guarantees significance'],a:0,
+    why:'Randomization supports a causal interpretation; sample size still governs precision.'},
+  ]};
+
+NODES['m6-omit']={kicker:'Module 6 · Choosing independent variables',title:'The Missing Variable',
+  intro:'Something is missing from the model, and its effect has slipped into the error term. Find out when that creates bias, which way it pushes, and why stuffing in extra variables isn’t the cure.',
+  lessons:[
+   {title:'Omitted-variable bias',
+    teach:`<p>Drop X₂ from the true model Y = β₀ + β₁X₁ + β₂X₂ + ε and its effect moves into the error. If X₂ moves with X₁, then X₁ is correlated with the error — Assumption 3 breaks.</p>
+    <div class="ex">β₁* = β₁ + β₂·α₁ → <b>Bias = β₂·α₁</b><br>β₂ = effect of the omitted X₂ on Y · α₁ = slope of X₂ on X₁</div>
+    <p>No bias if β₂ = 0 (X₂ doesn’t affect Y) <b>or</b> α₁ = 0 (X₂ unrelated to X₁). More data doesn’t fix it.</p>`,
+    practice:[
+     {make:r=>{const b2=round(rr(r,.2,1.5),2)*(r()<.3?-1:1),a1=round(rr(r,-.8,.8),2)||.4,bias=b2*a1;return {type:'num',q:`Omitted variable effect β₂ = <b>${b2}</b>; its relationship with the included X, α₁ = <b>${a1}</b>. What is the bias in β₁*?`,a:bias,tol:.006,
+      hint:'Bias = β₂ × α₁',solution:`${b2} × ${a1} = ${round(bias,4)}.`,why:`${bias>0?'Positive bias: the estimate overstates β₁.':'Negative bias: the estimate understates β₁.'}`};}},
+     {type:'mc',q:'Coffee and sleep both affect productivity, and heavy coffee drinkers sleep less. You omit sleep. The coffee coefficient…',opts:['Absorbs part of sleep’s effect and is biased','Stays unbiased','Becomes exactly zero','Only gets a larger standard error'],a:0,
+      why:'Sleep affects productivity (β₂ ≠ 0) and moves with coffee (α₁ ≠ 0), so both bias conditions hold.'},
+    ]},
+   {title:'Irrelevant variables and the four criteria',
+    teach:`<p>An <b>irrelevant</b> variable (true β = 0) doesn’t bias the others, but it adds noise: higher variance, larger SEs, smaller |t|, and often lower adjusted R².</p>
+    <div class="ex"><b>Omitting something important → bias. Adding something useless → noise.</b></div>
+    <p>To judge a variable, use all four criteria together: <b>1 Theory</b> · <b>2 t-test</b> (significant, expected sign) · <b>3 Adjusted R²</b> · <b>4 Coefficient stability</b> when it enters or leaves.</p>`,
+    practice:[
+     {type:'sort',q:'Which consequence goes with which mistake?',cats:['Omitted relevant variable','Included irrelevant variable'],
+      items:[{t:'Biased coefficients that can even flip sign',c:0},{t:'Larger standard errors, but still unbiased',c:1},{t:'Breaks “holding other factors constant”',c:0},{t:'Adjusted R² slips slightly',c:1}],
+      why:'Omission threatens validity; irrelevance threatens precision.'},
+     {type:'mc',q:'Which criterion should carry the most weight when deciding if a variable belongs?',opts:['Theory','The t-score','Adjusted R²','Whether the other coefficients move'],a:0,why:'Theory first, statistics second — then use all four together.'},
+    ]},
+  ],
+  puzzles:[
+   {type:'sort',q:'Predict the direction of omitted-variable bias on β₁.',cats:['Overestimate (positive bias)','Underestimate (negative bias)'],
+    items:[{t:'Omitted variable raises Y and moves with X₁',c:0},{t:'Omitted variable raises Y and moves against X₁',c:1},{t:'Omitted variable lowers Y and moves with X₁',c:1},{t:'Omitted variable lowers Y and moves against X₁',c:0}],
+    why:'Bias = β₂·α₁. Same signs → positive bias (overestimate); opposite signs → negative bias (underestimate).'},
+   {make:r=>{const b1=round(rr(r,1,4),2),b2=round(rr(r,.5,2.5),2),a1=round(rr(r,.2,.9),2),est=b1+b2*a1;return {type:'num',
+    q:`True model: Y = β₀ + <b>${b1}</b>X₁ + <b>${b2}</b>X₂. You leave out X₂, and X₂ = α₀ + <b>${a1}</b>X₁ + v. What coefficient on X₁ should you expect to estimate?`,a:est,tol:.006,
+    hint:'β₁* = β₁ + β₂·α₁',solution:`${b1} + ${b2} × ${a1} = ${round(est,4)}.`,why:'The included variable gets credit for part of the omitted variable’s effect.'};}},
+   {type:'mc',q:'Dropping population from Woody’s model moves the competition coefficient from −10,605 (t = −5.07) to −1,684 (t = −0.81). What’s the likely explanation?',
+    opts:['Omitted-variable bias — population affects sales and is correlated with competition','Population was irrelevant all along','Competition never mattered','A data-entry error in competition'],a:0,
+    why:'Large coefficient changes across defensible specifications deserve investigation — here, the classic omitted-variable story.'},
+   {type:'mc',q:'In a Brazilian-coffee demand model, its own price has a positive, insignificant coefficient. What’s the theory-first move?',
+    opts:['Keep price and look for a missing substitute price, like Colombian coffee','Drop price — it isn’t significant','Conclude demand ignores price','Flip the sign by hand'],a:0,
+    why:'Adding the substitute price restored the negative own-price coefficient. Don’t drop a variable theory says belongs just because one sample gives it a weak t.'},
+   {type:'sort',q:'Sensitivity analysis or data mining?',cats:['Sensitivity analysis','Data mining'],
+    items:[{t:'Start from theory, then check whether the key result survives reasonable alternatives',c:0},{t:'Add and drop variables until p-values look good',c:1},{t:'Report the model with and without SAT to test robustness',c:0},{t:'Search 40 variables and keep whichever three are significant',c:1}],
+    why:'Sensitivity analysis tests a story; data mining creates one from the sample. Document the specifications you tried.'},
   ]};
 
 /* ==== js/08_game.js ==== */

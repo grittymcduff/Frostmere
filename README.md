@@ -7,7 +7,7 @@ A single-player, storybook-style browser game for studying **Applied Business Re
 ## How it's built
 - `src/` holds the source. Edit there, never `index.html` directly.
   - `src/js/` – engine (rendering, movement, world, puzzle engine, game loop)
-  - `src/content/` – course content: `00_course.js` is the region map; `m1.js`, `m2.js`, `m3.js` hold each module's stones; `m1_waypoints.js` holds Module 1's mini-lessons. Add `m4.js`… to unseal more stones.
+  - `src/content/` – course content: `00_course.js` is the region map; `m1.js` … `m6.js` hold each module's stones (with waypoints inline from Module 2 on); `m1_waypoints.js` holds Module 1's mini-lessons. Add `m7.js`… to unseal Crystal Reach.
   - `src/style.css`, `src/body.html` – page shell
 - `python3 build.py` bundles everything into a single self-contained `index.html`, which GitHub Pages serves.
 

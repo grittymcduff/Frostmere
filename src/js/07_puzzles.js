@@ -64,6 +64,7 @@ ${res.coef.map(c=>row([c.name,x(c.b),x(c.se),x(c.t),x(c.p),x(c.lo),x(c.hi)])).jo
     for(const t of ticks(ymin,ymax,ys_))svg+=`<line x1="${m.l}" x2="${w-m.r}" y1="${py(t)}" y2="${py(t)}" class="gl"/><text x="${m.l-6}" y="${py(t)+4}" text-anchor="end">${round(t,2)}</text>`;
     for(const t of ticks(xmin,xmax,xs_))svg+=`<text x="${px(t)}" y="${h-m.b+14}" text-anchor="middle">${round(t,2)}</text>`;
     xs.forEach((x,i)=>svg+=`<circle cx="${px(x)}" cy="${py(ys[i])}" r="3.4" class="pt"/>`);
+    if(o.hline!==undefined)svg+=`<line x1="${m.l}" x2="${w-m.r}" y1="${py(o.hline)}" y2="${py(o.hline)}" class="fit" stroke-dasharray="5 4"/>`;
     if(o.line){const [b0,b1]=o.line;svg+=`<line x1="${px(xmin)}" y1="${py(b0+b1*xmin)}" x2="${px(xmax)}" y2="${py(b0+b1*xmax)}" class="fit"/>`;}
     svg+=`<text x="${(w+m.l)/2}" y="${h-4}" text-anchor="middle" class="al">${o.xl||'X'}</text><text x="12" y="${(h-m.b)/2}" text-anchor="middle" class="al" transform="rotate(-90 12 ${(h-m.b)/2})">${o.yl||'Y'}</text>`;
     if(o.eq)svg+=`<text x="${w-m.r-4}" y="${m.t+14}" text-anchor="end" class="eq">${o.eq}</text>`;
