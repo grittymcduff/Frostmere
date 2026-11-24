@@ -42,10 +42,10 @@ const ART={
     fgPine:    {files:['fg_pine.png'], w:320, h:520, ox:160,oy:515},               // dark foreground silhouette
   },
   // Player sprite sheet: rows = down, left, right, up; `frames` walk frames per row.
-  // Column 1 = standing (idle); columns 2–4 = walk cycle. `lantern` = glow position per [row][column],
+  // Column 1 = standing (idle); columns 2–5 = walk cycle. `lantern` = glow position per [row][column],
   // in world units from the feet, so the light sits on the painted lantern in every frame.
-  player:{file:'player.png', fw:128, fh:160, frames:4, w:44, h:55, ox:22, oy:52,
-          lantern:[[[8.4, -13.4], [8.1, -13.4], [8.4, -13.4], [8.1, -13.4]], [[-11.7, -16.0], [-11.7, -16.0], [-11.7, -16.0], [-11.7, -16.0]], [[11.3, -16.0], [11.3, -16.0], [11.3, -16.0], [11.3, -16.0]], [[-8.3, -14.8], [-8.3, -14.8], [-8.3, -14.8], [-8.3, -14.8]]]},
+  player:{file:'player.png', fw:128, fh:160, frames:5, w:44, h:55, ox:22, oy:52,
+          lantern:[[[9.2, -12.4], [11.0, -16.2], [9.2, -12.4], [9.0, -13.8], [8.3, -14.0]], [[-6.2, -14.9], [-5.4, -15.2], [-6.2, -14.9], [-6.3, -13.2], [-6.6, -13.3]], [[6.2, -14.9], [5.4, -15.2], [6.2, -14.9], [6.0, -13.2], [6.6, -13.3]], [[-7.0, -17.0], [-11.7, -19.7], [-7.0, -17.0], [-7.0, -17.0], [-7.0, -17.0]]]},
   // Optional seamless ground textures (tile), one per area.
   ground:{hub:'', woods:'', hollow:'', reach:''}, groundScale:.5,
 };
