@@ -7,7 +7,7 @@ A single-player, storybook-style browser game for studying **Applied Business Re
 ## How it's built
 - `src/` holds the source. Edit there, never `index.html` directly.
   - `src/js/` – engine (rendering, movement, world, puzzle engine, game loop)
-  - `src/content/` – course content: `00_course.js` is the region map; `m1.js` is Module 1. Add `m2.js`, `m3.js`, … to unseal more stones.
+  - `src/content/` – course content: `00_course.js` is the region map; `m1.js`, `m2.js`, `m3.js` hold each module's stones; `m1_waypoints.js` holds Module 1's mini-lessons. Add `m4.js`… to unseal more stones.
   - `src/style.css`, `src/body.html` – page shell
 - `python3 build.py` bundles everything into a single self-contained `index.html`, which GitHub Pages serves.
 
@@ -15,6 +15,11 @@ A single-player, storybook-style browser game for studying **Applied Business Re
 1. Edit files in `src/`.
 2. Run `python3 build.py`.
 3. Commit `src/` **and** `index.html`, then push to `main`.
+
+## Game rules
+- **Study stones** hold a module's main challenges (5 each). Restore a stone with **at most one miss**.
+- **Waypoints** (lecterns on the path before each stone) are short lessons with practice questions, in order. They're optional — but miss **2 or more** on a stone and it **freezes** until you finish its waypoints.
+- Restore every stone in a region to unseal the next region's gate.
 
 ## Notes
 - Data puzzles generate fresh datasets every attempt; answers are computed in code (OLS, t and F p-values verified against SciPy).

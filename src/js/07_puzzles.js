@@ -137,7 +137,7 @@ function renderPuzzle(){
 }
 function btn(label,cls){const b=document.createElement('button');b.className=cls;b.innerHTML=label;return b;}
 function stat(correctFirst){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;}
-function noteMiss(it){if(run.mode==='review')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function noteMiss(it){if(run.mode==='review'||NODES[it.node].lessonOf)return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
   const r=run;closeCard();r.onDone&&r.onDone(r.items);persist();

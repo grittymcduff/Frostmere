@@ -87,7 +87,7 @@ function initSprites(){
   SPR.lamp=makeLamp();SPR.crate=makeCrate();SPR.barrel=makeBarrel();SPR.snowman=makeSnowman();
   SPR.crystals=[0,1,2].map(()=>makeCrystals());SPR.sign=makeSign();SPR.flowers=[0,1,2].map(()=>makeFlowers());
   SPR.firepit=makeFirePit();SPR.fgPine=makeFgPine();
-  SPR.gate=makeGate();SPR.stone=makeStone();SPR.owl=makeOwl();
+  SPR.gate=makeGate();SPR.stone=makeStone();SPR.owl=makeOwl();SPR.lectern=makeLectern();SPR.ice=makeIce();
   SPR.cabins=[196,176,170,156,150].map(w=>makeCabin(w));
 }
 
@@ -107,7 +107,7 @@ function addGate(x,y,to,spawnKey){
   return gate;
 }
 function addStone(x,y,nodeId){
-  addObj({kind:'stone',x,y,spr:SPR.stone,marker:{x,y,h:104,state:()=>nodeState(nodeId)}});
+  addObj({kind:'stone',node:nodeId,x,y,spr:SPR.stone,marker:{x,y,h:104,state:()=>nodeState(nodeId)}});
   colliders.push({t:'c',x,y:y-4,r:14});claim(x,y,40);
   const L=addLight(x,y-40,120,[255,205,120],.8,.1);L.node=nodeId;
   INTER.push({x,y,r:58,node:nodeId,label:()=>nodeState(nodeId)==='sealed'?'Inspect sealed stone':'Study the stone',act:()=>openNode(nodeId)});
@@ -196,43 +196,82 @@ function buildHub(){
 
 /* --- a wild region (one per group of modules) --- */
 function buildWild(reg){
-  const th=reg.theme;
-  const nodes=reg.nodes, n=nodes.length;
-  PLAZA={x:1000,y:1170,r:120};
-  POND={x:1000,y:690,rx:th.lake?.[0]||250,ry:th.lake?.[1]||140};
-  GROVE=th.crystals?{x:1000,y:690}:null;
-  // nodes ring around the lake, from bottom-left over the top to bottom-right
+  const th=reg.theme, nodes=reg.nodes, n=nodes.length;
+  const cx=W/2, cy=H*.45, RX=W*.36, RY=H*.31;
+  PLAZA={x:cx,y:H-330,r:120};
+  POND={x:cx,y:cy,rx:th.lake?.[0]||250,ry:th.lake?.[1]||140};
+  GROVE=th.crystals?{x:cx,y:cy}:null;
+  // stones ring the lake: bottom-left → over the top → bottom-right
   const pts=[];
-  for(let k=0;k<n;k++){const a=(150+k*(240/Math.max(1,n-1)))*Math.PI/180;pts.push([1000+Math.cos(a)*640+rand(-25,25),690+Math.sin(a)*440+rand(-15,15)]);}
-  CLEARINGS=pts.map(([x,y])=>({x,y,r:70}));
-  const ring=[[PLAZA.x-60,PLAZA.y-40],...pts,[PLAZA.x+60,PLAZA.y-40]];
-  PATHS=[[[1000,1530],[990,1360],[1000,1230]],ring];
+  for(let k=0;k<n;k++){const a=(150+k*(240/Math.max(1,n-1)))*Math.PI/180;pts.push([cx+Math.cos(a)*RX+rand(-20,20),cy+Math.sin(a)*RY+rand(-12,12)]);}
+  CLEARINGS=pts.map(([x,y])=>({x,y,r:62}));
+  const ring=[[PLAZA.x-70,PLAZA.y-50],...pts,[PLAZA.x+70,PLAZA.y-50]];
+  PATHS=[[[cx,H+30],[cx-10,H-170],[cx,PLAZA.y-60]],ring];
   const nextReg=COURSE.regions.find(r=>r.requires===reg.id);
   const top=pts.reduce((a,b)=>b[1]<a[1]?b:a);
-  if(nextReg)PATHS.push([[top[0],top[1]],[ (top[0]+1000)/2, top[1]-60],[1000,10]]);
+  if(nextReg)PATHS.push([[top[0],top[1]],[(top[0]+cx)/2,top[1]/2+20],[cx,10]]);
   SCENE={fire:true};GROUND_TINT=th.tint;
   buildSurface();paintGround();
   claim(PLAZA.x,PLAZA.y,PLAZA.r);
   addCampfire(PLAZA.x,PLAZA.y);
-  addOwl(PLAZA.x+70,PLAZA.y-30,reg.npc);
+  addOwl(PLAZA.x+75,PLAZA.y-30,reg.npc);
+  addGate(cx,H-40,'hub','from'+reg.id[0].toUpperCase()+reg.id.slice(1));
+  if(nextReg)addGate(cx,70,nextReg.id,'fromPrev');
   pts.forEach(([x,y],k)=>addStone(x,y,nodes[k]));
-  addGate(1000,H-40,'hub','from'+reg.id[0].toUpperCase()+reg.id.slice(1));
-  if(nextReg)addGate(1000,70,nextReg.id,'fromPrev');
-  // lamps along the ring
+  // waypoint lecterns: evenly spaced along the path segment that leads to each stone
   const ringS=sampleCurve(ring,6);
-  for(let i=20;i<ringS.length-10;i+=Math.floor(ringS.length/(th.lamps||8))){
+  const near=([x,y])=>{let bi=0,bd=1e9;ringS.forEach(([sx,sy],i)=>{const d=(sx-x)**2+(sy-y)**2;if(d<bd){bd=d;bi=i;}});return bi;};
+  const idx=pts.map(near);
+  nodes.forEach((id,k)=>{
+    const L=(NODES[id]?.lessons||[]).length;if(!L)return;
+    const i0=k?idx[k-1]:0,i1=idx[k];
+    for(let j=0;j<L;j++){
+      const i=Math.round(i0+(i1-i0)*(j+1)/(L+1)),[x,y]=ringS[i],[x2,y2]=ringS[Math.min(ringS.length-1,i+1)],a=Math.atan2(y2-y,x2-x);
+      const side=(j%2?1:-1)*44;addLesson(x-Math.sin(a)*side,y+Math.cos(a)*side,id,j);
+    }
+  });
+  for(let i=24;i<ringS.length-12;i+=Math.floor(ringS.length/(th.lamps||8))){
     const [x,y]=ringS[i],[x2,y2]=ringS[Math.min(ringS.length-1,i+1)],a=Math.atan2(y2-y,x2-x);
-    const lx=x-Math.sin(a)*48,ly=y+Math.cos(a)*48;if(free(lx,ly,16))addLamp(lx,ly);
+    const lx=x+Math.sin(a)*52,ly=y-Math.cos(a)*52;if(free(lx,ly,16))addLamp(lx,ly);
   }
-  if(th.crystals){for(let i=0,c=0;i<400&&c<th.crystals;i++){const a=rand(0,TAU),x=1000+Math.cos(a)*rand(300,820),y=690+Math.sin(a)*rand(220,560);
+  if(th.crystals){for(let i=0,c=0;i<500&&c<th.crystals;i++){const a=rand(0,TAU),x=cx+Math.cos(a)*rand(RX*.45,RX*1.3),y=cy+Math.sin(a)*rand(RY*.45,RY*1.3);
     if(nearPath(x,y,30)||!free(x,y,50))continue;const s=rand(.55,1.05);addObj({kind:'crystal',x,y,spr:pick(SPR.crystals),s});colliders.push({t:'c',x,y:y-4,r:26*s});claim(x,y,50*s);
     addLight(x,y-30*s,150*s+30,[110,200,255],.8,.12);c++;}}
   pondRocks();
-  for(let i=0,b=0;i<600&&b<(th.birch||0);i++){const x=rand(80,W-80),y=rand(120,H-80);if(nearPath(x,y,30)||!free(x,y,22))continue;
+  for(let i=0,b=0;i<700&&b<(th.birch||0);i++){const x=rand(80,W-80),y=rand(120,H-80);if(nearPath(x,y,30)||!free(x,y,22))continue;
     addObj({kind:'birch',x,y,spr:pick(SPR.birch),s:rand(.85,1.15),sway:.6,phase:rand(0,9)});colliders.push({t:'c',x,y,r:8});claim(x,y,22);b++;}
-  scatterForest(th.trees||170,.03,{x:1000,y:690,rx:840,ry:620},th.blueTrees);
+  scatterForest(th.trees||170,.03,{x:cx,y:cy,rx:RX*1.3,ry:RY*1.4},th.blueTrees);
   scatterSmall(30,th.bushes??30,th.flowers??16);
-  return {start:{x:1000,y:1330},fromHub:{x:1000,y:1330},fromPrev:{x:1000,y:1330}};
+  const sp={x:cx,y:H-170};
+  return {start:sp,fromHub:sp,fromPrev:sp};
+}
+function makeLectern(){
+  return makeSprite(56,72,28,64,g=>{
+    g.fillStyle='rgba(40,55,95,.3)';ell(g,4,0,16,5);
+    g.fillStyle='#4e3423';g.fillRect(-3,-34,6,34);g.fillStyle='#5f412c';g.beginPath();g.roundRect(-9,-4,18,5,2);g.fill();
+    g.save();g.translate(0,-38);g.rotate(-.18);
+    g.fillStyle='#6c4630';g.beginPath();g.roundRect(-17,-6,34,12,3);g.fill();
+    g.fillStyle='#f3e9d2';g.beginPath();g.moveTo(-15,-6);g.quadraticCurveTo(-7,-11,0,-6);g.quadraticCurveTo(7,-11,15,-6);g.lineTo(15,2);g.quadraticCurveTo(7,-2,0,2);g.quadraticCurveTo(-7,-2,-15,2);g.closePath();g.fill();
+    g.strokeStyle='rgba(90,70,50,.55)';g.lineWidth=.8;for(const y of [-5,-3,-1]){g.beginPath();g.moveTo(-12,y);g.lineTo(-3,y-1);g.moveTo(3,y-1);g.lineTo(12,y);g.stroke();}
+    g.strokeStyle='#7d2430';g.lineWidth=1.4;g.beginPath();g.moveTo(0,-4);g.lineTo(1,6);g.stroke();
+    g.restore();
+    g.fillStyle='#fbfdff';ell(g,-10,-45,6,2);
+  });
+}
+function makeIce(){
+  return makeSprite(84,120,42,104,g=>{
+    const shard=(x,y,a,h,w)=>{g.save();g.translate(x,y);g.rotate(a);const sg=g.createLinearGradient(-w,0,w,0);sg.addColorStop(0,'rgba(235,250,255,.9)');sg.addColorStop(.5,'rgba(160,215,245,.65)');sg.addColorStop(1,'rgba(90,150,210,.55)');
+      g.fillStyle=sg;g.beginPath();g.moveTo(-w/2,0);g.lineTo(0,-h);g.lineTo(w/2,0);g.closePath();g.fill();g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=.8;g.beginPath();g.moveTo(-w*.1,-2);g.lineTo(0,-h);g.stroke();g.restore();};
+    g.fillStyle='rgba(190,230,255,.28)';g.beginPath();g.moveTo(-20,-2);g.lineTo(-17,-72);g.quadraticCurveTo(0,-92,17,-72);g.lineTo(20,-2);g.closePath();g.fill();
+    for(const [x,y,a,h,w] of [[-18,-2,-.5,38,12],[18,-2,.5,42,12],[-10,-4,-.2,60,11],[10,-3,.25,56,10],[0,-6,0,84,14],[-24,-1,-.9,22,9],[24,-1,.9,24,9]])shard(x,y,a,h,w);
+    g.fillStyle='rgba(240,250,255,.9)';ell(g,0,-2,28,6);
+  });
+}
+function addLesson(x,y,nodeId,j){
+  const lid=lessonId(nodeId,j);
+  addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>lessonState(nodeId,j)}});
+  colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,22);
+  INTER.push({x,y,r:46,label:()=>lessonState(nodeId,j)==='blocked'?'Waypoint (finish the previous one first)':'Read the waypoint',act:()=>openLesson(nodeId,j)});
 }
 
 /* --- scene switching --- */
@@ -245,6 +284,7 @@ function setScene(id,spawnKey){
   clearScene();
   R=mulberry(hashStr(id)+7);
   const reg=regionById(id);
+  if(id==='hub')sizeWorld(2000,1500);else sizeWorld(...(reg.theme.size||[2400,1800]));
   SPAWNS=id==='hub'?buildHub():buildWild(reg);
   curScene=id;
   const sp=SPAWNS[spawnKey]||SPAWNS.start;

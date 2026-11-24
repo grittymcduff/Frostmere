@@ -120,6 +120,11 @@
   #fade{position:fixed;inset:0;background:#05080f;opacity:0;pointer-events:none;transition:opacity .4s;z-index:9}#fade.on{opacity:1}
   @media (max-width:600px){#hud{padding:8px 11px}#hud .t1{font-size:15px}#hud .t2{display:none}.topbtns button{padding:8px 10px;font-size:12px}#card{padding:18px 14px 14px}}
   @media (prefers-reduced-motion:reduce){#banner.on{animation:none;opacity:1}#toast,#fade{transition:none}}
+  .rule{font-size:14px;line-height:1.5;background:rgba(140,205,255,.1);border-left:3px solid #8cc8f0;padding:9px 12px;border-radius:6px}
+  .teach{font-size:15.5px;line-height:1.6}.teach p{margin:8px 0}.teach .ex{background:rgba(255,226,168,.08);border:1px solid rgba(255,226,168,.22);border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14.5px}
+  .teach b{color:#ffe2a8}
+  ul.wl{list-style:none;padding:0;margin:10px 0}ul.wl li{display:flex;gap:9px;align-items:center;padding:5px 0;font-size:15px}ul.wl li.blocked{opacity:.55}
+  .ic.frozen{background:#2b5f8a;color:#dff3ff}.reg li small{opacity:.55;font-size:11.5px}
 </style>
 </head>
 <body>
@@ -152,7 +157,7 @@
 'use strict';
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
-const W = 2000, H = 1500;           // world size
+let W = 2000, H = 1500;              // world size
 const GS = 1.5;                     // ground texture resolution multiplier
 const SS = 2;                       // sprite cache resolution multiplier
 let VW = 0, VH = 0, DPR = 1, ZOOM = 1;
@@ -203,8 +208,8 @@ function sampleCurve(pts,step){
 }
 
 /* surface grid: 0 snow, 1 path/plaza, 2 ice */
-const GC = 10, GW = W/GC, GH = H/GC;
-const surf = new Uint8Array(GW*GH);
+const GC = 10; let GW = W/GC, GH = H/GC, surf = new Uint8Array(GW*GH);
+function sizeWorld(w,h){W=w;H=h;GW=W/GC;GH=H/GC;surf=new Uint8Array(GW*GH);ground.width=W*GS;ground.height=H*GS;}
 function buildSurface(){
   PATH_SAMPLES=PATHS.map(p=>sampleCurve(p,6));
   for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++){
@@ -902,6 +907,11 @@ function drawMarker(g,m,t){
   g.save();g.translate(x,y);
   if(st==='done'){g.fillStyle='#3e9a62';circ(g,0,0,9);g.strokeStyle='#eafff0';g.lineWidth=2.4;g.lineCap='round';g.beginPath();g.moveTo(-4,0);g.lineTo(-1,3.5);g.lineTo(4.5,-3.5);g.stroke();}
   else if(st==='sealed'){g.fillStyle='rgba(30,36,56,.85)';circ(g,0,0,9);g.strokeStyle='#9aa6c4';g.lineWidth=1.8;g.beginPath();g.arc(0,-2,3.2,Math.PI,0);g.stroke();g.fillStyle='#9aa6c4';g.fillRect(-4.2,-1.5,8.4,6);}
+  else if(st==='frozen'){g.fillStyle='rgba(20,50,90,.85)';circ(g,0,0,10);g.strokeStyle='#bfe8ff';g.lineWidth=1.6;g.lineCap='round';
+    for(let k=0;k<3;k++){const a=k*Math.PI/3;g.beginPath();g.moveTo(Math.cos(a)*6,Math.sin(a)*6);g.lineTo(-Math.cos(a)*6,-Math.sin(a)*6);g.stroke();}}
+  else if(st==='lesson'){g.fillStyle='#2b5f8a';g.beginPath();g.roundRect(-10,-8,20,15,4);g.fill();g.fillStyle='#e8f3ff';g.beginPath();g.moveTo(-7,-5);g.lineTo(-1,-3);g.lineTo(-1,5);g.lineTo(-7,3);g.closePath();g.fill();
+    g.beginPath();g.moveTo(7,-5);g.lineTo(1,-3);g.lineTo(1,5);g.lineTo(7,3);g.closePath();g.fill();}
+  else if(st==='lessonDone'){g.fillStyle='rgba(62,154,98,.85)';circ(g,0,0,6);g.strokeStyle='#eafff0';g.lineWidth=1.6;g.lineCap='round';g.beginPath();g.moveTo(-2.6,0);g.lineTo(-.6,2.3);g.lineTo(3,-2.2);g.stroke();}
   else if(st==='talk'){g.fillStyle='#f6ead0';g.beginPath();g.roundRect(-11,-8,22,15,6);g.fill();g.beginPath();g.moveTo(-3,7);g.lineTo(-7,12);g.lineTo(2,7);g.fill();
     g.fillStyle='#5a3a1a';for(const dx of [-5,0,5])circ(g,dx,-.5,1.6);}
   else{g.rotate(Math.PI/4);g.fillStyle='#7a4a12';g.fillRect(-9,-9,18,18);g.fillStyle='#f1c25c';g.fillRect(-7.5,-7.5,15,15);g.rotate(-Math.PI/4);
@@ -950,6 +960,7 @@ function render(t){
       const sk=windAt(t,o.phase)*.045*o.sway;
       g.save();g.translate(o.x,o.y);g.transform(1,0,sk,1,0,0);g.scale(o.s,o.s);g.drawImage(o.spr.cv,-o.spr.ox,-o.spr.oy,o.spr.w,o.spr.h);g.restore();
     }else drawSpr(g,o.spr,o.x,o.y,o.s);
+    if(o.kind==='stone'&&SAVE.locked[o.node])drawSpr(g,SPR.ice,o.x,o.y+2);
     g.globalAlpha=1;
     if(o.marker)drawMarker(g,o.marker,t);
   }
@@ -1011,7 +1022,7 @@ function render(t){
   if(FX.fg){
     const psx=(player.x-cam.x)*ZOOM+VW/2,psy=(player.y-cam.y)*ZOOM+VH/2;
     for(const f of FG){
-      const s=f[2]*ZOOM*.95,x=(f[0]-cam.x)*ZOOM*1.35+VW/2,y=(f[1]-cam.y)*ZOOM*1.35+VH/2;
+      const s=f[2]*ZOOM*.95,x=(f[0]*W/2000-cam.x)*ZOOM*1.35+VW/2,y=(f[1]*H/1500-cam.y)*ZOOM*1.35+VH/2;
       const w=320*s,h=520*s;if(x+w/2<0||x-w/2>VW||y<0||y-h>VH)continue;
       const near=Math.abs(psx-x)<w*.35&&psy<y&&psy>y-h*.9;
       f.fade=(f.fade??1);f.fade+=((near?.35:1)-f.fade)*Math.min(1,dtLast*6);
@@ -1126,7 +1137,7 @@ function initSprites(){
   SPR.lamp=makeLamp();SPR.crate=makeCrate();SPR.barrel=makeBarrel();SPR.snowman=makeSnowman();
   SPR.crystals=[0,1,2].map(()=>makeCrystals());SPR.sign=makeSign();SPR.flowers=[0,1,2].map(()=>makeFlowers());
   SPR.firepit=makeFirePit();SPR.fgPine=makeFgPine();
-  SPR.gate=makeGate();SPR.stone=makeStone();SPR.owl=makeOwl();
+  SPR.gate=makeGate();SPR.stone=makeStone();SPR.owl=makeOwl();SPR.lectern=makeLectern();SPR.ice=makeIce();
   SPR.cabins=[196,176,170,156,150].map(w=>makeCabin(w));
 }
 
@@ -1146,7 +1157,7 @@ function addGate(x,y,to,spawnKey){
   return gate;
 }
 function addStone(x,y,nodeId){
-  addObj({kind:'stone',x,y,spr:SPR.stone,marker:{x,y,h:104,state:()=>nodeState(nodeId)}});
+  addObj({kind:'stone',node:nodeId,x,y,spr:SPR.stone,marker:{x,y,h:104,state:()=>nodeState(nodeId)}});
   colliders.push({t:'c',x,y:y-4,r:14});claim(x,y,40);
   const L=addLight(x,y-40,120,[255,205,120],.8,.1);L.node=nodeId;
   INTER.push({x,y,r:58,node:nodeId,label:()=>nodeState(nodeId)==='sealed'?'Inspect sealed stone':'Study the stone',act:()=>openNode(nodeId)});
@@ -1235,43 +1246,82 @@ function buildHub(){
 
 /* --- a wild region (one per group of modules) --- */
 function buildWild(reg){
-  const th=reg.theme;
-  const nodes=reg.nodes, n=nodes.length;
-  PLAZA={x:1000,y:1170,r:120};
-  POND={x:1000,y:690,rx:th.lake?.[0]||250,ry:th.lake?.[1]||140};
-  GROVE=th.crystals?{x:1000,y:690}:null;
-  // nodes ring around the lake, from bottom-left over the top to bottom-right
+  const th=reg.theme, nodes=reg.nodes, n=nodes.length;
+  const cx=W/2, cy=H*.45, RX=W*.36, RY=H*.31;
+  PLAZA={x:cx,y:H-330,r:120};
+  POND={x:cx,y:cy,rx:th.lake?.[0]||250,ry:th.lake?.[1]||140};
+  GROVE=th.crystals?{x:cx,y:cy}:null;
+  // stones ring the lake: bottom-left → over the top → bottom-right
   const pts=[];
-  for(let k=0;k<n;k++){const a=(150+k*(240/Math.max(1,n-1)))*Math.PI/180;pts.push([1000+Math.cos(a)*640+rand(-25,25),690+Math.sin(a)*440+rand(-15,15)]);}
-  CLEARINGS=pts.map(([x,y])=>({x,y,r:70}));
-  const ring=[[PLAZA.x-60,PLAZA.y-40],...pts,[PLAZA.x+60,PLAZA.y-40]];
-  PATHS=[[[1000,1530],[990,1360],[1000,1230]],ring];
+  for(let k=0;k<n;k++){const a=(150+k*(240/Math.max(1,n-1)))*Math.PI/180;pts.push([cx+Math.cos(a)*RX+rand(-20,20),cy+Math.sin(a)*RY+rand(-12,12)]);}
+  CLEARINGS=pts.map(([x,y])=>({x,y,r:62}));
+  const ring=[[PLAZA.x-70,PLAZA.y-50],...pts,[PLAZA.x+70,PLAZA.y-50]];
+  PATHS=[[[cx,H+30],[cx-10,H-170],[cx,PLAZA.y-60]],ring];
   const nextReg=COURSE.regions.find(r=>r.requires===reg.id);
   const top=pts.reduce((a,b)=>b[1]<a[1]?b:a);
-  if(nextReg)PATHS.push([[top[0],top[1]],[ (top[0]+1000)/2, top[1]-60],[1000,10]]);
+  if(nextReg)PATHS.push([[top[0],top[1]],[(top[0]+cx)/2,top[1]/2+20],[cx,10]]);
   SCENE={fire:true};GROUND_TINT=th.tint;
   buildSurface();paintGround();
   claim(PLAZA.x,PLAZA.y,PLAZA.r);
   addCampfire(PLAZA.x,PLAZA.y);
-  addOwl(PLAZA.x+70,PLAZA.y-30,reg.npc);
+  addOwl(PLAZA.x+75,PLAZA.y-30,reg.npc);
+  addGate(cx,H-40,'hub','from'+reg.id[0].toUpperCase()+reg.id.slice(1));
+  if(nextReg)addGate(cx,70,nextReg.id,'fromPrev');
   pts.forEach(([x,y],k)=>addStone(x,y,nodes[k]));
-  addGate(1000,H-40,'hub','from'+reg.id[0].toUpperCase()+reg.id.slice(1));
-  if(nextReg)addGate(1000,70,nextReg.id,'fromPrev');
-  // lamps along the ring
+  // waypoint lecterns: evenly spaced along the path segment that leads to each stone
   const ringS=sampleCurve(ring,6);
-  for(let i=20;i<ringS.length-10;i+=Math.floor(ringS.length/(th.lamps||8))){
+  const near=([x,y])=>{let bi=0,bd=1e9;ringS.forEach(([sx,sy],i)=>{const d=(sx-x)**2+(sy-y)**2;if(d<bd){bd=d;bi=i;}});return bi;};
+  const idx=pts.map(near);
+  nodes.forEach((id,k)=>{
+    const L=(NODES[id]?.lessons||[]).length;if(!L)return;
+    const i0=k?idx[k-1]:0,i1=idx[k];
+    for(let j=0;j<L;j++){
+      const i=Math.round(i0+(i1-i0)*(j+1)/(L+1)),[x,y]=ringS[i],[x2,y2]=ringS[Math.min(ringS.length-1,i+1)],a=Math.atan2(y2-y,x2-x);
+      const side=(j%2?1:-1)*44;addLesson(x-Math.sin(a)*side,y+Math.cos(a)*side,id,j);
+    }
+  });
+  for(let i=24;i<ringS.length-12;i+=Math.floor(ringS.length/(th.lamps||8))){
     const [x,y]=ringS[i],[x2,y2]=ringS[Math.min(ringS.length-1,i+1)],a=Math.atan2(y2-y,x2-x);
-    const lx=x-Math.sin(a)*48,ly=y+Math.cos(a)*48;if(free(lx,ly,16))addLamp(lx,ly);
+    const lx=x+Math.sin(a)*52,ly=y-Math.cos(a)*52;if(free(lx,ly,16))addLamp(lx,ly);
   }
-  if(th.crystals){for(let i=0,c=0;i<400&&c<th.crystals;i++){const a=rand(0,TAU),x=1000+Math.cos(a)*rand(300,820),y=690+Math.sin(a)*rand(220,560);
+  if(th.crystals){for(let i=0,c=0;i<500&&c<th.crystals;i++){const a=rand(0,TAU),x=cx+Math.cos(a)*rand(RX*.45,RX*1.3),y=cy+Math.sin(a)*rand(RY*.45,RY*1.3);
     if(nearPath(x,y,30)||!free(x,y,50))continue;const s=rand(.55,1.05);addObj({kind:'crystal',x,y,spr:pick(SPR.crystals),s});colliders.push({t:'c',x,y:y-4,r:26*s});claim(x,y,50*s);
     addLight(x,y-30*s,150*s+30,[110,200,255],.8,.12);c++;}}
   pondRocks();
-  for(let i=0,b=0;i<600&&b<(th.birch||0);i++){const x=rand(80,W-80),y=rand(120,H-80);if(nearPath(x,y,30)||!free(x,y,22))continue;
+  for(let i=0,b=0;i<700&&b<(th.birch||0);i++){const x=rand(80,W-80),y=rand(120,H-80);if(nearPath(x,y,30)||!free(x,y,22))continue;
     addObj({kind:'birch',x,y,spr:pick(SPR.birch),s:rand(.85,1.15),sway:.6,phase:rand(0,9)});colliders.push({t:'c',x,y,r:8});claim(x,y,22);b++;}
-  scatterForest(th.trees||170,.03,{x:1000,y:690,rx:840,ry:620},th.blueTrees);
+  scatterForest(th.trees||170,.03,{x:cx,y:cy,rx:RX*1.3,ry:RY*1.4},th.blueTrees);
   scatterSmall(30,th.bushes??30,th.flowers??16);
-  return {start:{x:1000,y:1330},fromHub:{x:1000,y:1330},fromPrev:{x:1000,y:1330}};
+  const sp={x:cx,y:H-170};
+  return {start:sp,fromHub:sp,fromPrev:sp};
+}
+function makeLectern(){
+  return makeSprite(56,72,28,64,g=>{
+    g.fillStyle='rgba(40,55,95,.3)';ell(g,4,0,16,5);
+    g.fillStyle='#4e3423';g.fillRect(-3,-34,6,34);g.fillStyle='#5f412c';g.beginPath();g.roundRect(-9,-4,18,5,2);g.fill();
+    g.save();g.translate(0,-38);g.rotate(-.18);
+    g.fillStyle='#6c4630';g.beginPath();g.roundRect(-17,-6,34,12,3);g.fill();
+    g.fillStyle='#f3e9d2';g.beginPath();g.moveTo(-15,-6);g.quadraticCurveTo(-7,-11,0,-6);g.quadraticCurveTo(7,-11,15,-6);g.lineTo(15,2);g.quadraticCurveTo(7,-2,0,2);g.quadraticCurveTo(-7,-2,-15,2);g.closePath();g.fill();
+    g.strokeStyle='rgba(90,70,50,.55)';g.lineWidth=.8;for(const y of [-5,-3,-1]){g.beginPath();g.moveTo(-12,y);g.lineTo(-3,y-1);g.moveTo(3,y-1);g.lineTo(12,y);g.stroke();}
+    g.strokeStyle='#7d2430';g.lineWidth=1.4;g.beginPath();g.moveTo(0,-4);g.lineTo(1,6);g.stroke();
+    g.restore();
+    g.fillStyle='#fbfdff';ell(g,-10,-45,6,2);
+  });
+}
+function makeIce(){
+  return makeSprite(84,120,42,104,g=>{
+    const shard=(x,y,a,h,w)=>{g.save();g.translate(x,y);g.rotate(a);const sg=g.createLinearGradient(-w,0,w,0);sg.addColorStop(0,'rgba(235,250,255,.9)');sg.addColorStop(.5,'rgba(160,215,245,.65)');sg.addColorStop(1,'rgba(90,150,210,.55)');
+      g.fillStyle=sg;g.beginPath();g.moveTo(-w/2,0);g.lineTo(0,-h);g.lineTo(w/2,0);g.closePath();g.fill();g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=.8;g.beginPath();g.moveTo(-w*.1,-2);g.lineTo(0,-h);g.stroke();g.restore();};
+    g.fillStyle='rgba(190,230,255,.28)';g.beginPath();g.moveTo(-20,-2);g.lineTo(-17,-72);g.quadraticCurveTo(0,-92,17,-72);g.lineTo(20,-2);g.closePath();g.fill();
+    for(const [x,y,a,h,w] of [[-18,-2,-.5,38,12],[18,-2,.5,42,12],[-10,-4,-.2,60,11],[10,-3,.25,56,10],[0,-6,0,84,14],[-24,-1,-.9,22,9],[24,-1,.9,24,9]])shard(x,y,a,h,w);
+    g.fillStyle='rgba(240,250,255,.9)';ell(g,0,-2,28,6);
+  });
+}
+function addLesson(x,y,nodeId,j){
+  const lid=lessonId(nodeId,j);
+  addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>lessonState(nodeId,j)}});
+  colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,22);
+  INTER.push({x,y,r:46,label:()=>lessonState(nodeId,j)==='blocked'?'Waypoint (finish the previous one first)':'Read the waypoint',act:()=>openLesson(nodeId,j)});
 }
 
 /* --- scene switching --- */
@@ -1284,6 +1334,7 @@ function setScene(id,spawnKey){
   clearScene();
   R=mulberry(hashStr(id)+7);
   const reg=regionById(id);
+  if(id==='hub')sizeWorld(2000,1500);else sizeWorld(...(reg.theme.size||[2400,1800]));
   SPAWNS=id==='hub'?buildHub():buildWild(reg);
   curScene=id;
   const sp=SPAWNS[spawnKey]||SPAWNS.start;
@@ -1436,7 +1487,7 @@ function renderPuzzle(){
 }
 function btn(label,cls){const b=document.createElement('button');b.className=cls;b.innerHTML=label;return b;}
 function stat(correctFirst){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;}
-function noteMiss(it){if(run.mode==='review')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function noteMiss(it){if(run.mode==='review'||NODES[it.node].lessonOf)return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
   const r=run;closeCard();r.onDone&&r.onDone(r.items);persist();
@@ -1455,6 +1506,7 @@ const COURSE={
   welcome:{id:'welcome',name:'Welcome to Frostmere',role:'Village notice',lines:[
     'Beyond these three gates lie the study stones of <b>Applied Business Research Tools</b>. Each stone holds a handful of challenges drawn from one part of the course.',
     'Restore every stone in a region to unseal the next gate. <b>Signpost Woods</b> (north gate) is open now.',
+    'On the path before each stone stand small <b>waypoints</b> — lecterns with a short lesson and practice. Skip them and challenge the stone if you feel ready, but miss two or more and the stone <b>freezes</b> until you finish its waypoints in order.',
     'Miss a question and it gets pinned to the <b>review board</b> by the fire. It comes back with fresh numbers until you get it right first time.',
     'Press <b>Q</b> (or the Quests button) for the course map and your save code. Walk with WASD, arrows, a tap, or the joystick.',
   ]},
@@ -1465,11 +1517,12 @@ const COURSE={
   ]},
   regions:[
     {id:'woods',name:'Signpost Woods',sub:'Modules 1–3 · Regression foundations',requires:null,
-     theme:{tint:'#dde9e4',tod:'dusk',lamps:8,birch:16,trees:170,lake:[250,140]},
-     nodes:['m1-signs','m1-cross','m1-magic','m1-units','m1-ledger','m2','m3'],
+     theme:{size:[2600,1900],tint:'#dde9e4',tod:'dusk',lamps:8,birch:16,trees:170,lake:[250,140]},
+     nodes:['m1-signs','m1-cross','m1-magic','m1-units','m1-ledger','m2-ols','m2-andy','m2-fit','m3-design','m3-dummy'],
      npc:{id:'owl-woods',name:'Warden Quill',role:'Module 1 guide',lines:[
        'Module 1 in one line: use evidence to organize uncertainty before a commitment — not to manufacture certainty.',
-       'Five stones ring the lake: theory and signs, causes and coincidences, a booth at Magic Hill, a mill that grinds units, and a guild ledger full of Excel output.',
+       'Ten stones ring the lake. The first five are Module 1: signs, causes, the Magic Hill booth, the Units Mill, and the Guild Ledger. Past the top of the lake, Modules 2 and 3 take over: least squares, Big Andy’s Burger Barn, the Mirror of Fit, the Architect’s Stone, and the Fork of Categories.',
+       'Before each stone you’ll pass a pair of waypoint lecterns. Read them if you want a warm-up. Challenge a stone cold and miss twice, and it freezes until you’ve worked through them.',
        'Read output in this order: signs and units, size, precision, fit and residuals, then whether the whole specification is plausible. Off you go.',
      ]}},
     {id:'hollow',name:'Lantern Hollow',sub:'Modules 4–6 · Assumptions, testing, causation',requires:'woods',
@@ -1483,8 +1536,6 @@ const COURSE={
   ],
 };
 const sealed=(id,m,title,blurb)=>NODES[id]={sealed:true,kicker:`Module ${m}`,title,sealedText:`<b>${title}.</b> ${blurb} This stone's quests are added in a later build.`};
-sealed('m2',2,'Ordinary Least Squares','Estimating β with OLS in Excel and judging model fit.');
-sealed('m3',3,'Regression Design','The six steps from business mechanism to a defensible model.');
 sealed('m4',4,'The Classical Assumptions','Seven assumptions that make OLS estimates trustworthy.');
 sealed('m5',5,'Hypothesis Testing','t-tests, p-values, confidence intervals, and F-tests as decision evidence.');
 sealed('m6',6,'Regression and Causation','Research designs that move from association toward causation.');
@@ -1652,10 +1703,389 @@ NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild L
     why:'The goal is not to celebrate a high R² but to interpret what the model does and does not support. The teaching data are deliberately clean; real operating data are noisier.'};}},
 ]};
 
+/* ==== content/m1_waypoints.js ==== */
+/* ==========================================================================
+   MODULE 1 — WAYPOINTS (mini-lessons on the path before each stone)
+   Each lesson: a short teaching card + practice questions. Completing a
+   stone's waypoints thaws it if it froze; they are optional otherwise.
+   ========================================================================== */
+const W1=(id,lessons)=>{NODES[id].lessons=lessons;};
+
+W1('m1-signs',[
+  {title:'Signs come from theory',
+   teach:`<p>Before you look at any data, economic logic tells you which <b>direction</b> each driver should push the outcome.</p>
+   <div class="ex">Q = β₀ + β₁P + β₂Pᶜ + β₃Y<br>β₁ &lt; 0 · your price up → quantity down<br>β₂ &gt; 0 · competitor’s price up → your quantity up<br>β₃ &gt; 0 · customer budget up → demand up</div>
+   <p>Theory gives you the sign. It does <b>not</b> tell you whether the effect is large, reliable, or useful — that is what the data estimate.</p>`,
+   practice:[
+    {type:'mc',q:'A rival coffee shop raises its prices. Theory says your quantity demanded should…',opts:['Rise — the rival is a substitute, so β₂ > 0','Fall — all prices move together','Stay the same — only your own price matters','Be impossible to predict without data'],a:0,
+     why:'A substitute getting more expensive pushes customers toward you, so the competitor-price coefficient is expected to be positive.'},
+    {type:'mc',q:'Which question can economic theory answer on its own?',opts:['Which direction the effect should go','How many dollars the effect is worth','How precise the estimate is','Whether the effect is big enough to act on'],a:0,
+     why:'Theory predicts direction; data estimate magnitude and precision.'},
+  ]},
+  {title:'Reading a coefficient like a manager',
+   teach:`<p>A coefficient is a <b>marginal relationship in the units of the problem</b>, holding the other included factors constant.</p>
+   <div class="ex">Income coefficient = 0.23 → a one-unit rise in income is associated with 0.23 more units demanded, holding the other included factors constant.</div>
+   <p>Then ask the manager’s questions: is it <b>large enough</b> to matter, <b>precise enough</b> for the stakes, and likely to <b>survive</b> changes in competitors, technology, or policy? A correct sign alone never settles a decision.</p>`,
+   practice:[
+    {make:r=>{const b=round(rr(r,1.1,3.9),1);return {type:'mc',q:`An advertising coefficient is <b>${b}</b> (sales in units, advertising in $1,000s). Which reading is right?`,
+      opts:[`$1,000 more advertising is associated with about ${b} more units sold, holding the other included factors constant`,`$1 more advertising causes ${b} more units sold`,`Advertising explains ${Math.round(b*10)}% of sales`,`Sales will rise by exactly ${b} units every time advertising rises`],a:0,
+      why:'Read it in the stated units, as an association, conditional on the other included variables.'};}},
+    {type:'mc',q:'Your model gives the sign you expected. Which follow-up matters most for a pricing decision?',opts:['Is the effect big and precise enough to change what we do?','Is the intercept positive?','Did Excel report any decimals?','Is the sample size an even number?'],a:0,
+     why:'Sign ≠ decision. Materiality and precision decide whether the evidence should move resources.'},
+  ]},
+]);
+
+W1('m1-cross',[
+  {title:'Four stories behind a correlation',
+   teach:`<p>When A and B move together, any of four stories can be true:</p>
+   <div class="ex"><b>A → B</b> · A causes B<br><b>B → A</b> · reverse causality<br><b>C → A and B</b> · a third factor drives both<br><b>Coincidence</b> · an unstable pattern with no mechanism</div>
+   <p>A regression coefficient alone cannot tell these apart. Theory and research design have to.</p>`,
+   practice:[
+    {type:'mc',q:'Cities with more firefighters on duty report more fire damage. What’s the most likely story?',opts:['A third factor — bigger fires bring both more firefighters and more damage','Firefighters cause fire damage','Coincidence with no mechanism','Fire damage has no relation to firefighters'],a:0,
+     why:'Fire size (C) drives both the staffing (A) and the damage (B). The association is real; the causal reading is wrong.'},
+    {type:'mc',q:'Stores that spend more on loss-prevention staff report more shoplifting. A manager who knows high-theft stores were the ones given extra staff should suspect…',opts:['Reverse causality — theft drove the staffing','That staff cause shoplifting','Pure coincidence','A data-entry error'],a:0,
+     why:'B → A: the outcome (theft) caused the “driver” (staffing).'},
+  ]},
+  {title:'Design, errors, and residuals',
+   teach:`<p><b>Controlled experiments</b> change one factor across comparable groups — ideally by random assignment (price tests, regional ads, service offers). <b>Observational</b> settings study outcomes as they happen — interest rates, competitor moves, and economy-wide demand usually can’t be randomized.</p>
+   <div class="ex"><b>Error</b> εᵢ = Yᵢ − E(Yᵢ|Xᵢ) — the true deviation, never observed.<br><b>Residual</b> eᵢ = Yᵢ − Ŷᵢ — the miss you can see from your fitted model.</div>`,
+   practice:[
+    {type:'mc',q:'Which study is a controlled experiment?',opts:['Randomly offering free shipping to half of new customers','Comparing sales before and after a recession','Tracking sales when a competitor cuts prices','Comparing regions with different interest rates'],a:0,
+     why:'You chose who got the offer, at random — that is what makes it an experiment.'},
+    {type:'mc',q:'Which one can you actually compute from your data?',opts:['The residual, eᵢ = Yᵢ − Ŷᵢ','The true error term, εᵢ','The population β₁','The exact causal effect'],a:0,
+     why:'Residuals are observed misses; they approximate the unobservable errors.'},
+  ]},
+]);
+
+W1('m1-magic',[
+  {title:'From equation to prediction',
+   teach:`<p>A fitted line turns an input into an <b>expected</b> outcome. Code X exactly as the model was estimated, then substitute.</p>
+   <div class="ex">Predicted weight = 103.40 + 6.377 × (inches above 5 ft)<br>5 ft 9 in → X = 9 → 103.40 + 6.377 × 9 = <b>160.8 lb</b></div>
+   <p>The coding matters: X = 0 means a five-foot customer, so the intercept is a sensible reference point.</p>`,
+   practice:[
+    {make:r=>{const b0=round(rr(r,98,108),2),b1=round(rr(r,5.6,7.2),3),x=ri(r,3,13),a=b0+b1*x;return {type:'num',
+      exhibit:Exhibit.eq(`Predicted weight = ${b0} + ${b1} × (inches above 5 feet)`),q:`Predict the weight of a customer who is <b>${ftin(x)}</b>.`,a,tol:.15,unit:'lb',
+      hint:`${ftin(x)} is X = ${x}.`,solution:`${b0} + ${b1} × ${x} = ${fmtNum(a,1)} lb.`,why:'Code first, then substitute.'};}},
+    {type:'mc',q:'If the model had used total height in inches instead, what would the intercept mean?',opts:['Predicted weight of a person zero inches tall — not meaningful','Predicted weight of a five-foot person','The average weight in the sample','The weight gained per inch'],a:0,
+     why:'Coding X so that 0 is a real, relevant value is what makes an intercept interpretable.'},
+  ]},
+  {title:'Residuals pay the bills',
+   teach:`<p><b>Residual = actual − predicted.</b> Negative means the model <b>over</b>predicted; positive means it <b>under</b>predicted.</p>
+   <div class="ex">Predicted 160.8 lb, actual 157 lb → residual = 157 − 160.8 = <b>−3.8 lb</b> (overpredicted)</div>
+   <p>At the booth, what matters is the size of the miss: |residual| ≤ 10 lb earns $2; anything bigger costs $3. Judge a model in the units of the decision.</p>`,
+   practice:[
+    {make:r=>{const pred=round(rr(r,135,195),1),off=round((r()<.5?-1:1)*rr(r,1,14),1),W_=round(pred+off,0),a=W_-pred;return {type:'num',
+      q:`The model predicts <b>${fmtNum(pred,1)} lb</b>; the customer weighs <b>${W_} lb</b>. What is the residual?`,a,tol:.06,unit:'lb',
+      hint:'actual − predicted',solution:`${W_} − ${fmtNum(pred,1)} = ${fmtNum(a,1)} lb.`,why:`${Math.abs(a)<=10?'Within 10 lb: +$2.':'More than 10 lb off: −$3.'}`};}},
+    {type:'mc',q:'Five customers have residuals of −4, +12, +3, −11, and +7 lb. What does the booth earn?',opts:['$0 — three wins (+$6) and two losses (−$6)','+$10','−$15','+$4'],a:0,
+     why:'|−4|, |3|, |7| ≤ 10 → 3 × $2 = $6. |12| and |−11| > 10 → 2 × −$3 = −$6. Net $0.'},
+  ]},
+]);
+
+W1('m1-units',[
+  {title:'Coded units',
+   teach:`<p>Analysts often rescale a variable so the coefficient is readable. Weekly income coded in <b>$100 units</b> means X = 1 is $100.</p>
+   <div class="ex">Food = 83.42 + 10.21 × Income ($100s)<br>✔ “A <b>$100</b> rise in weekly income is associated with $10.21 more expected weekly food spending.”<br>✘ “A $1 rise … $10.21 more.”</div>
+   <p>To forecast, convert first: $2,000 a week → X = 20.</p>`,
+   practice:[
+    {make:r=>{const b0=round(rr(r,70,95),2),b1=round(rr(r,8.5,11.5),2),inc=pick([1200,1800,2400,3100]),a=b0+b1*inc/100;return {type:'num',
+      exhibit:Exhibit.eq(`Food = ${b0} + ${b1} × Income <small>($100 units)</small>`),q:`Forecast weekly food spending at a weekly income of <b>$${inc.toLocaleString()}</b>.`,a,tol:.06,pre:'$',
+      hint:`$${inc.toLocaleString()} → X = ${inc/100}.`,solution:`${b0} + ${b1} × ${inc/100} = ${money(a)}.`,why:'Convert the natural unit into the coded unit before you substitute.'};}},
+    {type:'mc',q:'You rescale income from $100 units to $1 units. What happens?',opts:['The coefficient’s number changes; the economic relationship does not','The relationship gets stronger','R² changes','The sign flips'],a:0,
+     why:'Scaling changes the number you report, not the underlying relationship.'},
+  ]},
+  {title:'Intercepts and the relevant range',
+   teach:`<p>The intercept is the prediction when every X = 0. Often zero is <b>far outside the data</b>, so the intercept is mathematically needed but has no literal business meaning.</p>
+   <div class="ex">PRICE = −102,871 + 129.22 × SIZE<br>A 0 sq ft house “selling” for −$102,871 is an extrapolation, not a fact.</div>
+   <p>Trust the slope inside the observed range; reality-check anything outside it.</p>`,
+   practice:[
+    {type:'mc',q:'A model of store revenue uses data from stores with 40–300 employees. The intercept is negative. Best response?',opts:['Ignore its literal value — zero employees is outside the data','Conclude tiny stores lose money','Throw the model out','Force the intercept to zero'],a:0,
+     why:'Zero is outside the relevant range, so the intercept is an extrapolated anchor, not a forecast.'},
+    {type:'mc',q:'When IS an intercept meaningful?',opts:['When X = 0 is plausible and inside or near the observed data','Whenever it is positive','Whenever R² is high','Never'],a:0,
+     why:'That’s why the booth model codes height as inches above 5 feet — so X = 0 is a real customer.'},
+  ]},
+]);
+
+W1('m1-ledger',[
+  {title:'The Excel workflow',
+   teach:`<p><b>Data → Data Analysis → Regression.</b> Select the Y range (outcome) and the X range (drivers), tick Labels, and choose where the output goes.</p>
+   <p>Before clicking OK, check the outcome, the predictors, the units, the sample, and the business logic. Then read the output in order:</p>
+   <div class="ex">1 Signs and units → 2 Magnitudes → 3 Standard errors, t, p → 4 Fit and residuals → 5 Plausibility of the specification</div>`,
+   practice:[
+    {type:'mc',q:'What should you read first in a regression output?',opts:['Coefficient signs and units','R Square','The p-values','The residual plot'],a:0,
+     why:'Signs and units first: if the direction or units don’t make sense, nothing after it matters yet.'},
+    {type:'mc',q:'In Excel’s Regression dialog, where does “annual revenue” go if it’s the outcome?',opts:['Input Y Range','Input X Range','Output Range','Residuals box'],a:0,
+     why:'Y is the outcome you want to explain; X holds the drivers.'},
+  ]},
+  {title:'Scaling a slope to a decision',
+   teach:`<p>The slope is a rate: <b>change in Y per one unit of X</b>. For a realistic change, multiply.</p>
+   <div class="ex">Revenue ($M) = 36.28 + 4.009 × Customers<br>+5 customers → 5 × 4.009 ≈ <b>$20.0M</b> more expected annual revenue</div>
+   <p>Then restore the uncertainty: is it causal, can operations serve them, and how wide is the prediction band?</p>`,
+   practice:[
+    {make:r=>{const b1=round(rr(r,2.4,6.2),3),k=ri(r,2,12),a=k*b1;return {type:'num',exhibit:Exhibit.eq(`Revenue ($M) = ${round(rr(r,20,50),2)} + ${b1} × Customers`),
+      q:`How much does expected revenue change if the branch adds <b>${k}</b> customers?`,a,tol:.02,pre:'$',unit:'M',hint:'k × slope',solution:`${k} × ${b1} = ${fmtNum(a,3)}.`,why:'The intercept drops out of a change; only the slope matters.'};}},
+    {type:'mc',q:'You computed a +$20M revenue change from adding customers. What’s the right next step?',opts:['Check capacity, causality, and uncertainty before committing','Book the $20M in next year’s budget','Report it as guaranteed','Add more variables until R² hits 1'],a:0,
+     why:'A point prediction is the beginning of a managerial conversation — not the end.'},
+  ]},
+]);
+
+/* ==== content/m2.js ==== */
+/* ==========================================================================
+   MODULE 2 — Ordinary Least Squares for managerial decisions
+   Three stones: the Least-Squares Loom (OLS mechanics), Big Andy's Burger
+   Barn (multivariate interpretation), the Mirror of Fit (R² and adjusted R²).
+   ========================================================================== */
+
+/* ---- generators ---- */
+function genTiny(r){ // 4–5 points and a candidate line, for hand SSE
+  const n=ri(r,4,5),b0=ri(r,1,4),b1=ri(r,2,4),x=[],y=[];
+  for(let i=1;i<=n;i++){x.push(i);y.push(b0+b1*i+ri(r,-2,2));}
+  const e=y.map((v,i)=>v-(b0+b1*x[i]));return {x,y,b0,b1,e,sse:e.reduce((s,v)=>s+v*v,0)};
+}
+function genAndy(r){
+  const P=[],A=[],S=[];
+  for(let i=0;i<75;i++){const p=round(rr(r,4.8,6.5),2),a=round(rr(r,.5,3.1),1);P.push(p);A.push(a);S.push(round(118.9-7.9*p+1.86*a+rngGauss(r)*4.9,1));}
+  const m=Stats.ols(P.map((p,i)=>[p,A[i]]),S,['PRICE','ADVERT']);return {m,b0:m.b[0],b1:m.b[1],b2:m.b[2]};
+}
+const andyEx=d=>Exhibit.excel(d.m,'SALES ($1,000s) · PRICE in $ · ADVERT in $1,000s');
+function genFitPair(r){ // model A: X1 only; model B: X1 + pure noise. Keep draws where adjusted R² falls.
+  for(let t=0;t<40;t++){
+    const n=ri(r,18,30),X1=[],Z=[],Y=[];
+    for(let i=0;i<n;i++){const x=rr(r,10,60);X1.push(x);Z.push(rr(r,0,100));Y.push(50+2.2*x+rngGauss(r)*22);}
+    const A=Stats.ols(X1,Y,['Price']),B=Stats.ols(X1.map((x,i)=>[x,Z[i]]),Y,['Price','Noise']);
+    if(B.adjR2<A.adjR2)return {n,A,B};
+  }
+}
+
+NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loom',
+  intro:'The loom weaves a line through a cloud of points by choosing the coefficients that make the squared misses as small as possible. Excel does the weaving — you need to know what it is optimizing, and what the ANOVA table is telling you.',
+  lessons:[
+   {title:'What least squares minimizes',
+    teach:`<p>OLS picks b₀ and b₁ to minimize the <b>sum of squared residuals</b>:</p><div class="ex">Σeᵢ² = Σ(Yᵢ − Ŷᵢ)²</div>
+    <p>Squaring stops positive and negative misses from canceling, and it punishes big misses more than small ones. One handy result: OLS residuals <b>sum to zero</b> — the fitted model doesn’t systematically over- or underpredict within the sample.</p>
+    <p>OLS reduces <b>model error</b>, not business risk: demand shifts, policy changes, and competitor moves are still out there.</p>`,
+    practice:[
+     {make:r=>{const d=genTiny(r);return {type:'num',exhibit:Exhibit.table(['x','y','ŷ = '+d.b0+' + '+d.b1+'x','e = y − ŷ'],d.x.map((x,i)=>[x,d.y[i],d.b0+d.b1*x,d.e[i]])),
+       q:'Square each residual and add them up. What is Σe²?',a:d.sse,tol:.01,hint:'Square each value in the last column, then sum.',solution:`${d.e.map(v=>`(${v})²`).join(' + ')} = ${d.sse}.`,why:'This is exactly the quantity OLS makes as small as possible.'};}},
+     {type:'mc',q:'Why does OLS square the residuals instead of just adding them?',opts:['So positive and negative misses don’t cancel, and big misses count more','To make the numbers larger','Because Excel cannot add negative numbers','So R² is always positive'],a:0,why:'Raw residuals from OLS sum to zero, so their plain sum can’t measure fit.'},
+    ]},
+   {title:'Explained and unexplained variation',
+    teach:`<p>Total variation in Y splits into what the model explains and what it leaves behind:</p>
+    <div class="ex"><b>TSS = ESS + RSS</b><br>Excel ANOVA: Total SS = Regression SS + Residual SS</div>
+    <p>Degrees of freedom are the price of complexity: Regression df = k, Residual df = n − k − 1, Total df = n − 1 (k = number of predictors).</p>`,
+    practice:[
+     {make:r=>{const ess=round(rr(r,200,900),1),rss=round(rr(r,80,400),1);return {type:'num',q:`Regression SS = <b>${ess}</b> and Residual SS = <b>${rss}</b>. What is Total SS?`,a:ess+rss,tol:.05,hint:'TSS = ESS + RSS',solution:`${ess} + ${rss} = ${round(ess+rss,1)}.`,why:'Total variation = explained + unexplained.'};}},
+     {make:r=>{const n=ri(r,20,80),k=ri(r,1,4);return {type:'num',q:`A model has <b>${n}</b> observations and <b>${k}</b> predictor${k>1?'s':''}. What is the residual df?`,a:n-k-1,tol:0,hint:'n − k − 1',solution:`${n} − ${k} − 1 = ${n-k-1}.`,why:'Each predictor (and the intercept) uses up one degree of freedom.'};}},
+    ]},
+  ],
+  puzzles:[
+   {type:'mc',q:'Ordinary Least Squares chooses the coefficients that…',opts:['Minimize the sum of squared residuals','Maximize the number of significant variables','Make every residual equal to zero','Minimize the sum of the residuals'],a:0,
+    why:'OLS minimizes Σ(Yᵢ − Ŷᵢ)². (The plain sum of OLS residuals is always zero, so minimizing it would be meaningless.)'},
+   {make:r=>{const d=genTiny(r);return {type:'num',exhibit:Exhibit.table(['x','y'],d.x.map((x,i)=>[x,d.y[i]]))+Exhibit.eq(`Candidate line: ŷ = ${d.b0} + ${d.b1}x`),
+    q:'Compute the sum of squared residuals for this candidate line.',a:d.sse,tol:.01,hint:'For each row: e = y − ŷ, then square and add.',solution:`Residuals ${d.e.join(', ')} → Σe² = ${d.sse}.`,
+    why:'OLS would search over every possible line and keep the one with the smallest Σe².'};}},
+   {type:'mc',q:'You run OLS with an intercept and add up all the residuals. You get…',opts:['Zero (up to rounding)','The Residual SS','The Standard Error','R²'],a:0,
+    why:'Σeᵢ = 0 is a built-in property of OLS with an intercept: no systematic over- or underprediction within the sample.'},
+   {make:r=>{const n=ri(r,20,40),X=[],Y=[];for(let i=0;i<n;i++){const x=rr(r,5,50);X.push(x);Y.push(30+3*x+rngGauss(r)*18);}const m=Stats.ols(X,Y,['Traffic']);
+    return {type:'num',exhibit:Exhibit.excel(m,'Daily sales ($)').replace(/<tr><td>R Square<\/td>.*?<\/tr>/,'<tr><td>R Square</td><td class="n">?</td></tr>').replace(/<tr><td>Multiple R<\/td>.*?<\/tr>/,'<tr><td>Multiple R</td><td class="n">?</td></tr>').replace(/<tr><td>Adjusted R Square<\/td>.*?<\/tr>/,'<tr><td>Adjusted R Square</td><td class="n">?</td></tr>'),
+     q:'The R² cells are hidden. Use the ANOVA table to compute <b>R²</b>.',a:m.R2,tol:.002,hint:'R² = Regression SS / Total SS (or 1 − Residual SS / Total SS).',
+     solution:`${Exhibit.xl(m.SSR)} / ${Exhibit.xl(m.SST)} = ${Exhibit.xl(m.R2)}.`,why:'R² is the share of total variation the model explains: ESS / TSS.'};}},
+   {type:'mc',q:'A colleague says, “OLS is an estimate and b₁ = 2.4 is the estimator.” What’s the correction?',opts:['Swap them: OLS is the estimator (the recipe); b₁ = 2.4 is the estimate (the result)','Both are estimators','Both are estimates','b₁ is the population parameter β₁'],a:0,
+    why:'An estimator is the procedure applied to sample data; an estimate is the number it produces. Lowercase b’s are the same as beta-hats.'},
+  ]};
+
+NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s Burger Barn',
+  intro:'Big Andy runs 75 franchises in similar-sized cities and wants to know how monthly sales relate to menu price and advertising. SALES and ADVERT are in $1,000s; PRICE is in dollars. Each coefficient holds the other driver constant.',
+  lessons:[
+   {title:'Holding other factors constant',
+    teach:`<p>A multiple-regression coefficient answers: <b>what happens to Y when this X rises by one unit, with the other included X’s held fixed?</b></p>
+    <div class="ex">SALARY ($000) = 3.17 + 1.40·EXPERIENCE + 0.25·SCORE<br>Holding score constant, one more year of experience ↔ about <b>$1,404</b> more salary.<br>Holding experience constant, one more test point ↔ about <b>$251</b> more.</div>
+    <p>Don’t compare coefficient sizes across variables measured in different units.</p>`,
+    practice:[
+     {type:'mc',q:'In SALARY ($000) = 3.17 + 1.40·EXPERIENCE + 0.25·SCORE, what does 0.25 mean?',opts:['Holding experience constant, one more aptitude point is associated with about $250 more salary','One more point causes $0.25 more salary','Score matters less than experience because 0.25 < 1.40','Each point adds 25% to salary'],a:0,
+      why:'Salary is in thousands, so 0.25 → $250, and the comparison holds experience fixed. Different units mean the sizes aren’t directly comparable.'},
+     {type:'mc',q:'Why might a single-variable model of sales on advertising mislead?',opts:['It can mix advertising’s effect with other drivers, like price, that move with it','Single-variable models always have low R²','Excel can’t run them','Advertising can’t be measured'],a:0,
+      why:'Multiple regression asks whether a driver still matters after accounting for the others.'},
+    ]},
+   {title:'From coefficient to a pricing move',
+    teach:`<p>Translate coefficients into realistic changes and the stated units.</p>
+    <div class="ex">b(PRICE) = −7.908, SALES in $1,000s<br>$0.10 price cut: −7.908 × (−0.10) = 0.7908 thousand ≈ <b>+$791</b> monthly revenue</div>
+    <p>And remember: extra revenue isn’t profit. $1,000 more advertising that brings $1,863 in revenue leaves $863 <b>before</b> food, labor, and other costs.</p>`,
+    practice:[
+     {make:r=>{const b=round(rr(r,-9.5,-6.2),3),c=pick([.05,.10,.15,.25]),a=-b*c*1000;return {type:'num',q:`The price coefficient is <b>${b}</b> (SALES in $1,000s). A <b>$${c.toFixed(2)}</b> price <b>cut</b> is associated with how much more monthly revenue, in dollars?`,a,tol:1,pre:'$',
+       hint:'coefficient × change in price, then × 1,000',solution:`${b} × (−${c.toFixed(2)}) × 1,000 = ${money(a,0)}.`,why:'Scale the coefficient to the change you are actually considering.'};}},
+     {make:r=>{const b=round(rr(r,1.4,2.6),3),a=(b-1)*1000;return {type:'num',q:`Advertising coefficient <b>${b}</b> (both SALES and ADVERT in $1,000s). An extra $1,000 of advertising leaves how much revenue above the ad cost?`,a,tol:1,pre:'$',
+       hint:'Extra revenue (b × $1,000) minus the $1,000 spent.',solution:`${money(b*1000,0)} − $1,000 = ${money(a,0)}.`,why:'That amount still isn’t profit — the extra sales carry their own food, labor, and franchise costs.'};}},
+    ]},
+  ],
+  puzzles:[
+   {make:r=>{const d=genAndy(r),b=round(d.b1,3);return {type:'mc',exhibit:andyEx(d),q:'How should Big Andy read the PRICE coefficient?',
+    opts:[`Holding advertising constant, a $1 price increase is associated with about ${money(Math.abs(b)*1000,0)} ${b<0?'less':'more'} monthly sales revenue`,`A $1 price increase causes sales to fall by ${Math.abs(b)} dollars`,`Holding advertising constant, a $1,000 price increase is associated with ${Math.abs(b)} less revenue`,`Price explains ${Math.round(Math.abs(b)*10)}% of sales`],a:0,
+    why:'SALES is in $1,000s, PRICE in dollars, and the reading is conditional on ADVERT. It’s an estimated association, not proof of a causal effect.'};}},
+   {make:r=>{const d=genAndy(r),c=pick([.10,.20,.25]),a=-d.b1*c*1000;return {type:'num',exhibit:andyEx(d),q:`Andy cuts price by <b>$${c.toFixed(2)}</b> and keeps advertising unchanged. By how much does predicted monthly revenue change, in dollars?`,a,tol:2,pre:'$',
+    hint:'PRICE coefficient × (−change) × 1,000.',solution:`${Exhibit.xl(d.b1)} × (−${c.toFixed(2)}) × 1,000 ≈ ${money(a,0)}.`,why:'Holding advertising constant is what lets you read the price coefficient alone.'};}},
+   {make:r=>{const d=genAndy(r),inc=pick([400,500,750]),a=d.b2*inc-inc;return {type:'num',exhibit:andyEx(d),q:`Andy raises advertising by <b>$${inc}</b>. After paying for the ads, how much predicted revenue is left (before food, labor, and other costs)?`,a,tol:2,pre:'$',
+    hint:`ADVERT is in $1,000s: $${inc} = ${inc/1000} units. Revenue gain = b(ADVERT) × ${inc/1000} × 1,000, then subtract $${inc}.`,solution:`${Exhibit.xl(d.b2)} × ${inc/1000} × 1,000 − ${inc} ≈ ${money(a,0)}.`,
+    why:'An advertising decision should rest on incremental profit, not revenue — and this number still isn’t profit.'};}},
+   {make:r=>{const d=genAndy(r),p=pick([5.2,5.5,5.8,6.1]),ad=pick([800,1200,1500,2000]),pred=d.m.predict([p,ad/1000])*1000;return {type:'num',exhibit:andyEx(d),
+    q:`Predict monthly sales revenue, in dollars, for PRICE = <b>$${p.toFixed(2)}</b> and ADVERT = <b>$${ad.toLocaleString()}</b>.`,a:pred,tol:15,pre:'$',
+    hint:`Convert ADVERT to $1,000s (${ad/1000}), plug both into the equation, then multiply the result by 1,000.`,solution:`(${Exhibit.xl(d.b0)} + ${Exhibit.xl(d.b1)} × ${p} + ${Exhibit.xl(d.b2)} × ${ad/1000}) × 1,000 ≈ ${money(pred,0)}.`,
+    why:'A prediction is a planning baseline. Competition, local events, service, and weather can all move the actual result.'};}},
+   {type:'mc',q:'Option A (cut price $0.10) leaves ~$791 before other costs; Option B (+$500 ads) leaves ~$432 after the ad spend. What should Andy conclude?',
+    opts:['A looks better on direct costs, but neither number is profit — subtract food, labor, and operating costs and weigh capacity and competitor response','Choose A — the model proves it earns $791 more profit','Choose B — advertising always pays back','The regression has made the decision; no further analysis is needed'],a:0,
+    why:'Regression compares expected outcomes; managers decide whether the expected gain justifies the cost and the risk.'},
+  ]};
+
+NODES['m2-fit']={kicker:'Module 2 · Fit and model selection',title:'The Mirror of Fit',
+  intro:'The mirror flatters any model that adds a variable — R² can only go up. Your job is to tell real explanatory power from decoration.',
+  lessons:[
+   {title:'R² is fit, not proof',
+    teach:`<p><b>R² = ESS / TSS = 1 − RSS / TSS</b> — the share of the sample’s variation in Y that the model explains.</p>
+    <div class="ex">R² near 0 → a flat line explains almost none of the variation.<br>R² near 1 → a tight cloud — but still <b>no proof of causation</b>.</div>
+    <p>Fit describes the sample. It doesn’t guarantee a useful decision rule.</p>`,
+    practice:[
+     {make:r=>{const tss=round(rr(r,500,1500),0),rss=round(tss*rr(r,.15,.7),0),a=1-rss/tss;return {type:'num',q:`TSS = <b>${tss}</b>, RSS = <b>${rss}</b>. What is R²?`,a,tol:.002,hint:'1 − RSS/TSS',solution:`1 − ${rss}/${tss} = ${round(a,3)}.`,why:'R² is the explained share of total variation.'};}},
+     {type:'mc',q:'A model of sales on store traffic has R² = 0.96. What can you say?',opts:['Traffic and sales move closely together in this sample','More traffic definitely causes more sales','The model will forecast next year perfectly','No other variable could matter'],a:0,why:'Strong fit describes the sample; it doesn’t validate a causal story or guarantee forecasts.'},
+    ]},
+   {title:'Adjusted R² and the price of complexity',
+    teach:`<p>Adding any variable — even pure noise — can’t lower R², because TSS stays fixed and RSS can only fall or stay the same. That rewards <b>overfitting</b>.</p>
+    <p><b>Adjusted R²</b> charges for each extra coefficient and <b>can fall</b> when a variable adds noise. Use it only to compare models with the <b>same dependent variable</b> in the same units.</p>
+    <div class="ex">Mozzarella = f(Income): adj R² 0.88 → add “boat drownings”: 0.97. Better fit — no credible mechanism. It doesn’t belong.</div>`,
+    practice:[
+     {type:'mc',q:'You add a variable of random numbers to a model. R² will…',opts:['Stay the same or rise','Definitely fall','Become negative','Stay exactly the same'],a:0,why:'RSS can only decrease or stay the same when you add a regressor, so R² can’t fall.'},
+     {type:'mc',q:'Which comparison is valid with adjusted R²?',opts:['Two models of monthly sales ($), one with an extra driver','A model of sales vs a model of profit','A model of sales in $ vs sales in units','A model for apples vs one for oranges'],a:0,why:'Same dependent variable, same units — otherwise it’s apples and oranges.'},
+    ]},
+  ],
+  puzzles:[
+   {type:'mc',q:'What does R² measure?',opts:['The share of variation in Y, within the sample, that the model explains','Whether the coefficients are causal','How likely the model is to be correct','The average prediction error in dollars'],a:0,
+    why:'R² = 1 − RSS/TSS describes in-sample fit — not causality or decision value.'},
+   {make:r=>{const {n,A,B}=genFitPair(r),x=Exhibit.xl;return {type:'mc',
+    exhibit:Exhibit.table(['Model','Variables','R²','Adjusted R²'],[['A','Price',x(A.R2),x(A.adjR2)],['B','Price + Noise',x(B.R2),x(B.adjR2)]])+`<p class="meta">Same ${n} stores, same dependent variable (weekly sales).</p>`,
+    q:'Model B adds a variable. What do these results suggest?',opts:['R² rose but adjusted R² fell — the new variable isn’t earning its place','Model B is better because its R² is higher','Model A is wrong because its R² is lower','Adjusted R² can’t be used here'],a:0,
+    why:'R² can’t fall when a variable is added. Adjusted R² penalizes the extra coefficient and dropped, so the variable adds noise rather than information.'};}},
+   {type:'mc',q:'Adding “U.S. deaths from falling off fishing boats” raises a mozzarella-consumption model’s adjusted R² from 0.88 to 0.97. Should it stay?',
+    opts:['No — there’s no credible economic mechanism; a better statistic doesn’t mean a better model','Yes — adjusted R² penalizes useless variables, so it must be real','Yes — any variable that raises fit belongs','Only if its p-value is below 0.05'],a:0,
+    why:'Statistics are a filter; economic logic and judgment make the final call. A variable doesn’t belong just because it raises adjusted R².'},
+   {type:'mc',q:'Model 1 explains <b>sales revenue ($)</b> with adjusted R² = 0.62. Model 2 explains <b>profit margin (%)</b> with adjusted R² = 0.81. What can you conclude?',
+    opts:['Nothing about which is better — they explain different dependent variables','Model 2 is the better model','Model 1 is overfit','Profit is easier to predict than revenue'],a:0,
+    why:'Compare adjusted R² only across models with the same dependent variable in the same units.'},
+   {make:r=>{const n=ri(r,25,60),k=ri(r,2,5),R2=round(rr(r,.45,.85),3),a=1-(1-R2)*(n-1)/(n-k-1);return {type:'num',
+    q:`A model has R² = <b>${R2}</b> with <b>n = ${n}</b> observations and <b>k = ${k}</b> predictors. Compute adjusted R².`,a,tol:.002,
+    hint:'Adjusted R² = 1 − (1 − R²)(n − 1)/(n − k − 1)',solution:`1 − (1 − ${R2}) × ${n-1}/${n-k-1} = ${round(a,4)}.`,
+    why:'Every extra predictor shrinks n − k − 1, so a variable must cut RSS enough to pay for the degree of freedom it uses.'};}},
+  ]};
+
+/* ==== content/m3.js ==== */
+/* ==========================================================================
+   MODULE 3 — Regression design for managerial decisions
+   Two stones: the Architect's Stone (six-step design, signs, units, outliers)
+   and the Fork of Categories (dummy variables).
+   ========================================================================== */
+const SIX_STEPS=['Anchor the question in an economic mechanism','Specify Y, X, units, and functional form','Predict the expected signs','Inspect the data and justify any changes','Estimate and evaluate in Excel','Document the model and defend the recommendation'];
+
+function genSalary(r){
+  const E=[],S=[],D=[],Y=[];
+  for(let i=0;i<20;i++){const e=ri(r,0,10),s=ri(r,70,100),d=r()<.5?1:0;E.push(e);S.push(s);D.push(d);Y.push(round(8+1.15*e+.197*s+2.3*d+rngGauss(r)*2.4,1));}
+  if(D.every(v=>v===D[0]))D[0]=1-D[0];
+  const m=Stats.ols(E.map((e,i)=>[e,S[i],D[i]]),Y,['Experience','Score','Degree']);return {m};
+}
+function genLaunch(r){
+  for(;;){const C=[],Dd=[],M=[];
+    for(let i=0;i<40;i++){const u=r(),c=u>.45&&u<=.85?1:0,d=u>.85?1:0;C.push(c);Dd.push(d);M.push(round(18.5+2.4*c+5.5*d+rngGauss(r)*2.2,2));}
+    const nc=C.reduce((a,b)=>a+b,0),nd=Dd.reduce((a,b)=>a+b,0);if(nd<3||nc<3||40-nc-nd<3)continue;
+    const m=Stats.ols(C.map((c,i)=>[c,Dd[i]]),M,['Commercial','Defense']);return {m};}
+}
+
+NODES['m3-design']={kicker:'Module 3 · Designing a regression',title:'The Architect’s Stone',
+  intro:'The most important regression work happens before Excel. The architect wants to see your blueprint: mechanism, specification, expected signs, and a disciplined look at the data — then a model you can defend.',
+  lessons:[
+   {title:'Six steps, mechanism first',
+    teach:`<div class="ex">${SIX_STEPS.map((s,i)=>`${i+1} · ${s}`).join('<br>')}</div>
+    <p>Step 1 is the anchor: explain <b>why</b> the outcome should respond to each driver before you open the spreadsheet. Data can’t supply missing business logic. Pick variables because the mechanism supports them, not because they’re available — and write down the expected signs <b>before</b> you see results.</p>`,
+    practice:[
+     {type:'mc',q:'A manager wants to start by pulling every column in the data warehouse into a regression to “see what sticks.” Which step did they skip?',opts:['Anchoring the question in an economic mechanism','Documenting the model','Estimating in Excel','Inspecting the residuals'],a:0,
+      why:'Choose drivers because the business mechanism supports them — not because they’re available. Mining until something “works” is the opposite of step 1.'},
+     {type:'mc',q:'When should you record the expected sign of each coefficient?',opts:['Before you estimate the model','After you see which ones are significant','Only if a result surprises you','Never — the data decide the sign'],a:0,
+      why:'Expected signs turn reasoning into testable predictions. Writing them afterwards just rationalizes the output.'},
+    ]},
+   {title:'Units and unusual observations',
+    teach:`<p>Read every coefficient in the stated units of <b>both</b> variables.</p>
+    <div class="ex">Sales ($000) = 420 + 18 × Advertising ($000)<br>$1,000 more advertising → 18 × $1,000 = <b>$18,000</b><br>$1 more advertising → 0.018 × $1,000 = <b>$18</b></div>
+    <p>An outlier may be a data-entry error, an observation from a different population, or a rare but valid outcome. <b>Flag, investigate, document</b> — and exclude only with a defensible reason, never because it weakens your result.</p>`,
+    practice:[
+     {make:r=>{const c=ri(r,6,40);return {type:'num',exhibit:Exhibit.eq(`Sales ($000) = ${ri(r,200,600)} + ${c} × Advertising ($000)`),q:'How many <b>dollars</b> of extra predicted sales go with <b>$1</b> more advertising?',a:c,tol:.01,pre:'$',
+       hint:'$1 is 1/1,000 of an advertising unit, and sales are in thousands.',solution:`${c} × (1/1,000) × $1,000 = $${c}.`,why:'When Y and X share the same scaling, the coefficient also reads as dollars per dollar.'};}},
+     {type:'mc',q:'Which is a defensible reason to drop an observation?',opts:['Records confirm it was a data-entry error','It makes the coefficient insignificant','It lowers R²','It looks unusual on the scatterplot'],a:0,
+      why:'Exclude only with documentation and a defensible reason — like a verified error or a store from a different population.'},
+    ]},
+  ],
+  puzzles:[
+   {type:'order',q:'Put the six steps of applied regression in order.',items:SIX_STEPS,
+    why:'Mechanism → specification → expected signs → data inspection → estimation → documentation. The process is iterative: new information can send you back a step.'},
+   {type:'sort',q:'A restaurant chain models <b>annual store sales</b>. Sort each driver by its expected sign.',cats:['Negative','Positive','Ambiguous'],
+    items:[{t:'Number of direct competitors nearby',c:0},{t:'Residents in the market area',c:1},{t:'Average household income',c:2},{t:'Students per teacher (in a model of test scores)',c:0}],
+    why:'More competitors split customers (−); more residents grow the market (+); income depends on the restaurant’s positioning (±, likely +). More students per teacher may reduce attention, lowering scores (−).'},
+   {make:r=>{const c=round(rr(r,.25,.6),3),k=pick([1000,5000,10000]),a=c*k;return {type:'num',
+    exhibit:Exhibit.eq(`Predicted SALES ($) = 102,192 − 9,075·COMPETITION + ${c}·POPULATION + 1.288·INCOME`),
+    q:`The chain is choosing between two sites. One has <b>${k.toLocaleString()}</b> more residents. Holding competition and income constant, how much higher are its predicted annual sales?`,a,tol:.6,pre:'$',
+    hint:'The population coefficient is dollars per resident.',solution:`${c} × ${k.toLocaleString()} = ${money(a,0)}.`,
+    why:'A per-resident coefficient looks tiny until you scale it to a managerially meaningful change.'};}},
+   {type:'mc',q:'One store in the data reports annual sales ten times larger than any other. What’s the disciplined response?',
+    opts:['Flag it and check operating records — it could be an error, a different kind of store, or a real outlier','Delete it so the model fits better','Keep it but don’t mention it','Duplicate it so the model learns from it'],a:0,
+    why:'Inspect and justify — never clean automatically. Dropping an observation changes the estimates, the standard errors, the fit, and the degrees of freedom.'},
+   {type:'mc',q:'Which of these belongs in Step 6, documenting the model?',
+    opts:['Coefficients with units, standard errors, R² and adjusted R², N, data exclusions, and limitations','Only the coefficients that came out significant','Only R², since it summarizes everything','Nothing — a good model speaks for itself'],a:0,
+    why:'Documentation makes the analysis reproducible, challengeable, and defensible — including inconvenient results.'},
+  ]};
+
+NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categories',
+  intro:'At the fork, the road splits by category — degree or no degree, government or commercial or defense. Categories can enter a regression only as 0/1 switches, measured against a baseline.',
+  lessons:[
+   {title:'Categories as 0/1 switches',
+    teach:`<p>A <b>dummy variable</b> turns a two-category condition into a number: 1 if present, 0 if absent.</p>
+    <div class="ex">Salary = b₀ + b₁·Experience + b₂·Score + b₃·Degree<br>Degree = 1 with a relevant graduate degree, 0 otherwise</div>
+    <p>b₃ is the predicted salary <b>difference from the baseline</b> (Degree = 0), holding experience and score constant. A dummy <b>shifts the intercept</b>; the slopes stay the same.</p>`,
+    practice:[
+     {make:r=>{const b=round(rr(r,1.5,4),2);return {type:'mc',q:`In a salary model (salary in $000), the Degree coefficient is <b>${b}</b>. What does it mean?`,
+      opts:[`Holding experience and score constant, degree holders are predicted to earn about $${Math.round(b*1000).toLocaleString()} more than those without`,`A degree raises salary by ${b}%`,`Everyone in the sample earns $${Math.round(b*1000).toLocaleString()} more`,`Degree holders earn ${b} times as much`],a:0,
+      why:'A dummy coefficient is an adjusted difference from the 0 (baseline) category, in Y’s units.'};}},
+     {type:'mc',q:'On a chart of salary against experience, adding a Degree dummy does what to the fitted lines?',opts:['Shifts the line up or down — same slope, different intercept','Changes the slope only','Rotates the line around the origin','Nothing visible'],a:0,why:'A dummy changes the intercept while the slopes are held constant.'},
+    ]},
+   {title:'k − 1 dummies and the trap',
+    teach:`<p>A category with <b>k</b> groups needs <b>k − 1</b> dummies. The omitted group is the <b>baseline</b>.</p>
+    <div class="ex">Government (baseline) · Commercial · Defense<br>D₁ = 1 if Commercial · D₂ = 1 if Defense<br>Margin = β₀ + β₁D₁ + β₂D₂ → β₀ = Government’s predicted margin; β₂ = Defense minus Government</div>
+    <p>Include all three dummies with an intercept and they always sum to 1 — exactly the intercept’s column. That’s <b>perfect multicollinearity</b>, the <b>dummy-variable trap</b>. Never code categories 1, 2, 3 either — that implies a ranking and equal spacing.</p>`,
+    practice:[
+     {make:r=>{const k=ri(r,3,6);return {type:'num',q:`A variable has <b>${k}</b> categories. How many dummy variables go into a model with an intercept?`,a:k-1,tol:0,hint:'k − 1',solution:`${k} − 1 = ${k-1}.`,why:'The omitted category is the baseline every coefficient is compared against.'};}},
+     {type:'mc',q:'Why not code customer type as Government = 1, Commercial = 2, Defense = 3 in one variable?',opts:['It implies a ranking and equal distances between types that don’t exist','Excel can’t read numbers above 2','It would make R² too high','It is the same as using dummies'],a:0,why:'Categories have no numeric order; dummies let each group have its own shift from the baseline.'},
+    ]},
+  ],
+  puzzles:[
+   {make:r=>{const d=genSalary(r),b=d.m.b[3];return {type:'mc',exhibit:Exhibit.excel(d.m,'Salary ($000) · Degree = 1 with graduate degree'),
+    q:'How should you read the Degree coefficient?',
+    opts:[`Holding experience and score constant, degree holders are predicted to earn about ${money(Math.abs(b)*1000,0)} ${b>=0?'more':'less'} than non-holders`,`A degree causes a ${round(Math.abs(b),2)}% raise`,`Degree holders earn ${round(Math.abs(b),2)} thousand dollars in total`,`The Degree coefficient is the baseline salary`],a:0,
+    why:'The dummy coefficient is an adjusted difference from the Degree = 0 baseline. Check its p-value too: a difference can be economically sizable yet estimated imprecisely.'};}},
+   {make:r=>{const d=genSalary(r),e=ri(r,1,10),s=ri(r,72,98),deg=r()<.5?1:0,a=d.m.predict([e,s,deg]);return {type:'num',exhibit:Exhibit.excel(d.m,'Salary ($000)'),
+    q:`Predict the salary (in $000) of a programmer with <b>${e}</b> years of experience, an aptitude score of <b>${s}</b>, and <b>${deg?'a':'no'}</b> graduate degree.`,a,tol:.05,unit:'thousand',
+    hint:`Degree = ${deg}. Use Intercept + Exp×${e} + Score×${s} + Degree×${deg}.`,solution:`${Exhibit.xl(d.m.b[0])} + ${Exhibit.xl(d.m.b[1])}×${e} + ${Exhibit.xl(d.m.b[2])}×${s} + ${Exhibit.xl(d.m.b[3])}×${deg} ≈ ${fmtNum(a,2)}.`,
+    why:'For the dummy, plug in 0 or 1 — it simply switches the degree shift on or off.'};}},
+   {make:r=>{const d=genLaunch(r),pickT=pick(['Government','Commercial','Defense']),a=pickT==='Government'?d.m.b[0]:pickT==='Commercial'?d.m.b[0]+d.m.b[1]:d.m.b[0]+d.m.b[2];return {type:'num',
+    exhibit:Exhibit.excel(d.m,'Launch margin (%) · Government is the baseline'),q:`What is the predicted launch margin for a <b>${pickT}</b> contract?`,a,tol:.02,unit:'%',
+    hint:pickT==='Government'?'Government is the baseline: both dummies are 0.':`Baseline (intercept) plus the ${pickT} coefficient.`,
+    solution:pickT==='Government'?`Intercept = ${fmtNum(a,2)}%.`:`${Exhibit.xl(d.m.b[0])} + ${Exhibit.xl(pickT==='Commercial'?d.m.b[1]:d.m.b[2])} = ${fmtNum(a,2)}%.`,
+    why:'The intercept is the baseline group’s level; each dummy coefficient is that group’s difference from the baseline.'};}},
+   {type:'mc',q:'An analyst includes Government, Commercial, and Defense dummies <b>and</b> an intercept. Excel balks. Why?',
+    opts:['The three dummies always sum to 1 — the same as the intercept column — creating perfect multicollinearity (the dummy-variable trap)','There are too few observations','Dummy variables can’t be used with an intercept','Excel can only handle two dummies'],a:0,
+    why:'Drop one category to serve as the baseline: k categories → k − 1 dummies.'},
+   {make:r=>{const k=ri(r,3,7);return {type:'num',q:`A bank models loan losses across <b>${k}</b> regions and includes an intercept. How many region dummies should it use?`,a:k-1,tol:0,
+    hint:'Categories minus one.',solution:`${k} − 1 = ${k-1}; the omitted region is the baseline.`,why:'Each coefficient then reads as that region’s difference from the baseline region.'};}},
+  ]};
+
 /* ==== js/08_game.js ==== */
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},tod:'dusk',stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},tod:'dusk',stats:{answered:0,first:0}});
+const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s};}catch(e){}}
 function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();}
@@ -1665,7 +2095,12 @@ const regionById=id=>COURSE.regions.find(r=>r.id===id);
 const liveNodes=reg=>reg.nodes.filter(id=>NODES[id]&&!NODES[id].sealed);
 const regionDone=id=>{const r=regionById(id);if(!r)return true;const l=liveNodes(r);return l.length>0&&l.every(n=>SAVE.done[n]);};
 const regionUnlocked=id=>{if(id==='hub')return true;const r=regionById(id);return !r.requires||regionDone(r.requires);};
-function nodeState(id){const n=NODES[id];if(!n||n.sealed)return 'sealed';return SAVE.done[id]?'done':'todo';}
+function nodeState(id){const n=NODES[id];if(!n||n.sealed)return 'sealed';if(SAVE.done[id])return 'done';return SAVE.locked[id]?'frozen':'todo';}
+const lessonId=(id,j)=>`${id}#L${j+1}`;
+const lessonsOf=id=>NODES[id]?.lessons||[];
+const lessonsDone=id=>lessonsOf(id).filter((_,j)=>SAVE.lessons[lessonId(id,j)]).length;
+function lessonState(id,j){if(SAVE.lessons[lessonId(id,j)])return 'lessonDone';if(j>0&&!SAVE.lessons[lessonId(id,j-1)])return 'blocked';return SAVE.done[id]?'none':'lesson';}
+function registerLessons(){for(const id of Object.keys(NODES)){lessonsOf(id).forEach((L,j)=>{NODES[lessonId(id,j)]={lessonOf:id,j,title:L.title,kicker:`Waypoint ${j+1} of ${lessonsOf(id).length} · ${NODES[id].title}`,puzzles:L.practice};});}}
 
 /* ---------- HUD, toasts, banners ---------- */
 const $=id=>document.getElementById(id);
@@ -1674,7 +2109,7 @@ function renderHud(){
   $('hName').textContent=reg?reg.name:COURSE.hubName;
   $('hSub').textContent=reg?reg.sub:COURSE.hubSub;
   let line='';
-  if(reg){const l=liveNodes(reg);line=`Study stones restored: ${l.filter(n=>SAVE.done[n]).length} / ${l.length}`+(reg.nodes.length>l.length?` · ${reg.nodes.length-l.length} sealed`:'');}
+  if(reg){const l=liveNodes(reg);const fz=l.filter(n=>nodeState(n)==='frozen').length;line=`Study stones restored: ${l.filter(n=>SAVE.done[n]).length} / ${l.length}`+(fz?` · ${fz} frozen`:'')+(reg.nodes.length>l.length?` · ${reg.nodes.length-l.length} sealed`:'');}
   else{const all=COURSE.regions.flatMap(liveNodes);line=`Course progress: ${all.filter(n=>SAVE.done[n]).length} / ${all.length} stones`+(SAVE.missed.length?` · ${SAVE.missed.length} to review`:'');}
   $('hLine').textContent=line;
 }
@@ -1691,23 +2126,52 @@ function openDialog(npc,i=0){
   b.onclick=()=>{if(i<lines.length-1)openDialog(npc,i+1);else{SAVE.seen[npc.id]=true;persist();closeCard();}};
 }
 function openWelcome(){openDialog(COURSE.welcome);}
+function lessonListHtml(id){return `<ul class="wl">${lessonsOf(id).map((L,j)=>{const st=lessonState(id,j);return `<li class="${st}"><i class="ic ${st==='lessonDone'?'done':st==='blocked'?'sealed':'todo'}">${st==='lessonDone'?'✓':j+1}</i>${esc(L.title)}</li>`;}).join('')}</ul>`;}
 function openNode(id){
   const n=NODES[id];
   if(!n||n.sealed){showCard(`<div class="kicker">${esc(n?.kicker||'Sealed stone')}</div><h2>${esc(n?.title||'Sealed')}</h2><p class="say">${n?.sealedText||'This stone is still sealed. Its quests are added in a later build.'}</p>`);return;}
-  const prev=SAVE.done[id];
-  showCard(`<div class="kicker">${esc(n.kicker)}</div><h2>${esc(n.title)}</h2><p class="say">${n.intro}</p>
+  const L=lessonsOf(id).length,ld=lessonsDone(id),prev=SAVE.done[id];
+  if(nodeState(id)==='frozen'){
+    showCard(`<div class="kicker">${esc(n.kicker)} · frozen</div><h2>${esc(n.title)}</h2><p class="say">The stone rejected your answers and froze solid. To thaw it, finish its waypoints on the path behind you, in order — each is a short lesson with practice questions.</p>${lessonListHtml(id)}<p class="meta">${ld} of ${L} waypoints complete</p>`);return;}
+  const rule=L&&!prev?(ld<L?`<p class="rule">Restore it with <b>at most one miss</b>. Miss ${FREEZE_AT} or more and it freezes until you finish its ${L} waypoints (${ld} done so far). Feeling unsure? The waypoints are on the path just before this stone.</p>`
+      :`<p class="rule">You've finished all ${L} waypoints. Restore it with at most one miss — it won't freeze again.</p>`):'';
+  showCard(`<div class="kicker">${esc(n.kicker)}</div><h2>${esc(n.title)}</h2><p class="say">${n.intro}</p>${rule}
     <p class="meta">${n.puzzles.length} challenges${prev?` · best first-try score ${prev.best} / ${n.puzzles.length}`:''}</p><div class="acts"></div>`);
-  const b=btn(prev?'Study again':'Begin','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  const b=btn(prev?'Study again':'Challenge the stone','primary');card.querySelector('.acts').appendChild(b);b.focus();
   b.onclick=()=>startSession(n.title,n.kicker,n.puzzles.map((_,idx)=>({node:id,idx})),items=>{
-    const first=items.filter(x=>!x.missed).length,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
-    SAVE.done[id]={best:Math.max(first,SAVE.done[id]?.best||0),ts:Date.now()};persist();
-    burst();
-    if(!wasDone)toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
-    else toast(`Studied again · ${first} / ${items.length} on the first try`);
+    const miss=items.filter(x=>x.missed).length,first=items.length-miss,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
+    if(wasDone){SAVE.done[id].best=Math.max(first,SAVE.done[id].best);persist();toast(`Studied again · ${first} / ${items.length} on the first try`);return;}
+    if(miss>=FREEZE_AT){
+      if(L&&lessonsDone(id)<L){SAVE.locked[id]=true;persist();freezeFx(id);
+        toast(`<b>${esc(n.title)}</b> froze over · ${miss} misses. Finish its ${L} waypoints to thaw it.`,4200);}
+      else{persist();toast(`The stone dims · ${miss} misses. It needs at most one — try again.`,3600);}
+      return;}
+    delete SAVE.locked[id];SAVE.done[id]={best:first,ts:Date.now()};persist();
+    burst();toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
     if(!regBefore&&regionDone(curScene)){const nx=COURSE.regions.find(r=>r.requires===curScene);
       setTimeout(()=>banner(`${regionById(curScene).name} restored`,nx?`The gate to ${nx.name} is unsealed`:'Every stone in this region is restored'),900);}
   });
 }
+function openLesson(id,j){
+  const Ls=lessonsOf(id),L=Ls[j],lid=lessonId(id,j),st=lessonState(id,j),n=NODES[id];
+  const kick=`Waypoint ${j+1} of ${Ls.length} · leads to ${n.title}`;
+  if(st==='blocked'){showCard(`<div class="kicker">${esc(kick)}</div><h2>${esc(L.title)}</h2><p class="say">The pages are blank for now. Waypoints open in order — finish <b>${esc(Ls[j-1].title)}</b> first; it's back along the path.</p>`);return;}
+  showCard(`<div class="kicker">${esc(kick)}</div><h2>${esc(L.title)}</h2><div class="teach">${L.teach}</div>
+    <p class="meta">${L.practice.length} practice question${L.practice.length>1?'s':''}${SAVE.lessons[lid]?' · completed':''}</p><div class="acts"></div>`);
+  const b=btn(SAVE.lessons[lid]?'Practice again':'Practice','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  b.onclick=()=>startSession(L.title,kick,L.practice.map((_,idx)=>({node:lid,idx})),()=>{
+    const was=SAVE.lessons[lid];SAVE.lessons[lid]=true;
+    const all=lessonsDone(id)===Ls.length;
+    if(all&&SAVE.locked[id]){delete SAVE.locked[id];persist();thawFx(id);toast(`<b>${esc(n.title)}</b> thaws — challenge it again.`,3600);return;}
+    persist();if(!was)toast(all?`All waypoints for <b>${esc(n.title)}</b> complete.`:`Waypoint complete · next one is further along the path.`);
+  });
+}
+function stoneObj(id){return objects.find(o=>o.kind==='stone'&&o.node===id);}
+let shake=0;
+function freezeFx(id){const o=stoneObj(id);shake=.45;if(!o||!FX.particles)return;
+  for(let i=0;i<70;i++){const a=rand(0,TAU),v=rand(30,160);emit({t:'spark',x:o.x+rand(-14,14),y:o.y-rand(10,70),vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6,l:0,m:rand(.6,1.4),sz:rand(3,7)});}}
+function thawFx(id){const o=stoneObj(id);if(!o||!FX.particles)return;
+  for(let i=0;i<50;i++){emit({t:'mote',warm:1,x:o.x+rand(-20,20),y:o.y-rand(0,80),vx:rand(-20,20),vy:rand(-60,-20),l:0,m:rand(1,2),sz:rand(2,5),ph:rand(0,9)});}}
 function openReview(){
   if(!SAVE.missed.length){showCard(`<div class="kicker">Review board</div><h2>Nothing to review</h2><p class="say">Questions you miss anywhere in the world are pinned here, so you can retry them with fresh numbers. The board is empty — nice work.</p>`);return;}
   const pickN=shuffle(SAVE.missed).slice(0,6);
@@ -1721,12 +2185,12 @@ function burst(){if(!FX.particles)return;for(let i=0;i<60;i++){const a=rand(0,TA
 
 /* ---------- quest log + save tools ---------- */
 function renderLog(){
-  const icon=s=>({done:'<i class="ic done">✓</i>',todo:'<i class="ic todo">!</i>',sealed:'<i class="ic sealed"></i>'}[s]);
+  const icon=s=>({done:'<i class="ic done">✓</i>',todo:'<i class="ic todo">!</i>',sealed:'<i class="ic sealed"></i>',frozen:'<i class="ic frozen">❄</i>'}[s]);
   let h=`<button class="close" id="logClose" aria-label="Close">×</button><div class="kicker">Quest log</div><h2>The course map</h2>`;
   for(const r of COURSE.regions){
     const un=regionUnlocked(r.id),dn=regionDone(r.id);
     h+=`<section class="reg ${un?'':'locked'}"><div class="rh"><b>${esc(r.name)}</b><span>${dn?'Restored':un?'Open':'Sealed — restore '+esc(regionById(r.requires).name)+' first'}</span></div><div class="rs">${esc(r.sub)}</div><ul>`;
-    for(const id of r.nodes){const n=NODES[id],st=nodeState(id);h+=`<li>${icon(st)}<span>${esc(n?.title||id)}</span><em>${st==='done'?`${SAVE.done[id].best} / ${n.puzzles.length}`:st==='sealed'?'later build':''}</em></li>`;}
+    for(const id of r.nodes){const n=NODES[id],st=nodeState(id),L=lessonsOf(id).length;h+=`<li>${icon(st)}<span>${esc(n?.title||id)}${L?`<small> · waypoints ${lessonsDone(id)}/${L}</small>`:''}</span><em>${st==='done'?`${SAVE.done[id].best} / ${n.puzzles.length}`:st==='sealed'?'later build':st==='frozen'?'frozen':''}</em></li>`;}
     h+=`</ul></section>`;
   }
   const acc=SAVE.stats.answered?Math.round(100*SAVE.stats.first/SAVE.stats.answered):0;
@@ -1768,7 +2232,7 @@ function updateWorldLogic(dt){
         const nx=(player.x-gt.x)/(d||1),ny=(player.y-gt.y)/(d||1);player.vx=nx*220;player.vy=ny*220;tapTarget=null;}
     }}
   // stone lights follow quest state
-  for(const L of lights)if(L.node){const s=nodeState(L.node);L.col=s==='done'?[120,230,150]:s==='sealed'?[110,125,190]:[255,205,120];L.i=s==='sealed'?.45:.85;}
+  for(const L of lights)if(L.node){const s=nodeState(L.node);L.col=s==='done'?[120,230,150]:s==='sealed'?[110,125,190]:s==='frozen'?[140,205,255]:[255,205,120];L.i=s==='sealed'?.45:.85;}
   // nearest interactable
   let best=null,bd=1e9;for(const it of INTER){const d=Math.hypot(player.x-it.x,player.y-it.y);if(d<it.r&&d<bd){bd=d;best=it;}}
   if(best!==nearI){nearI=best;readBtn.classList.toggle('hidden',!best);}
@@ -1798,6 +2262,7 @@ function frame(now){
   cam.x+=(tx-cam.x)*ce;cam.y+=(ty-cam.y)*ce;
   const hw=VW/2/ZOOM,hh=VH/2/ZOOM;
   cam.x=hw*2>=W?W/2:clamp(cam.x,hw,W-hw);cam.y=hh*2>=H?H/2:clamp(cam.y,hh,H-hh);
+  if(shake>0){shake-=dt;const k=shake*14;cam.x+=rand(-k,k);cam.y+=rand(-k,k);}
   updateParticles(dt,t);
   updateWorldLogic(dt);
   render(t);
@@ -1808,12 +2273,13 @@ function frame(now){
 
 /* ---------- boot ---------- */
 loadSave();
+registerLessons();
 initSprites();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
 renderHud();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
+window.__game={get run(){return run;},objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
 requestAnimationFrame(frame);
 
 }

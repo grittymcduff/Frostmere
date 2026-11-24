@@ -195,6 +195,11 @@ function drawMarker(g,m,t){
   g.save();g.translate(x,y);
   if(st==='done'){g.fillStyle='#3e9a62';circ(g,0,0,9);g.strokeStyle='#eafff0';g.lineWidth=2.4;g.lineCap='round';g.beginPath();g.moveTo(-4,0);g.lineTo(-1,3.5);g.lineTo(4.5,-3.5);g.stroke();}
   else if(st==='sealed'){g.fillStyle='rgba(30,36,56,.85)';circ(g,0,0,9);g.strokeStyle='#9aa6c4';g.lineWidth=1.8;g.beginPath();g.arc(0,-2,3.2,Math.PI,0);g.stroke();g.fillStyle='#9aa6c4';g.fillRect(-4.2,-1.5,8.4,6);}
+  else if(st==='frozen'){g.fillStyle='rgba(20,50,90,.85)';circ(g,0,0,10);g.strokeStyle='#bfe8ff';g.lineWidth=1.6;g.lineCap='round';
+    for(let k=0;k<3;k++){const a=k*Math.PI/3;g.beginPath();g.moveTo(Math.cos(a)*6,Math.sin(a)*6);g.lineTo(-Math.cos(a)*6,-Math.sin(a)*6);g.stroke();}}
+  else if(st==='lesson'){g.fillStyle='#2b5f8a';g.beginPath();g.roundRect(-10,-8,20,15,4);g.fill();g.fillStyle='#e8f3ff';g.beginPath();g.moveTo(-7,-5);g.lineTo(-1,-3);g.lineTo(-1,5);g.lineTo(-7,3);g.closePath();g.fill();
+    g.beginPath();g.moveTo(7,-5);g.lineTo(1,-3);g.lineTo(1,5);g.lineTo(7,3);g.closePath();g.fill();}
+  else if(st==='lessonDone'){g.fillStyle='rgba(62,154,98,.85)';circ(g,0,0,6);g.strokeStyle='#eafff0';g.lineWidth=1.6;g.lineCap='round';g.beginPath();g.moveTo(-2.6,0);g.lineTo(-.6,2.3);g.lineTo(3,-2.2);g.stroke();}
   else if(st==='talk'){g.fillStyle='#f6ead0';g.beginPath();g.roundRect(-11,-8,22,15,6);g.fill();g.beginPath();g.moveTo(-3,7);g.lineTo(-7,12);g.lineTo(2,7);g.fill();
     g.fillStyle='#5a3a1a';for(const dx of [-5,0,5])circ(g,dx,-.5,1.6);}
   else{g.rotate(Math.PI/4);g.fillStyle='#7a4a12';g.fillRect(-9,-9,18,18);g.fillStyle='#f1c25c';g.fillRect(-7.5,-7.5,15,15);g.rotate(-Math.PI/4);
@@ -243,6 +248,7 @@ function render(t){
       const sk=windAt(t,o.phase)*.045*o.sway;
       g.save();g.translate(o.x,o.y);g.transform(1,0,sk,1,0,0);g.scale(o.s,o.s);g.drawImage(o.spr.cv,-o.spr.ox,-o.spr.oy,o.spr.w,o.spr.h);g.restore();
     }else drawSpr(g,o.spr,o.x,o.y,o.s);
+    if(o.kind==='stone'&&SAVE.locked[o.node])drawSpr(g,SPR.ice,o.x,o.y+2);
     g.globalAlpha=1;
     if(o.marker)drawMarker(g,o.marker,t);
   }
@@ -304,7 +310,7 @@ function render(t){
   if(FX.fg){
     const psx=(player.x-cam.x)*ZOOM+VW/2,psy=(player.y-cam.y)*ZOOM+VH/2;
     for(const f of FG){
-      const s=f[2]*ZOOM*.95,x=(f[0]-cam.x)*ZOOM*1.35+VW/2,y=(f[1]-cam.y)*ZOOM*1.35+VH/2;
+      const s=f[2]*ZOOM*.95,x=(f[0]*W/2000-cam.x)*ZOOM*1.35+VW/2,y=(f[1]*H/1500-cam.y)*ZOOM*1.35+VH/2;
       const w=320*s,h=520*s;if(x+w/2<0||x-w/2>VW||y<0||y-h>VH)continue;
       const near=Math.abs(psx-x)<w*.35&&psy<y&&psy>y-h*.9;
       f.fade=(f.fade??1);f.fade+=((near?.35:1)-f.fade)*Math.min(1,dtLast*6);

@@ -16,8 +16,8 @@ function sampleCurve(pts,step){
 }
 
 /* surface grid: 0 snow, 1 path/plaza, 2 ice */
-const GC = 10, GW = W/GC, GH = H/GC;
-const surf = new Uint8Array(GW*GH);
+const GC = 10; let GW = W/GC, GH = H/GC, surf = new Uint8Array(GW*GH);
+function sizeWorld(w,h){W=w;H=h;GW=W/GC;GH=H/GC;surf=new Uint8Array(GW*GH);ground.width=W*GS;ground.height=H*GS;}
 function buildSurface(){
   PATH_SAMPLES=PATHS.map(p=>sampleCurve(p,6));
   for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++){

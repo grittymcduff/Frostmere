@@ -1,6 +1,7 @@
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},tod:'dusk',stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},tod:'dusk',stats:{answered:0,first:0}});
+const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s};}catch(e){}}
 function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();}
@@ -10,7 +11,12 @@ const regionById=id=>COURSE.regions.find(r=>r.id===id);
 const liveNodes=reg=>reg.nodes.filter(id=>NODES[id]&&!NODES[id].sealed);
 const regionDone=id=>{const r=regionById(id);if(!r)return true;const l=liveNodes(r);return l.length>0&&l.every(n=>SAVE.done[n]);};
 const regionUnlocked=id=>{if(id==='hub')return true;const r=regionById(id);return !r.requires||regionDone(r.requires);};
-function nodeState(id){const n=NODES[id];if(!n||n.sealed)return 'sealed';return SAVE.done[id]?'done':'todo';}
+function nodeState(id){const n=NODES[id];if(!n||n.sealed)return 'sealed';if(SAVE.done[id])return 'done';return SAVE.locked[id]?'frozen':'todo';}
+const lessonId=(id,j)=>`${id}#L${j+1}`;
+const lessonsOf=id=>NODES[id]?.lessons||[];
+const lessonsDone=id=>lessonsOf(id).filter((_,j)=>SAVE.lessons[lessonId(id,j)]).length;
+function lessonState(id,j){if(SAVE.lessons[lessonId(id,j)])return 'lessonDone';if(j>0&&!SAVE.lessons[lessonId(id,j-1)])return 'blocked';return SAVE.done[id]?'none':'lesson';}
+function registerLessons(){for(const id of Object.keys(NODES)){lessonsOf(id).forEach((L,j)=>{NODES[lessonId(id,j)]={lessonOf:id,j,title:L.title,kicker:`Waypoint ${j+1} of ${lessonsOf(id).length} · ${NODES[id].title}`,puzzles:L.practice};});}}
 
 /* ---------- HUD, toasts, banners ---------- */
 const $=id=>document.getElementById(id);
@@ -19,7 +25,7 @@ function renderHud(){
   $('hName').textContent=reg?reg.name:COURSE.hubName;
   $('hSub').textContent=reg?reg.sub:COURSE.hubSub;
   let line='';
-  if(reg){const l=liveNodes(reg);line=`Study stones restored: ${l.filter(n=>SAVE.done[n]).length} / ${l.length}`+(reg.nodes.length>l.length?` · ${reg.nodes.length-l.length} sealed`:'');}
+  if(reg){const l=liveNodes(reg);const fz=l.filter(n=>nodeState(n)==='frozen').length;line=`Study stones restored: ${l.filter(n=>SAVE.done[n]).length} / ${l.length}`+(fz?` · ${fz} frozen`:'')+(reg.nodes.length>l.length?` · ${reg.nodes.length-l.length} sealed`:'');}
   else{const all=COURSE.regions.flatMap(liveNodes);line=`Course progress: ${all.filter(n=>SAVE.done[n]).length} / ${all.length} stones`+(SAVE.missed.length?` · ${SAVE.missed.length} to review`:'');}
   $('hLine').textContent=line;
 }
@@ -36,23 +42,52 @@ function openDialog(npc,i=0){
   b.onclick=()=>{if(i<lines.length-1)openDialog(npc,i+1);else{SAVE.seen[npc.id]=true;persist();closeCard();}};
 }
 function openWelcome(){openDialog(COURSE.welcome);}
+function lessonListHtml(id){return `<ul class="wl">${lessonsOf(id).map((L,j)=>{const st=lessonState(id,j);return `<li class="${st}"><i class="ic ${st==='lessonDone'?'done':st==='blocked'?'sealed':'todo'}">${st==='lessonDone'?'✓':j+1}</i>${esc(L.title)}</li>`;}).join('')}</ul>`;}
 function openNode(id){
   const n=NODES[id];
   if(!n||n.sealed){showCard(`<div class="kicker">${esc(n?.kicker||'Sealed stone')}</div><h2>${esc(n?.title||'Sealed')}</h2><p class="say">${n?.sealedText||'This stone is still sealed. Its quests are added in a later build.'}</p>`);return;}
-  const prev=SAVE.done[id];
-  showCard(`<div class="kicker">${esc(n.kicker)}</div><h2>${esc(n.title)}</h2><p class="say">${n.intro}</p>
+  const L=lessonsOf(id).length,ld=lessonsDone(id),prev=SAVE.done[id];
+  if(nodeState(id)==='frozen'){
+    showCard(`<div class="kicker">${esc(n.kicker)} · frozen</div><h2>${esc(n.title)}</h2><p class="say">The stone rejected your answers and froze solid. To thaw it, finish its waypoints on the path behind you, in order — each is a short lesson with practice questions.</p>${lessonListHtml(id)}<p class="meta">${ld} of ${L} waypoints complete</p>`);return;}
+  const rule=L&&!prev?(ld<L?`<p class="rule">Restore it with <b>at most one miss</b>. Miss ${FREEZE_AT} or more and it freezes until you finish its ${L} waypoints (${ld} done so far). Feeling unsure? The waypoints are on the path just before this stone.</p>`
+      :`<p class="rule">You've finished all ${L} waypoints. Restore it with at most one miss — it won't freeze again.</p>`):'';
+  showCard(`<div class="kicker">${esc(n.kicker)}</div><h2>${esc(n.title)}</h2><p class="say">${n.intro}</p>${rule}
     <p class="meta">${n.puzzles.length} challenges${prev?` · best first-try score ${prev.best} / ${n.puzzles.length}`:''}</p><div class="acts"></div>`);
-  const b=btn(prev?'Study again':'Begin','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  const b=btn(prev?'Study again':'Challenge the stone','primary');card.querySelector('.acts').appendChild(b);b.focus();
   b.onclick=()=>startSession(n.title,n.kicker,n.puzzles.map((_,idx)=>({node:id,idx})),items=>{
-    const first=items.filter(x=>!x.missed).length,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
-    SAVE.done[id]={best:Math.max(first,SAVE.done[id]?.best||0),ts:Date.now()};persist();
-    burst();
-    if(!wasDone)toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
-    else toast(`Studied again · ${first} / ${items.length} on the first try`);
+    const miss=items.filter(x=>x.missed).length,first=items.length-miss,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
+    if(wasDone){SAVE.done[id].best=Math.max(first,SAVE.done[id].best);persist();toast(`Studied again · ${first} / ${items.length} on the first try`);return;}
+    if(miss>=FREEZE_AT){
+      if(L&&lessonsDone(id)<L){SAVE.locked[id]=true;persist();freezeFx(id);
+        toast(`<b>${esc(n.title)}</b> froze over · ${miss} misses. Finish its ${L} waypoints to thaw it.`,4200);}
+      else{persist();toast(`The stone dims · ${miss} misses. It needs at most one — try again.`,3600);}
+      return;}
+    delete SAVE.locked[id];SAVE.done[id]={best:first,ts:Date.now()};persist();
+    burst();toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
     if(!regBefore&&regionDone(curScene)){const nx=COURSE.regions.find(r=>r.requires===curScene);
       setTimeout(()=>banner(`${regionById(curScene).name} restored`,nx?`The gate to ${nx.name} is unsealed`:'Every stone in this region is restored'),900);}
   });
 }
+function openLesson(id,j){
+  const Ls=lessonsOf(id),L=Ls[j],lid=lessonId(id,j),st=lessonState(id,j),n=NODES[id];
+  const kick=`Waypoint ${j+1} of ${Ls.length} · leads to ${n.title}`;
+  if(st==='blocked'){showCard(`<div class="kicker">${esc(kick)}</div><h2>${esc(L.title)}</h2><p class="say">The pages are blank for now. Waypoints open in order — finish <b>${esc(Ls[j-1].title)}</b> first; it's back along the path.</p>`);return;}
+  showCard(`<div class="kicker">${esc(kick)}</div><h2>${esc(L.title)}</h2><div class="teach">${L.teach}</div>
+    <p class="meta">${L.practice.length} practice question${L.practice.length>1?'s':''}${SAVE.lessons[lid]?' · completed':''}</p><div class="acts"></div>`);
+  const b=btn(SAVE.lessons[lid]?'Practice again':'Practice','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  b.onclick=()=>startSession(L.title,kick,L.practice.map((_,idx)=>({node:lid,idx})),()=>{
+    const was=SAVE.lessons[lid];SAVE.lessons[lid]=true;
+    const all=lessonsDone(id)===Ls.length;
+    if(all&&SAVE.locked[id]){delete SAVE.locked[id];persist();thawFx(id);toast(`<b>${esc(n.title)}</b> thaws — challenge it again.`,3600);return;}
+    persist();if(!was)toast(all?`All waypoints for <b>${esc(n.title)}</b> complete.`:`Waypoint complete · next one is further along the path.`);
+  });
+}
+function stoneObj(id){return objects.find(o=>o.kind==='stone'&&o.node===id);}
+let shake=0;
+function freezeFx(id){const o=stoneObj(id);shake=.45;if(!o||!FX.particles)return;
+  for(let i=0;i<70;i++){const a=rand(0,TAU),v=rand(30,160);emit({t:'spark',x:o.x+rand(-14,14),y:o.y-rand(10,70),vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6,l:0,m:rand(.6,1.4),sz:rand(3,7)});}}
+function thawFx(id){const o=stoneObj(id);if(!o||!FX.particles)return;
+  for(let i=0;i<50;i++){emit({t:'mote',warm:1,x:o.x+rand(-20,20),y:o.y-rand(0,80),vx:rand(-20,20),vy:rand(-60,-20),l:0,m:rand(1,2),sz:rand(2,5),ph:rand(0,9)});}}
 function openReview(){
   if(!SAVE.missed.length){showCard(`<div class="kicker">Review board</div><h2>Nothing to review</h2><p class="say">Questions you miss anywhere in the world are pinned here, so you can retry them with fresh numbers. The board is empty — nice work.</p>`);return;}
   const pickN=shuffle(SAVE.missed).slice(0,6);
@@ -66,12 +101,12 @@ function burst(){if(!FX.particles)return;for(let i=0;i<60;i++){const a=rand(0,TA
 
 /* ---------- quest log + save tools ---------- */
 function renderLog(){
-  const icon=s=>({done:'<i class="ic done">✓</i>',todo:'<i class="ic todo">!</i>',sealed:'<i class="ic sealed"></i>'}[s]);
+  const icon=s=>({done:'<i class="ic done">✓</i>',todo:'<i class="ic todo">!</i>',sealed:'<i class="ic sealed"></i>',frozen:'<i class="ic frozen">❄</i>'}[s]);
   let h=`<button class="close" id="logClose" aria-label="Close">×</button><div class="kicker">Quest log</div><h2>The course map</h2>`;
   for(const r of COURSE.regions){
     const un=regionUnlocked(r.id),dn=regionDone(r.id);
     h+=`<section class="reg ${un?'':'locked'}"><div class="rh"><b>${esc(r.name)}</b><span>${dn?'Restored':un?'Open':'Sealed — restore '+esc(regionById(r.requires).name)+' first'}</span></div><div class="rs">${esc(r.sub)}</div><ul>`;
-    for(const id of r.nodes){const n=NODES[id],st=nodeState(id);h+=`<li>${icon(st)}<span>${esc(n?.title||id)}</span><em>${st==='done'?`${SAVE.done[id].best} / ${n.puzzles.length}`:st==='sealed'?'later build':''}</em></li>`;}
+    for(const id of r.nodes){const n=NODES[id],st=nodeState(id),L=lessonsOf(id).length;h+=`<li>${icon(st)}<span>${esc(n?.title||id)}${L?`<small> · waypoints ${lessonsDone(id)}/${L}</small>`:''}</span><em>${st==='done'?`${SAVE.done[id].best} / ${n.puzzles.length}`:st==='sealed'?'later build':st==='frozen'?'frozen':''}</em></li>`;}
     h+=`</ul></section>`;
   }
   const acc=SAVE.stats.answered?Math.round(100*SAVE.stats.first/SAVE.stats.answered):0;
@@ -113,7 +148,7 @@ function updateWorldLogic(dt){
         const nx=(player.x-gt.x)/(d||1),ny=(player.y-gt.y)/(d||1);player.vx=nx*220;player.vy=ny*220;tapTarget=null;}
     }}
   // stone lights follow quest state
-  for(const L of lights)if(L.node){const s=nodeState(L.node);L.col=s==='done'?[120,230,150]:s==='sealed'?[110,125,190]:[255,205,120];L.i=s==='sealed'?.45:.85;}
+  for(const L of lights)if(L.node){const s=nodeState(L.node);L.col=s==='done'?[120,230,150]:s==='sealed'?[110,125,190]:s==='frozen'?[140,205,255]:[255,205,120];L.i=s==='sealed'?.45:.85;}
   // nearest interactable
   let best=null,bd=1e9;for(const it of INTER){const d=Math.hypot(player.x-it.x,player.y-it.y);if(d<it.r&&d<bd){bd=d;best=it;}}
   if(best!==nearI){nearI=best;readBtn.classList.toggle('hidden',!best);}
@@ -143,6 +178,7 @@ function frame(now){
   cam.x+=(tx-cam.x)*ce;cam.y+=(ty-cam.y)*ce;
   const hw=VW/2/ZOOM,hh=VH/2/ZOOM;
   cam.x=hw*2>=W?W/2:clamp(cam.x,hw,W-hw);cam.y=hh*2>=H?H/2:clamp(cam.y,hh,H-hh);
+  if(shake>0){shake-=dt;const k=shake*14;cam.x+=rand(-k,k);cam.y+=rand(-k,k);}
   updateParticles(dt,t);
   updateWorldLogic(dt);
   render(t);
@@ -153,10 +189,11 @@ function frame(now){
 
 /* ---------- boot ---------- */
 loadSave();
+registerLessons();
 initSprites();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
 renderHud();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
+window.__game={get run(){return run;},objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
 requestAnimationFrame(frame);
