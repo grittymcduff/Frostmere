@@ -14,11 +14,11 @@ const ART={
     pines:     {files:['pine_1.png','pine_2.png','pine_3.png','pine_4.png','pine_5.png','pine_6.png'], multi:true, w:120, h:190, ox:60, oy:178},   // snowy pines (Signpost Woods + village)
     pinesV:    {files:['pine_violet_1.png','pine_violet_2.png','pine_violet_3.png','pine_violet_4.png'], multi:true, w:120, h:190, ox:60, oy:178},   // violet pines (Lantern Hollow)
     pinesB:    {files:['pine_blue_1.png','pine_blue_2.png','pine_blue_3.png'], multi:true, w:120, h:190, ox:60, oy:178},   // ice-blue pines (Crystal Reach)
-    birch:     {files:['birch_1.png'], multi:true, w:170, h:210, ox:85, oy:200},   // bare white birches
-    rocks:     {files:['rock_1.png'], multi:true, w:64,  h:52,  ox:32, oy:40},
-    bush:      {files:['bush_1.png'], multi:true, w:70,  h:50,  ox:35, oy:40},    // berry bushes
-    flowers:   {files:['flowers_1.png'], multi:true, w:40,  h:30,  ox:20, oy:22},    // winter roses
-    crystals:  {files:['crystals_1.png'], multi:true, w:110, h:120, ox:55, oy:104},
+    birch:     {files:['birch_1.png','birch_2.png'], multi:true, w:170, h:210, ox:85, oy:200},   // bare white birches
+    rocks:     {files:['rock_1.png','rock_2.png'], multi:true, w:64,  h:52,  ox:32, oy:40},
+    bush:      {files:['bush_1.png','bush_2.png'], multi:true, w:70,  h:50,  ox:35, oy:40},    // berry bushes
+    flowers:   {files:['flowers_1.png','flowers_2.png'], multi:true, w:40,  h:30,  ox:20, oy:22},    // winter roses
+    crystals:  {files:['crystals_1.png','crystals_2.png'], multi:true, w:110, h:120, ox:55, oy:104},
     cabins:    {files:['cabin_1.png','cabin_3.png','cabin_4.png','cabin_5.png'], multi:true, w:246, h:218, ox:123,oy:198,
                 info:{w:176,bodyH:74,roofH:98,windows:[[-53,-45],[53,-45]],chimney:[42,-146]},   // default
                 // per-file window/chimney positions (from tools/prep_art.py) so glow + smoke line up
@@ -39,7 +39,7 @@ const ART={
     ice:       {files:['ice_shell.png'], w:84,  h:120, ox:42, oy:104},               // frozen-stone overlay (semi-transparent)
     cache:     {files:['cache_closed.png'], w:56,  h:52,  ox:28, oy:42},                // closed supply cache
     cacheOpen: {files:['cache_open.png'], w:56,  h:52,  ox:28, oy:42},
-    fgPine:    {files:[], w:320, h:520, ox:160,oy:515},               // dark foreground silhouette
+    fgPine:    {files:['fg_pine.png'], w:320, h:520, ox:160,oy:515},               // dark foreground silhouette
   },
   // Player sprite sheet: rows = down, left, right, up; `frames` walk frames per row.
   player:{file:'', fw:128, fh:160, frames:4, w:44, h:55, ox:22, oy:52},
