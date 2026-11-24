@@ -12,13 +12,13 @@ const ART={
   sprites:{
     // key        files (several = random variants)          w    h   ox   oy
     pines:     {files:['pine_1.png','pine_2.png','pine_3.png','pine_4.png','pine_5.png','pine_6.png'], multi:true, w:120, h:190, ox:60, oy:178},   // snowy pines (Signpost Woods + village)
-    pinesV:    {files:['pine_violet_1.png','pine_violet_2.png','pine_violet_3.png','pine_violet_4.png'], multi:true, w:120, h:190, ox:60, oy:178},   // violet pines (Lantern Hollow)
-    pinesB:    {files:['pine_blue_1.png','pine_blue_2.png','pine_blue_3.png'], multi:true, w:120, h:190, ox:60, oy:178},   // ice-blue pines (Crystal Reach)
-    birch:     {files:['birch_1.png','birch_2.png'], multi:true, w:170, h:210, ox:85, oy:200},   // bare white birches
-    rocks:     {files:['rock_1.png','rock_2.png'], multi:true, w:64,  h:52,  ox:32, oy:40},
-    bush:      {files:['bush_1.png','bush_2.png'], multi:true, w:70,  h:50,  ox:35, oy:40},    // berry bushes
+    pinesV:    {files:['pine_violet_1.png','pine_violet_2.png'], multi:true, w:120, h:190, ox:60, oy:178},   // violet pines (Lantern Hollow)
+    pinesB:    {files:['pine_blue_1.png','pine_blue_2.png'], multi:true, w:120, h:190, ox:60, oy:178},   // ice-blue pines (Crystal Reach)
+    birch:     {files:['birch_1.png','birch_2.png','birch_3.png'], multi:true, w:170, h:210, ox:85, oy:200},   // bare white birches
+    rocks:     {files:['rock_1.png','rock_2.png','rock_3.png'], multi:true, w:64,  h:52,  ox:32, oy:40},
+    bush:      {files:['bush_1.png','bush_2.png','bush_3.png'], multi:true, w:70,  h:50,  ox:35, oy:40},    // berry bushes
     flowers:   {files:['flowers_1.png','flowers_2.png'], multi:true, w:40,  h:30,  ox:20, oy:22},    // winter roses
-    crystals:  {files:['crystals_1.png','crystals_2.png'], multi:true, w:110, h:120, ox:55, oy:104},
+    crystals:  {files:['crystals_1.png','crystals_2.png','crystals_3.png'], multi:true, w:110, h:120, ox:55, oy:104},
     cabins:    {files:['cabin_1.png','cabin_3.png','cabin_4.png','cabin_5.png'], multi:true, w:246, h:218, ox:123,oy:198,
                 info:{w:176,bodyH:74,roofH:98,windows:[[-53,-45],[53,-45]],chimney:[42,-146]},   // default
                 // per-file window/chimney positions (from tools/prep_art.py) so glow + smoke line up
