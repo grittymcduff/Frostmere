@@ -14,8 +14,8 @@ function applyArt(){
   for(const [key,ims] of Object.entries(IMG)){
     const a=ART.sprites[key];if(!a)continue;
     if(key==='fgPine'){SPR.fgPine=ims[0];continue;}
-    const mk=im=>({cv:im,w:a.w,h:a.h,ox:a.ox,oy:a.oy,info:a.info});
-    SPR[key]=a.multi?ims.map(mk):mk(ims[0]);
+    const mk=(im,i)=>({cv:im,w:a.w,h:a.h,ox:a.ox,oy:a.oy,info:a.infos?.[i]||a.info});
+    SPR[key]=a.multi?ims.map(mk):mk(ims[0],0);
   }
 }
 /* sprite-sheet player (used only when ART.player.file is set and loads) */

@@ -4,6 +4,8 @@ Every object in the world is currently drawn in code. Any of them can be replace
 
 ## How to swap in a piece of art
 
+> **Tip:** run new art through `python3 tools/prep_art.py <key> raw.png assets/name.png` first. It strips the pink fringe left by magenta background removal, snaps the base onto the anchor (and scales undersized trees up), and for cabins prints the window/chimney `info` block to paste into `00_art.js`. Needs Pillow + NumPy (+ SciPy for cabins).
+
 1. Make a **transparent PNG** at the size in the table below (2× the in-game size, so it stays crisp on phones).
 2. Put it in `assets/` (e.g. `assets/pine_1.png`).
 3. Open `src/content/00_art.js` and add the file name to that sprite's `files` list:
