@@ -82,16 +82,16 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function shuffle(a,r=Math.random){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function showCard(html){card.innerHTML=`<button class="close" aria-label="Close">×</button>${html}`;card.classList.remove('hidden');card.scrollTop=0;
   card.querySelector('.close').onclick=closeCard;keys.clear();tapTarget=null;}
-function closeCard(){card.classList.add('hidden');run=null;}
+function closeCard(){card.classList.add('hidden');run=null;calcEl.classList.add('hidden');}
 
 function instantiate(p,seed){
   if(!p.make)return {...p};
   return {...p,...p.make(mulberry(seed)),make:undefined,_seed:seed};
 }
 
-function startSession(title,kicker,items,onDone){
+function startSession(title,kicker,items,onDone,mode='practice'){
   // items: [{node, idx}] ; each instantiated with a fresh seed
-  run={title,kicker,items:items.map(it=>({...it,p:instantiate(NODES[it.node].puzzles[it.idx],(Math.random()*1e9)|0),missed:false})),i:0,onDone};
+  run={title,kicker,items:items.map(it=>({...it,p:instantiate(NODES[it.node].puzzles[it.idx],(Math.random()*1e9)|0),missed:false})),i:0,onDone,mode};
   renderPuzzle();
 }
 function header(){const n=run.items.length,i=run.i;
@@ -99,14 +99,34 @@ function header(){const n=run.items.length,i=run.i;
   <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
 function renderPuzzle(){
   const it=run.items[run.i],p=it.p;
-  let body=`${header()}${p.exhibit||''}<p class="q">${p.q}</p><div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
+  let body=`${header()}${p.exhibit||''}<div class="ptools" id="ptools"></div><p class="q">${p.q}</p><div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
   showCard(body);
   const pz=card.querySelector('#pz'),acts=card.querySelector('#acts');
-  const fail=(msg)=>{if(!it.missed){it.missed=true;noteMiss(it);}feedback('no',msg||p.hint||'Not quite — try again.');};
-  const pass=()=>{feedback('ok',p.why||'Correct.');acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1);};
+  const fail=(msg)=>{
+    if(it.charm){it.charm=false;feedback('no','<b>Your Warding Charm absorbed that miss</b> — it won’t count. '+(msg||p.hint||'Try again.'));drawTools();return;}
+    if(!it.missed){it.missed=true;noteMiss(it);}feedback('no',msg||p.hint||'Not quite — try again.');drawTools();};
+  const drawTools=()=>{
+    const tb=card.querySelector('#ptools');if(!tb)return;const solved=card.querySelector('#fb').classList.contains('ok');
+    let h=`<button class="tool" data-t="calc">Calculator</button>`;
+    if(run.mode==='stone'&&!solved){
+      const inv=SAVE.inv,hasHint=!!p.hint;
+      if(p.type==='mc')h+=`<button class="tool item" data-t="lens" ${inv.lens&&!it.lens?'':'disabled'}>Lens <i>${inv.lens}</i></button>`;
+      if(p.type!=='mc')h+=`<button class="tool item" data-t="feather" ${inv.feather&&!it.feather&&hasHint?'':'disabled'} title="${hasHint?'Reveal the first step':'No first step to reveal here'}">Feather <i>${inv.feather}</i></button>`;
+      h+=`<button class="tool item${it.charm?' armed':''}" data-t="charm" ${inv.charm&&!it.charm&&!it.missed?'':'disabled'}>${it.charm?'Charm armed':'Warding Charm'} <i>${inv.charm}</i></button>`;
+    }
+    tb.innerHTML=h;
+    tb.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=b.dataset.t;
+      if(k==='calc'){toggleCalc();return;}
+      if(!SAVE.inv[k])return;SAVE.inv[k]--;persist();
+      if(k==='lens'){const wrong=[...pz.querySelectorAll('button.opt')].filter(x=>!x.disabled&&x.dataset.k!=String(p.a));const g=pick(wrong);if(g){g.disabled=true;g.classList.add('gone');}it.lens=true;feedback('', '<b>Lens:</b> one wrong answer struck out.');}
+      if(k==='feather'){it.feather=true;feedback('', `<b>Feather — first step:</b> ${p.hint}`);}
+      if(k==='charm'){it.charm=true;feedback('', '<b>Warding Charm armed:</b> your next miss on this question won’t count.');}
+      drawTools();});
+  };
+  const pass=()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1);};
   if(p.type==='mc'){
     const order=shuffle(p.opts.map((o,k)=>k));
-    order.forEach(k=>{const b=btn(p.opts[k],'opt');pz.appendChild(b);b.onclick=()=>{if(b.disabled)return;
+    order.forEach(k=>{const b=btn(p.opts[k],'opt');b.dataset.k=k;pz.appendChild(b);b.onclick=()=>{if(b.disabled)return;
       if(k===p.a){b.classList.add('ok');pz.querySelectorAll('button').forEach(x=>x.disabled=true);pass();}
       else{b.classList.add('no');b.disabled=true;fail(p.hints?.[k]);}};});
   }else if(p.type==='num'){
@@ -134,11 +154,12 @@ function renderPuzzle(){
     chk.onclick=()=>{const wrong=cur.filter((k,i)=>k!==i).length;pz.querySelectorAll('li').forEach((li,i)=>{li.classList.toggle('good',cur[i]===i);li.classList.toggle('bad',cur[i]!==i);});
       if(!wrong){pz.querySelectorAll('.mv').forEach(b=>b.disabled=true);pass();}else fail(`${wrong} step${wrong>1?'s are':' is'} out of place.`);};
   }
-  function feedback(kind,msg){const fb=card.querySelector('#fb');fb.className='fb '+kind;fb.innerHTML=msg;}
+  function feedback(kind,msg){const fb=card.querySelector('#fb');fb.className='fb '+(kind||'info');fb.innerHTML=msg;}
+  drawTools();
 }
 function btn(label,cls){const b=document.createElement('button');b.className=cls;b.innerHTML=label;return b;}
 function stat(correctFirst){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;}
-function noteMiss(it){if(run.mode==='review'||NODES[it.node].lessonOf)return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function noteMiss(it){if(run.mode!=='stone')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
   const r=run;closeCard();r.onDone&&r.onDone(r.items);persist();

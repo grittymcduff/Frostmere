@@ -125,11 +125,31 @@
   .teach b{color:#ffe2a8}
   ul.wl{list-style:none;padding:0;margin:10px 0}ul.wl li{display:flex;gap:9px;align-items:center;padding:5px 0;font-size:15px}ul.wl li.blocked{opacity:.55}
   .ic.frozen{background:#2b5f8a;color:#dff3ff}.reg li small{opacity:.55;font-size:11.5px}
+  .ptools{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+  .ptools .tool{font:inherit;font-size:13px;padding:6px 11px;min-height:36px;border-radius:999px;cursor:pointer;background:rgba(255,255,255,.06);color:#f3ead8;border:1px solid rgba(255,214,150,.3)}
+  .ptools .tool.item{border-color:rgba(140,205,255,.45);color:#d8efff}.ptools .tool i{font-style:normal;opacity:.7;margin-left:4px}
+  .ptools .tool.armed{background:rgba(140,205,255,.25)}.ptools .tool:disabled{opacity:.35;cursor:default}
+  #card button.opt.gone{text-decoration:line-through;opacity:.35}
+  .fb.info{padding:10px 12px;background:rgba(140,205,255,.1);border-left:3px solid #8cc8f0}
+  #hud .inv{color:#d8efff;font-size:12px}
+  .ic.cache{background:#7a4e30}.reg li.cl{opacity:.85}
+  #calc{position:fixed;right:12px;bottom:12px;width:min(330px,calc(100vw - 24px));z-index:8;padding:12px;box-sizing:border-box;max-height:calc(100dvh - 24px);overflow:auto}
+  #calc .ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:#ffe2a8}
+  #calc .cx{background:none;border:none;color:#f3ead8;font-size:22px;cursor:pointer;width:36px;height:36px}
+  #cIn{width:100%;box-sizing:border-box;font:16px/1.3 ui-monospace,Menlo,Consolas,monospace;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,214,150,.4);background:rgba(0,0,0,.3);color:#fff}
+  .cout{font:15px ui-monospace,Menlo,Consolas,monospace;min-height:20px;margin:6px 2px;color:#cfe6ff}.cout.ok{color:#a9eabd}.cout.err{color:#ffb4a8;font-family:inherit;font-size:13px}
+  #calc .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  #calc .keys button{font:14px ui-monospace,Menlo,Consolas,monospace;min-height:40px;border-radius:8px;cursor:pointer;background:rgba(255,255,255,.07);color:#f3ead8;border:1px solid rgba(255,214,150,.2)}
+  #calc .keys button.eqk{background:#e9b35c;color:#2a1a08;font-weight:bold}
+  #calc .hist{font:12px ui-monospace,Menlo,Consolas,monospace;opacity:.6;margin-top:8px;max-height:84px;overflow:auto}
+  #calc .use{width:100%;margin-top:8px;font:inherit;font-size:14px;min-height:40px;border-radius:9px;background:#e9b35c;color:#2a1a08;border:0;font-weight:bold;cursor:pointer}
+  #calc .chelp{font-size:11.5px;opacity:.6;line-height:1.5;margin:8px 0 0}#calc code{font-size:11px;background:rgba(255,255,255,.08);padding:0 3px;border-radius:3px}
+  @media (max-width:600px){#calc{left:12px;right:12px;width:auto;bottom:8px}}
 </style>
 </head>
 <body>
 <canvas id="game" aria-label="Frostmere Village game world"></canvas>
-<div id="hud" class="panel"><span class="t1" id="hName"></span><span class="t2" id="hSub"></span><div class="line" id="hLine"></div></div>
+<div id="hud" class="panel"><span class="t1" id="hName"></span><span class="t2" id="hSub"></span><div class="line" id="hLine"></div><div class="line inv hidden" id="hInv"></div></div>
 <div class="topbtns"><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="fxBtn" class="panel">✦ Effects</button></div>
 <div id="fx" class="panel hidden">
   <div class="sub">Layers (code only)</div>
@@ -150,6 +170,7 @@
 <div id="toast" class="panel"></div>
 <div id="banner"><b></b><span></span></div>
 <div id="fade"></div>
+<div id="calc" class="panel hidden" role="dialog" aria-label="Calculator"></div>
 
 <script>
 {
@@ -1137,7 +1158,7 @@ function initSprites(){
   SPR.lamp=makeLamp();SPR.crate=makeCrate();SPR.barrel=makeBarrel();SPR.snowman=makeSnowman();
   SPR.crystals=[0,1,2].map(()=>makeCrystals());SPR.sign=makeSign();SPR.flowers=[0,1,2].map(()=>makeFlowers());
   SPR.firepit=makeFirePit();SPR.fgPine=makeFgPine();
-  SPR.gate=makeGate();SPR.stone=makeStone();SPR.owl=makeOwl();SPR.lectern=makeLectern();SPR.ice=makeIce();
+  SPR.gate=makeGate();SPR.stone=makeStone();SPR.owl=makeOwl();SPR.lectern=makeLectern();SPR.ice=makeIce();SPR.cache=makeCacheSpr(false);SPR.cacheOpen=makeCacheSpr(true);
   SPR.cabins=[196,176,170,156,150].map(w=>makeCabin(w));
 }
 
@@ -1280,6 +1301,13 @@ function buildWild(reg){
       const side=(j%2?1:-1)*44;addLesson(x-Math.sin(a)*side,y+Math.cos(a)*side,id,j);
     }
   });
+  // supply caches: hidden off the path, out beyond each stone, among the trees
+  pts.forEach(([sx,sy],k)=>{const id=nodes[k];if(!NODES[id]?.cache)return;
+    const base=Math.atan2(sy-cy,sx-cx);
+    for(let t=0;t<220;t++){const a=base+rand(-.9,.9),d=rand(150,330),x=sx+Math.cos(a)*d,y=sy+Math.sin(a)*d*.85;
+      if(x<70||y<110||x>W-70||y>H-140)continue;if(nearPath(x,y,70)||!free(x,y,24))continue;addCache(x,y,id);return;}
+    for(let t=0;t<400;t++){const x=rand(80,W-80),y=rand(120,H-160);if(nearPath(x,y,60)||!free(x,y,24))continue;addCache(x,y,id);return;}
+  });
   for(let i=24;i<ringS.length-12;i+=Math.floor(ringS.length/(th.lamps||8))){
     const [x,y]=ringS[i],[x2,y2]=ringS[Math.min(ringS.length-1,i+1)],a=Math.atan2(y2-y,x2-x);
     const lx=x+Math.sin(a)*52,ly=y-Math.cos(a)*52;if(free(lx,ly,16))addLamp(lx,ly);
@@ -1317,6 +1345,25 @@ function makeIce(){
     g.fillStyle='rgba(240,250,255,.9)';ell(g,0,-2,28,6);
   });
 }
+function makeCacheSpr(open){
+  return makeSprite(56,52,28,42,g=>{
+    g.fillStyle='rgba(40,55,95,.3)';ell(g,4,0,22,6);
+    const bg=g.createLinearGradient(0,-22,0,0);bg.addColorStop(0,'#8a5a36');bg.addColorStop(1,'#5a3a22');
+    g.fillStyle=bg;g.beginPath();g.roundRect(-18,-20,36,20,3);g.fill();
+    g.fillStyle='#3a3a46';g.fillRect(-18,-14,36,3);g.fillRect(-9,-20,3,20);g.fillRect(6,-20,3,20);
+    if(open){g.fillStyle='#2a1a10';g.beginPath();g.roundRect(-16,-22,32,5,2);g.fill();
+      g.fillStyle='#6e4630';g.beginPath();g.moveTo(-18,-22);g.lineTo(18,-22);g.lineTo(15,-36);g.lineTo(-15,-36);g.closePath();g.fill();g.fillStyle='#fbfdff';g.fillRect(-14,-37,28,2);}
+    else{g.fillStyle='#7a4e30';g.beginPath();g.moveTo(-19,-20);g.quadraticCurveTo(0,-32,19,-20);g.closePath();g.fill();
+      g.fillStyle='#3a3a46';g.fillRect(-9,-27,3,8);g.fillRect(6,-27,3,8);
+      g.fillStyle='#e9c260';g.beginPath();g.roundRect(-3.5,-20,7,7,1.5);g.fill();g.fillStyle='#7fd8ff';circ(g,0,-16.5,1.6);
+      g.fillStyle='#fbfdff';g.beginPath();g.moveTo(-17,-21);g.quadraticCurveTo(0,-34,17,-21);g.quadraticCurveTo(0,-26,-17,-21);g.fill();}
+    g.fillStyle='rgba(250,252,255,.9)';ell(g,-12,-1,9,2.5);ell(g,13,0,7,2);
+  });
+}
+function addCache(x,y,id){
+  addObj({kind:'cache',cache:id,x,y,spr:SAVE.caches[id+'#C']?SPR.cacheOpen:SPR.cache});colliders.push({t:'c',x,y:y-4,r:13});claim(x,y,30);
+  INTER.push({x,y,r:48,label:()=>SAVE.caches[id+'#C']?'Empty cache':'Open the supply cache',act:()=>openCache(id)});
+}
 function addLesson(x,y,nodeId,j){
   const lid=lessonId(nodeId,j);
   addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>lessonState(nodeId,j)}});
@@ -1346,6 +1393,82 @@ function setScene(id,spawnKey){
   todKey=(reg&&reg.theme.tod)||'dusk';syncTodButtons();
 }
 function hashStr(s){let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
+
+/* ==== js/07_calc.js ==== */
+/* ---------- calculator: safe expression parser (no eval) + panel ---------- */
+const Calc=(()=>{
+  const FN={sqrt:Math.sqrt,ln:Math.log,log:Math.log10,exp:Math.exp,abs:Math.abs,
+    sum:(...a)=>a.reduce((s,v)=>s+v,0),mean:(...a)=>a.reduce((s,v)=>s+v,0)/a.length,
+    sumsq:(...a)=>a.reduce((s,v)=>s+v*v,0),
+    var:(...a)=>{const m=a.reduce((s,v)=>s+v,0)/a.length;return a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1);},
+    sd:(...a)=>Math.sqrt(FN.var(...a)),min:Math.min,max:Math.max,round:(x,d=0)=>Math.round(x*10**d)/10**d};
+  function tokenize(s){
+    s=s.replace(/[×✕]/g,'*').replace(/[÷]/g,'/').replace(/[−–]/g,'-').replace(/π/g,'pi').replace(/√/g,'sqrt').replace(/\$/g,'');
+    const t=[];let i=0;
+    while(i<s.length){const c=s[i];
+      if(/\s/.test(c)){i++;continue;}
+      const m=s.slice(i).match(/^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?/i);
+      if(m){t.push({k:'n',v:parseFloat(m[0])});i+=m[0].length;continue;}
+      const w=s.slice(i).match(/^[a-z]+/i);
+      if(w){t.push({k:'w',v:w[0].toLowerCase()});i+=w[0].length;continue;}
+      if('+-*/^(),%'.includes(c)){t.push({k:c});i++;continue;}
+      throw new Error(`Unexpected “${c}”`);}
+    return t;
+  }
+  function evaluate(src,ans=0){
+    const t=tokenize(src);let p=0;
+    const peek=()=>t[p],eat=k=>{if(t[p]&&t[p].k===k){p++;return true;}return false;};
+    const expr=()=>{let v=term();for(;;){if(eat('+'))v+=term();else if(eat('-'))v-=term();else return v;}};
+    const term=()=>{let v=unary();for(;;){if(eat('*'))v*=unary();else if(eat('/'))v/=unary();
+      else if(peek()&&(peek().k==='('||peek().k==='w'||peek().k==='n'))v*=unary(); // implicit ×, e.g. 2(3+4)
+      else return v;}};
+    const unary=()=>{if(eat('-'))return -unary();if(eat('+'))return unary();return power();};
+    const power=()=>{let b=postfix();if(eat('^'))return b**unary();return b;};
+    const postfix=()=>{let v=atom();while(eat('%'))v/=100;return v;};
+    const atom=()=>{const x=t[p];if(!x)throw new Error('Incomplete expression');
+      if(x.k==='n'){p++;return x.v;}
+      if(eat('(')){const v=expr();if(!eat(')'))throw new Error('Missing “)”');return v;}
+      if(x.k==='w'){p++;const n=x.v;
+        if(n==='pi')return Math.PI;if(n==='e'&&!(t[p]&&t[p].k==='('))return Math.E;if(n==='ans')return ans;
+        const f=FN[n];if(!f)throw new Error(`Unknown “${n}”`);
+        if(!eat('(')){return f(atom());}
+        const args=[];if(!eat(')')){do{args.push(expr());}while(eat(','));if(!eat(')'))throw new Error('Missing “)”');}
+        return f(...args);}
+      throw new Error('Unexpected symbol');};
+    const v=expr();if(p<t.length)throw new Error('Unexpected input');if(!isFinite(v))throw new Error('Not a finite number');return v;
+  }
+  const fmt=v=>{const a=Math.abs(v);if(a!==0&&(a<1e-6||a>=1e12))return v.toExponential(6);return String(Number(v.toPrecision(12)));};
+  return {evaluate,fmt};
+})();
+
+const calcEl=document.getElementById('calc');
+let calcAns=0;
+function buildCalc(){
+  const keys=[['(',')','^','√(','⌫'],['7','8','9','÷','C'],['4','5','6','×','ln('],['1','2','3','−','exp('],['0','.',',','+','='],['x²','1/x','ANS','sum(','mean('],['sumsq(','var(','sd(','log(','π']];
+  calcEl.innerHTML=`<div class="ch"><b>Calculator</b><button class="cx" aria-label="Close calculator">×</button></div>
+  <input id="cIn" autocomplete="off" spellcheck="false" aria-label="Expression" placeholder="e.g. (12.4-9.8)^2 + sumsq(1,-2,3)">
+  <div id="cOut" class="cout">&nbsp;</div>
+  <div class="keys">${keys.flat().map(k=>`<button data-k="${k}"${k==='='?' class="eqk"':''}>${k.replace('(','')==='√'?'√':k}</button>`).join('')}</div>
+  <div class="hist" id="cHist"></div>
+  <button id="cUse" class="use hidden">Use result as my answer</button>
+  <p class="chelp">Lists: <code>mean(4,7,9)</code> · <code>sumsq(1,-2,3)</code> = Σx² · <code>var()</code> and <code>sd()</code> use n − 1 · <code>ln</code> natural log · <code>log</code> base 10.</p>`;
+  const inp=calcEl.querySelector('#cIn'),out=calcEl.querySelector('#cOut'),hist=calcEl.querySelector('#cHist');
+  const run=()=>{const s=inp.value.trim();if(!s)return;try{const v=Calc.evaluate(s,calcAns);calcAns=v;out.textContent='= '+Calc.fmt(v);out.className='cout ok';
+      const row=document.createElement('div');row.textContent=`${s} = ${Calc.fmt(v)}`;hist.prepend(row);while(hist.children.length>5)hist.lastChild.remove();
+      inp.value=Calc.fmt(v);syncUse();}catch(e){out.textContent=e.message;out.className='cout err';}};
+  const ins=s=>{const a=inp.selectionStart??inp.value.length,b=inp.selectionEnd??a;inp.value=inp.value.slice(0,a)+s+inp.value.slice(b);inp.focus();inp.setSelectionRange(a+s.length,a+s.length);};
+  calcEl.querySelectorAll('.keys button').forEach(b=>b.onclick=()=>{const k=b.dataset.k;
+    if(k==='=')run();else if(k==='C'){inp.value='';out.innerHTML='&nbsp;';out.className='cout';}
+    else if(k==='⌫'){inp.value=inp.value.slice(0,-1);inp.focus();}
+    else if(k==='x²')ins('^2');else if(k==='1/x'){inp.value=`1/(${inp.value||'ans'})`;}
+    else if(k==='ANS')ins('ans');else if(k==='√(')ins('sqrt(');else ins(k);});
+  inp.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();run();}if(e.key==='Escape')toggleCalc(false);});
+  inp.addEventListener('keyup',e=>e.stopPropagation());
+  calcEl.querySelector('.cx').onclick=()=>toggleCalc(false);
+  calcEl.querySelector('#cUse').onclick=()=>{const n=document.getElementById('numIn');if(n&&!n.disabled){n.value=Calc.fmt(calcAns);n.focus();toggleCalc(false);}};
+}
+function syncUse(){const n=document.getElementById('numIn');calcEl.querySelector('#cUse').classList.toggle('hidden',!(n&&!n.disabled));}
+function toggleCalc(on){if(!calcEl.innerHTML)buildCalc();const show=on??calcEl.classList.contains('hidden');calcEl.classList.toggle('hidden',!show);if(show){syncUse();setTimeout(()=>calcEl.querySelector('#cIn').focus(),30);}}
 
 /* ==== js/07_puzzles.js ==== */
 /* ---------- statistics: OLS with Excel-style output ---------- */
@@ -1432,16 +1555,16 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function shuffle(a,r=Math.random){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function showCard(html){card.innerHTML=`<button class="close" aria-label="Close">×</button>${html}`;card.classList.remove('hidden');card.scrollTop=0;
   card.querySelector('.close').onclick=closeCard;keys.clear();tapTarget=null;}
-function closeCard(){card.classList.add('hidden');run=null;}
+function closeCard(){card.classList.add('hidden');run=null;calcEl.classList.add('hidden');}
 
 function instantiate(p,seed){
   if(!p.make)return {...p};
   return {...p,...p.make(mulberry(seed)),make:undefined,_seed:seed};
 }
 
-function startSession(title,kicker,items,onDone){
+function startSession(title,kicker,items,onDone,mode='practice'){
   // items: [{node, idx}] ; each instantiated with a fresh seed
-  run={title,kicker,items:items.map(it=>({...it,p:instantiate(NODES[it.node].puzzles[it.idx],(Math.random()*1e9)|0),missed:false})),i:0,onDone};
+  run={title,kicker,items:items.map(it=>({...it,p:instantiate(NODES[it.node].puzzles[it.idx],(Math.random()*1e9)|0),missed:false})),i:0,onDone,mode};
   renderPuzzle();
 }
 function header(){const n=run.items.length,i=run.i;
@@ -1449,14 +1572,34 @@ function header(){const n=run.items.length,i=run.i;
   <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
 function renderPuzzle(){
   const it=run.items[run.i],p=it.p;
-  let body=`${header()}${p.exhibit||''}<p class="q">${p.q}</p><div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
+  let body=`${header()}${p.exhibit||''}<div class="ptools" id="ptools"></div><p class="q">${p.q}</p><div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
   showCard(body);
   const pz=card.querySelector('#pz'),acts=card.querySelector('#acts');
-  const fail=(msg)=>{if(!it.missed){it.missed=true;noteMiss(it);}feedback('no',msg||p.hint||'Not quite — try again.');};
-  const pass=()=>{feedback('ok',p.why||'Correct.');acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1);};
+  const fail=(msg)=>{
+    if(it.charm){it.charm=false;feedback('no','<b>Your Warding Charm absorbed that miss</b> — it won’t count. '+(msg||p.hint||'Try again.'));drawTools();return;}
+    if(!it.missed){it.missed=true;noteMiss(it);}feedback('no',msg||p.hint||'Not quite — try again.');drawTools();};
+  const drawTools=()=>{
+    const tb=card.querySelector('#ptools');if(!tb)return;const solved=card.querySelector('#fb').classList.contains('ok');
+    let h=`<button class="tool" data-t="calc">Calculator</button>`;
+    if(run.mode==='stone'&&!solved){
+      const inv=SAVE.inv,hasHint=!!p.hint;
+      if(p.type==='mc')h+=`<button class="tool item" data-t="lens" ${inv.lens&&!it.lens?'':'disabled'}>Lens <i>${inv.lens}</i></button>`;
+      if(p.type!=='mc')h+=`<button class="tool item" data-t="feather" ${inv.feather&&!it.feather&&hasHint?'':'disabled'} title="${hasHint?'Reveal the first step':'No first step to reveal here'}">Feather <i>${inv.feather}</i></button>`;
+      h+=`<button class="tool item${it.charm?' armed':''}" data-t="charm" ${inv.charm&&!it.charm&&!it.missed?'':'disabled'}>${it.charm?'Charm armed':'Warding Charm'} <i>${inv.charm}</i></button>`;
+    }
+    tb.innerHTML=h;
+    tb.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=b.dataset.t;
+      if(k==='calc'){toggleCalc();return;}
+      if(!SAVE.inv[k])return;SAVE.inv[k]--;persist();
+      if(k==='lens'){const wrong=[...pz.querySelectorAll('button.opt')].filter(x=>!x.disabled&&x.dataset.k!=String(p.a));const g=pick(wrong);if(g){g.disabled=true;g.classList.add('gone');}it.lens=true;feedback('', '<b>Lens:</b> one wrong answer struck out.');}
+      if(k==='feather'){it.feather=true;feedback('', `<b>Feather — first step:</b> ${p.hint}`);}
+      if(k==='charm'){it.charm=true;feedback('', '<b>Warding Charm armed:</b> your next miss on this question won’t count.');}
+      drawTools();});
+  };
+  const pass=()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1);};
   if(p.type==='mc'){
     const order=shuffle(p.opts.map((o,k)=>k));
-    order.forEach(k=>{const b=btn(p.opts[k],'opt');pz.appendChild(b);b.onclick=()=>{if(b.disabled)return;
+    order.forEach(k=>{const b=btn(p.opts[k],'opt');b.dataset.k=k;pz.appendChild(b);b.onclick=()=>{if(b.disabled)return;
       if(k===p.a){b.classList.add('ok');pz.querySelectorAll('button').forEach(x=>x.disabled=true);pass();}
       else{b.classList.add('no');b.disabled=true;fail(p.hints?.[k]);}};});
   }else if(p.type==='num'){
@@ -1484,11 +1627,12 @@ function renderPuzzle(){
     chk.onclick=()=>{const wrong=cur.filter((k,i)=>k!==i).length;pz.querySelectorAll('li').forEach((li,i)=>{li.classList.toggle('good',cur[i]===i);li.classList.toggle('bad',cur[i]!==i);});
       if(!wrong){pz.querySelectorAll('.mv').forEach(b=>b.disabled=true);pass();}else fail(`${wrong} step${wrong>1?'s are':' is'} out of place.`);};
   }
-  function feedback(kind,msg){const fb=card.querySelector('#fb');fb.className='fb '+kind;fb.innerHTML=msg;}
+  function feedback(kind,msg){const fb=card.querySelector('#fb');fb.className='fb '+(kind||'info');fb.innerHTML=msg;}
+  drawTools();
 }
 function btn(label,cls){const b=document.createElement('button');b.className=cls;b.innerHTML=label;return b;}
 function stat(correctFirst){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;}
-function noteMiss(it){if(run.mode==='review'||NODES[it.node].lessonOf)return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function noteMiss(it){if(run.mode!=='stone')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
   const r=run;closeCard();r.onDone&&r.onDone(r.items);persist();
@@ -2365,13 +2509,78 @@ NODES['m6-omit']={kicker:'Module 6 · Choosing independent variables',title:'The
     why:'Sensitivity analysis tests a story; data mining creates one from the sample. Document the specifications you tried.'},
   ]};
 
+/* ==== content/z_caches.js ==== */
+/* ==========================================================================
+   SUPPLY CACHES — one hidden near each stone. Each lock is a short problem
+   that needs real arithmetic (the calculator helps). Reward: one item.
+     lens    → strike out a wrong answer (multiple choice)
+     feather → reveal the first step (calculation questions)
+     charm   → the next miss on a question doesn't count
+   ========================================================================== */
+const CACHE=(id,item,puzzle)=>{NODES[id].cache={item,puzzle};};
+
+/* ---- Signpost Woods: Modules 1–3 ---- */
+CACHE('m1-signs','lens',{make:r=>{const a=ri(r,400,700),bp=ri(r,25,60),bc=ri(r,12,35),by=round(rr(r,.4,1.2),1),P=round(rr(r,3,6),2),Pc=round(rr(r,3.5,6.5),2),Y=ri(r,200,400),q=a-bp*P+bc*Pc+by*Y;
+  return {type:'num',exhibit:Exhibit.eq(`Q = ${a} − ${bp}P + ${bc}Pᶜ + ${by}Y`),q:`A café’s weekly demand model is above. Predict Q when your price P = <b>$${P}</b>, the rival’s price Pᶜ = <b>$${Pc}</b>, and customer budget Y = <b>${Y}</b>.`,a:q,tol:.05,unit:'cups',
+   hint:`${a} − ${bp}×${P} + ${bc}×${Pc} + ${by}×${Y}`,solution:`${a} − ${round(bp*P,2)} + ${round(bc*Pc,2)} + ${round(by*Y,2)} = ${round(q,2)}.`,why:'The signs carry the theory: own price pulls Q down, a pricier rival and a bigger budget push it up.'};}});
+CACHE('m1-cross','charm',{make:r=>{const n=ri(r,150,300),t=ri(r,Math.round(n*.18),Math.round(n*.3)),c=ri(r,Math.round(n*.1),Math.round(n*.2)),d=100*(t-c)/n;
+  return {type:'num',q:`A retailer <b>randomly</b> offered free shipping to ${n} customers; ${t} reordered. Of ${n} customers not offered it, ${c} reordered. By how many <b>percentage points</b> did the offer raise the reorder rate?`,a:d,tol:.06,unit:'pts',
+   hint:`Rate with offer = ${t}/${n}; without = ${c}/${n}; subtract and × 100.`,solution:`(${t} − ${c}) / ${n} × 100 = ${round(d,2)} points.`,why:'Random assignment is what lets you read this difference as the offer’s effect, not a coincidence or a third factor.'};}});
+CACHE('m1-magic','feather',{make:r=>{const p=ri(r,62,90),N=ri(r,60,200),e=N*(2*p/100-3*(1-p/100));
+  return {type:'num',q:`Your height model guesses within 10 lb for <b>${p}%</b> of customers. Each hit earns $2; each miss costs $3. What should the booth expect to earn from <b>${N}</b> customers?`,a:e,tol:.6,pre:'$',
+   hint:`Per customer: 0.${String(p).padStart(2,'0')} × $2 − ${round(1-p/100,2)} × $3; then × ${N}.`,solution:`${N} × (${p/100}×2 − ${round(1-p/100,2)}×3) = ${money(e)}.`,why:'Judge a model in the units of the decision — here, expected dollars per customer.'};}});
+CACHE('m1-units','lens',{make:r=>{const b=round(rr(r,8,12),2),k=pick([500,1000,1500]),a=b*k/100;
+  return {type:'num',exhibit:Exhibit.eq(`Food = 83.42 + ${b} × Income <small>(weekly income in $100 units)</small>`),q:`By how much does expected weekly food spending change when weekly income rises by <b>$${k.toLocaleString()}</b>?`,a,tol:.02,pre:'$',
+   hint:`$${k.toLocaleString()} is ${k/100} income units.`,solution:`${k/100} × ${b} = ${money(a)}.`,why:'Convert the change into the coded unit, then multiply by the slope.'};}});
+CACHE('m1-ledger','charm',{make:r=>{const b0=round(rr(r,25,45),2),b1=round(rr(r,3.2,4.8),3),T=ri(r,180,260),x=(T-b0)/b1;
+  return {type:'num',exhibit:Exhibit.eq(`Revenue ($M) = ${b0} + ${b1} × Customers`),q:`A branch wants expected revenue of <b>$${T}M</b>. How many active customers does the model say it needs? (Give the exact value — don’t round.)`,a:x,tol:.02,
+   hint:`Solve ${T} = ${b0} + ${b1}·X for X.`,solution:`(${T} − ${b0}) / ${b1} = ${round(x,3)}.`,why:'Inverting a fitted line is fine inside the observed range — outside it, you’re extrapolating.'};}});
+CACHE('m2-ols','feather',{make:r=>{const x=[1,2,3,4,5],y=x.map(v=>ri(r,2,4)*v+ri(r,-2,3)),xb=3,yb=y.reduce((a,b)=>a+b,0)/5,sxy=x.reduce((s,v,i)=>s+(v-xb)*(y[i]-yb),0),sxx=10,b1=sxy/sxx;
+  return {type:'num',exhibit:Exhibit.table(['x','y'],x.map((v,i)=>[v,y[i]]))+Exhibit.eq('b₁ = Σ(x − x̄)(y − ȳ) / Σ(x − x̄)²'),q:'Compute the OLS slope b₁ by hand for these five points.',a:b1,tol:.006,
+   hint:`x̄ = 3 and ȳ = ${yb}. Σ(x − x̄)² = 10.`,solution:`Σ(x − x̄)(y − ȳ) = ${round(sxy,3)}; b₁ = ${round(sxy,3)} / 10 = ${round(b1,4)}.`,why:'This is the slope that minimizes Σe² — the same number Excel would report.'};}});
+CACHE('m2-andy','lens',{make:r=>{const b2=round(rr(r,1.6,2.4),3),cs=ri(r,35,55),inc=b2*1000,pr=inc*(1-cs/100)-1000;
+  return {type:'num',q:`Advertising coefficient = <b>${b2}</b> (SALES and ADVERT in $1,000s). Food, labor, and franchise costs eat <b>${cs}%</b> of each extra revenue dollar. What is the incremental profit from an extra <b>$1,000</b> of advertising?`,a:pr,tol:.6,pre:'$',
+   hint:`Extra revenue = ${b2} × $1,000. Keep (1 − ${cs/100}) of it, then subtract the $1,000 ad cost.`,solution:`${money(inc,0)} × ${round(1-cs/100,2)} − $1,000 = ${money(pr)}.`,why:'Revenue above ad cost isn’t profit — the extra sales carry their own costs.'};}});
+CACHE('m2-fit','charm',{make:r=>{const n=ri(r,30,60),R2a=round(rr(r,.55,.7),3),R2b=round(R2a+rr(r,.002,.012),3),ka=2,kb=3,adj=(R2,k)=>1-(1-R2)*(n-1)/(n-k-1),a=adj(R2b,kb);
+  return {type:'num',q:`Model A (2 predictors) has R² = ${R2a}. Model B adds a third predictor: R² = <b>${R2b}</b>, n = <b>${n}</b>. Compute Model B’s adjusted R².`,a,tol:.0015,
+   hint:'1 − (1 − R²)(n − 1)/(n − k − 1), with k = 3.',solution:`1 − (1 − ${R2b}) × ${n-1}/${n-4} = ${round(a,4)} (Model A: ${round(adj(R2a,ka),4)}).`,
+   why:`${a<adj(R2a,ka)?'Adjusted R² fell, so the third predictor isn’t earning its degree of freedom.':'Adjusted R² rose slightly — but theory still decides whether it belongs.'}`};}});
+CACHE('m3-design','feather',{make:r=>{const N=[ri(r,2,7),ri(r,2,7)],P=[ri(r,40,160)*1000,ri(r,40,160)*1000],I=[ri(r,40,95)*1000,ri(r,40,95)*1000],f=k=>102192-9075*N[k]+.355*P[k]+1.288*I[k],d=f(0)-f(1);
+  return {type:'num',exhibit:Exhibit.eq('SALES = 102,192 − 9,075·N + 0.355·P + 1.288·I')+Exhibit.table(['Site','Competitors N','Population P','Income I'],[['A',N[0],P[0].toLocaleString(),money(I[0],0)],['B',N[1],P[1].toLocaleString(),money(I[1],0)]]),
+   q:'How much higher are predicted annual sales at Site A than at Site B? (Negative if B is higher.)',a:d,tol:2,pre:'$',
+   hint:'The intercept cancels: −9,075·ΔN + 0.355·ΔP + 1.288·ΔI, with Δ = A − B.',solution:`−9,075×${N[0]-N[1]} + 0.355×${(P[0]-P[1]).toLocaleString()} + 1.288×${(I[0]-I[1]).toLocaleString()} = ${money(d,0)}.`,why:'Comparing two scenarios only needs the coefficients times the differences.'};}});
+CACHE('m3-dummy','lens',{make:r=>{const b0=round(rr(r,17,20),2),b1=round(rr(r,1.5,3.2),2),b2=round(rr(r,4,7),2),d=b2-b1;
+  return {type:'num',exhibit:Exhibit.eq(`Margin (%) = ${b0} + ${b1}·Commercial + ${b2}·Defense <small>(Government is the baseline)</small>`),q:'How many percentage points higher is the predicted margin for a <b>Defense</b> contract than for a <b>Commercial</b> one?',a:d,tol:.006,unit:'pts',
+   hint:'Defense = b₀ + b₂; Commercial = b₀ + b₁. Subtract.',solution:`(${b0} + ${b2}) − (${b0} + ${b1}) = ${round(d,2)}.`,why:'Both dummies are measured against Government, so their difference compares the two non-baseline groups directly.'};}});
+
+/* ---- Lantern Hollow: Modules 4–6 ---- */
+CACHE('m4-seven','charm',{make:r=>{const a=round(rr(r,1.2,2.6),2),b=round(rr(r,.25,.6),2),X=pick([50,100,200,400]),y=Math.exp(a+b*Math.log(X));
+  return {type:'num',exhibit:Exhibit.eq(`ln(Sales) = ${a} + ${b}·ln(Ads)`),q:`A multiplicative model Sales = A·Ads^β becomes linear in its parameters after taking logs. Predict <b>Sales</b> (not ln Sales) when Ads = <b>${X}</b>.`,a:y,tol:Math.max(.05,y*.002),
+   hint:`Compute ${a} + ${b}·ln(${X}), then take e^ of the result.`,solution:`exp(${a} + ${b} × ln ${X}) = exp(${round(a+b*Math.log(X),4)}) = ${round(y,3)}.`,why:'Transforming the variables keeps the model linear in β — so OLS still applies.'};}});
+CACHE('m4-plots','lens',{make:r=>{const s=round(rr(r,4,12),2),e=round((r()<.5?-1:1)*rr(r,s*1.2,s*3),2),z=e/s;
+  return {type:'num',q:`A store’s residual is <b>${e}</b>, and the regression’s standard error is <b>${s}</b>. Compute its standardized residual. (Then ask: flag it?)`,a:z,tol:.006,
+   hint:'standardized residual ≈ residual / standard error',solution:`${e} / ${s} = ${round(z,3)} → ${Math.abs(z)>2?'beyond ±2: investigate':'within ±2'}.`,why:'About 95% should fall within ±2 if errors are roughly normal. A flag starts an investigation, not a deletion.'};}});
+CACHE('m5-tests','feather',{make:r=>{const b=-round(rr(r,3000,12000),0),se=round(rr(r,1500,4500),0),t=b/se;
+  return {type:'num',q:`Competition coefficient b = <b>${b.toLocaleString()}</b>, SE = <b>${se.toLocaleString()}</b>, df = 29. Compute t for H₀: β ≥ 0. (Left-tail critical value: −1.699.)`,a:t,tol:.006,
+   hint:'t = b / SE',solution:`${b.toLocaleString()} / ${se.toLocaleString()} = ${round(t,3)} → ${t<-1.699?'reject H₀':'fail to reject H₀'}.`,why:'The rejection rule depends on the tail, α, and df — set before you look at the result.'};}});
+CACHE('m5-three','charm',{make:r=>{const b=round(rr(r,4,14),3),se=round(rr(r,1,3),3),df=ri(r,30,45),tc=Stats.tinv(.975,df),w=tc*se;
+  return {type:'num',q:`b = <b>${b}</b>, SE = <b>${se}</b>, df = ${df}. The two-tailed critical value is <b>${round(tc,3)}</b>. How wide is the 95% confidence interval (upper − lower)?`,a:2*round(tc,3)*se,tol:.02,
+   hint:'Width = 2 × t × SE',solution:`2 × ${round(tc,3)} × ${se} = ${round(2*round(tc,3)*se,3)}.`,why:'A wider interval means less precision — it’s the plausible range managers need alongside the point estimate.'};}});
+CACHE('m6-trial','lens',{make:r=>{const n=4,T=[],C=[];const eff=ri(r,6,18)*1000;for(let i=0;i<n;i++){T.push(Math.round((118000+eff+rngGauss(r)*4000)/100)*100);C.push(Math.round((118000+rngGauss(r)*4000)/100)*100);}
+  const m=a=>a.reduce((s,v)=>s+v,0)/a.length,d=m(T)-m(C);
+  return {type:'num',exhibit:Exhibit.table(['Group','Store sales'],[...T.map(v=>['Treatment',money(v,0)]),...C.map(v=>['Control',money(v,0)])]),q:'Stores were randomly assigned. Estimate the treatment effect β₁ (treatment mean − control mean).',a:d,tol:1,pre:'$',
+   hint:'Average each group with mean(…), then subtract.',solution:`${money(m(T),0)} − ${money(m(C),0)} = ${money(d,0)}.`,why:'With a single 0/1 regressor, OLS’s slope is exactly this difference in means.'};}});
+CACHE('m6-omit','feather',{make:r=>{const est=round(rr(r,1.5,3.5),2),b2=round(rr(r,.4,1.2),2),a1=round(rr(r,.3,.9),2),tru=est-b2*a1;
+  return {type:'num',q:`Omitting X₂ gave an estimated β₁* = <b>${est}</b>. You know β₂ = <b>${b2}</b> and α₁ = <b>${a1}</b>. What is the true β₁?`,a:tru,tol:.006,
+   hint:'β₁* = β₁ + β₂·α₁, so β₁ = β₁* − β₂·α₁.',solution:`${est} − ${b2} × ${a1} = ${round(tru,4)}.`,why:'Positive β₂ and positive α₁ make the bias positive — the short model overstated β₁.'};}});
+
 /* ==== js/08_game.js ==== */
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},tod:'dusk',stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},tod:'dusk',stats:{answered:0,first:0}});
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
-function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s};}catch(e){}}
+function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
 function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();}
 
 /* ---------- progress rules ---------- */
@@ -2384,7 +2593,7 @@ const lessonId=(id,j)=>`${id}#L${j+1}`;
 const lessonsOf=id=>NODES[id]?.lessons||[];
 const lessonsDone=id=>lessonsOf(id).filter((_,j)=>SAVE.lessons[lessonId(id,j)]).length;
 function lessonState(id,j){if(SAVE.lessons[lessonId(id,j)])return 'lessonDone';if(j>0&&!SAVE.lessons[lessonId(id,j-1)])return 'blocked';return SAVE.done[id]?'none':'lesson';}
-function registerLessons(){for(const id of Object.keys(NODES)){lessonsOf(id).forEach((L,j)=>{NODES[lessonId(id,j)]={lessonOf:id,j,title:L.title,kicker:`Waypoint ${j+1} of ${lessonsOf(id).length} · ${NODES[id].title}`,puzzles:L.practice};});}}
+function registerLessons(){for(const id of Object.keys(NODES)){const C=NODES[id].cache;if(C)NODES[id+'#C']={cacheOf:id,title:'Supply cache',kicker:`Supply cache · ${NODES[id].title}`,puzzles:[C.puzzle]};lessonsOf(id).forEach((L,j)=>{NODES[lessonId(id,j)]={lessonOf:id,j,title:L.title,kicker:`Waypoint ${j+1} of ${lessonsOf(id).length} · ${NODES[id].title}`,puzzles:L.practice};});}}
 
 /* ---------- HUD, toasts, banners ---------- */
 const $=id=>document.getElementById(id);
@@ -2396,6 +2605,7 @@ function renderHud(){
   if(reg){const l=liveNodes(reg);const fz=l.filter(n=>nodeState(n)==='frozen').length;line=`Study stones restored: ${l.filter(n=>SAVE.done[n]).length} / ${l.length}`+(fz?` · ${fz} frozen`:'')+(reg.nodes.length>l.length?` · ${reg.nodes.length-l.length} sealed`:'');}
   else{const all=COURSE.regions.flatMap(liveNodes);line=`Course progress: ${all.filter(n=>SAVE.done[n]).length} / ${all.length} stones`+(SAVE.missed.length?` · ${SAVE.missed.length} to review`:'');}
   $('hLine').textContent=line;
+  const iv=invText();$('hInv').textContent=iv?`Carrying: ${iv}`:'';$('hInv').classList.toggle('hidden',!iv);
 }
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
@@ -2420,7 +2630,7 @@ function openNode(id){
   const rule=L&&!prev?(ld<L?`<p class="rule">Restore it with <b>at most one miss</b>. Miss ${FREEZE_AT} or more and it freezes until you finish its ${L} waypoints (${ld} done so far). Feeling unsure? The waypoints are on the path just before this stone.</p>`
       :`<p class="rule">You've finished all ${L} waypoints. Restore it with at most one miss — it won't freeze again.</p>`):'';
   showCard(`<div class="kicker">${esc(n.kicker)}</div><h2>${esc(n.title)}</h2><p class="say">${n.intro}</p>${rule}
-    <p class="meta">${n.puzzles.length} challenges${prev?` · best first-try score ${prev.best} / ${n.puzzles.length}`:''}</p><div class="acts"></div>`);
+    <p class="meta">${n.puzzles.length} challenges${prev?` · best first-try score ${prev.best} / ${n.puzzles.length}`:''}${invText()?` · you carry ${invText()}`:''}</p><div class="acts"></div>`);
   const b=btn(prev?'Study again':'Challenge the stone','primary');card.querySelector('.acts').appendChild(b);b.focus();
   b.onclick=()=>startSession(n.title,n.kicker,n.puzzles.map((_,idx)=>({node:id,idx})),items=>{
     const miss=items.filter(x=>x.missed).length,first=items.length-miss,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
@@ -2434,7 +2644,7 @@ function openNode(id){
     burst();toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
     if(!regBefore&&regionDone(curScene)){const nx=COURSE.regions.find(r=>r.requires===curScene);
       setTimeout(()=>banner(`${regionById(curScene).name} restored`,nx?`The gate to ${nx.name} is unsealed`:'Every stone in this region is restored'),900);}
-  });
+  },'stone');
 }
 function openLesson(id,j){
   const Ls=lessonsOf(id),L=Ls[j],lid=lessonId(id,j),st=lessonState(id,j),n=NODES[id];
@@ -2450,6 +2660,18 @@ function openLesson(id,j){
     persist();if(!was)toast(all?`All waypoints for <b>${esc(n.title)}</b> complete.`:`Waypoint complete · next one is further along the path.`);
   });
 }
+const ITEM={lens:{n:'Lens',d:'strikes out one wrong answer on a multiple-choice question'},feather:{n:'Feather',d:'reveals the first step on a calculation question'},charm:{n:'Warding Charm',d:'arm it before answering — your next miss on that question won’t count'}};
+function invText(){return Object.keys(ITEM).filter(k=>SAVE.inv[k]).map(k=>`${SAVE.inv[k]} ${ITEM[k].n}${SAVE.inv[k]>1&&k!=='charm'?'s':''}`).join(', ');}
+function openCache(id){
+  const C=NODES[id].cache,cid=id+'#C',it=ITEM[C.item];
+  if(SAVE.caches[cid]){showCard(`<div class="kicker">Supply cache · ${esc(NODES[id].title)}</div><h2>Empty cache</h2><p class="say">You already took the ${it.n} from this one.</p>`);return;}
+  showCard(`<div class="kicker">Supply cache · near ${esc(NODES[id].title)}</div><h2>A frozen supply cache</h2><p class="say">A rune-lock seals it. Solve the problem etched on the lid to open it. Inside: a <b>${it.n}</b> — it ${it.d}. Items work only during a stone challenge.</p><div class="acts"></div>`);
+  const b=btn('Read the lock','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  b.onclick=()=>startSession('Supply cache',`Supply cache · ${NODES[id].title}`,[{node:cid,idx:0}],()=>{
+    SAVE.caches[cid]=true;SAVE.inv[C.item]=(SAVE.inv[C.item]||0)+1;persist();
+    const o=objects.find(o=>o.cache===id);if(o){o.spr=SPR.cacheOpen;burst();}
+    toast(`Found a <b>${it.n}</b> — it ${it.d}.`,4200);},'cache');
+}
 function stoneObj(id){return objects.find(o=>o.kind==='stone'&&o.node===id);}
 let shake=0;
 function freezeFx(id){const o=stoneObj(id);shake=.45;if(!o||!FX.particles)return;
@@ -2463,7 +2685,7 @@ function openReview(){
   const b=btn('Start review','primary');card.querySelector('.acts').appendChild(b);b.focus();
   b.onclick=()=>{startSession('Review board','Spaced review',pickN,items=>{
     let cleared=0;for(const it of items)if(!it.missed){SAVE.missed=SAVE.missed.filter(m=>!(m.node===it.node&&m.idx===it.idx));cleared++;}
-    persist();toast(`Review done · ${cleared} cleared · ${SAVE.missed.length} left`);});run.mode='review';};
+    persist();toast(`Review done · ${cleared} cleared · ${SAVE.missed.length} left`);},'review');};
 }
 function burst(){if(!FX.particles)return;for(let i=0;i<60;i++){const a=rand(0,TAU),v=rand(40,170);emit({t:'mote',warm:1,x:player.x+rand(-10,10),y:player.y-30,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,l:0,m:rand(.8,1.8),sz:rand(2,5),ph:rand(0,9)});}}
 
@@ -2475,10 +2697,11 @@ function renderLog(){
     const un=regionUnlocked(r.id),dn=regionDone(r.id);
     h+=`<section class="reg ${un?'':'locked'}"><div class="rh"><b>${esc(r.name)}</b><span>${dn?'Restored':un?'Open':'Sealed — restore '+esc(regionById(r.requires).name)+' first'}</span></div><div class="rs">${esc(r.sub)}</div><ul>`;
     for(const id of r.nodes){const n=NODES[id],st=nodeState(id),L=lessonsOf(id).length;h+=`<li>${icon(st)}<span>${esc(n?.title||id)}${L?`<small> · waypoints ${lessonsDone(id)}/${L}</small>`:''}</span><em>${st==='done'?`${SAVE.done[id].best} / ${n.puzzles.length}`:st==='sealed'?'later build':st==='frozen'?'frozen':''}</em></li>`;}
+    const cs=r.nodes.filter(id=>NODES[id]?.cache);if(cs.length)h+=`<li class="cl"><i class="ic cache"></i><span>Supply caches found</span><em>${cs.filter(id=>SAVE.caches[id+'#C']).length} / ${cs.length}</em></li>`;
     h+=`</ul></section>`;
   }
   const acc=SAVE.stats.answered?Math.round(100*SAVE.stats.first/SAVE.stats.answered):0;
-  h+=`<p class="meta">${SAVE.stats.answered} answered · ${acc}% right on the first try · ${SAVE.missed.length} pinned for review</p>
+  h+=`<p class="meta">${invText()?`Carrying: ${invText()} · `:''}${SAVE.stats.answered} answered · ${acc}% right on the first try · ${SAVE.missed.length} pinned for review</p>
   <details class="tools"><summary>Save &amp; transfer</summary><p class="meta">Progress saves in this browser automatically. To move it to another device, copy this code and paste it there.</p>
   <textarea id="saveCode" rows="3" readonly></textarea><div class="acts"><button class="opt" id="copyCode">Copy code</button><button class="opt" id="importBtn">Paste a code…</button><button class="opt danger" id="resetBtn">Reset progress</button></div><div id="toolMsg" class="meta"></div></details>`;
   const L=$('log');L.innerHTML=h;
@@ -2517,6 +2740,7 @@ function updateWorldLogic(dt){
     }}
   // stone lights follow quest state
   for(const L of lights)if(L.node){const s=nodeState(L.node);L.col=s==='done'?[120,230,150]:s==='sealed'?[110,125,190]:s==='frozen'?[140,205,255]:[255,205,120];L.i=s==='sealed'?.45:.85;}
+  for(const o of objects)if(o.cache&&!SAVE.caches[o.cache+'#C']&&FX.particles&&Math.hypot(player.x-o.x,player.y-o.y)<380&&R()<dt*5)emit({t:'spark',x:o.x+rand(-12,12),y:o.y-rand(4,22),vx:rand(-6,6),vy:rand(-22,-8),l:0,m:rand(.6,1.2),sz:rand(2,4)});
   // nearest interactable
   let best=null,bd=1e9;for(const it of INTER){const d=Math.hypot(player.x-it.x,player.y-it.y);if(d<it.r&&d<bd){bd=d;best=it;}}
   if(best!==nearI){nearI=best;readBtn.classList.toggle('hidden',!best);}
@@ -2563,7 +2787,7 @@ resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
 renderHud();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
+window.__game={get run(){return run;},openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
 requestAnimationFrame(frame);
 
 }
