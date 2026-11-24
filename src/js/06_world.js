@@ -1,5 +1,5 @@
 /* ---------- world: scenes, gates, study stones ---------- */
-const objects=[], colliders=[], lights=[], chimneys=[], INTER=[], GATES=[];
+const objects=[], colliders=[], lights=[], chimneys=[], INTER=[], GATES=[], STRINGS=[];
 const occupied=[];
 function free(x,y,r){
   if(x<20||y<30||x>W-20||y>H-10)return false;
@@ -81,6 +81,7 @@ const SPR={};
 function initSprites(){
   SPR.pines=[0,1,2,3,4,5].map(i=>makePine(160+i*6+rand(-4,4)));
   SPR.pinesB=[0,1,2].map(i=>makePine(200+i*8));
+  SPR.pinesV=[0,1,2,3].map(i=>makePine(282+i*9));
   SPR.birch=[0,1,2,3].map(()=>makeBirch());
   SPR.rocks=[0,1,2,3,4].map(()=>makeRock());
   SPR.bush=[0,1,2,3].map(()=>makeBush());
@@ -125,7 +126,7 @@ function scatterForest(count,innerProb,ellipse,hue){
     if(inside&&R()>innerProb)continue;
     const s=rand(.78,1.35);
     if(nearPath(x,y,40)||!free(x,y,26*s))continue;
-    addObj({kind:'pine',x,y,spr:pick(hue?SPR.pinesB:SPR.pines),s,sway:1,phase:rand(0,9),occ:[-44,44,-170,-24]});
+    addObj({kind:'pine',x,y,spr:pick(SPR[{blue:'pinesB',violet:'pinesV'}[hue]]||SPR.pines),s,sway:1,phase:rand(0,9),occ:[-44,44,-170,-24]});
     colliders.push({t:'c',x,y:y-2,r:10*s});claim(x,y,26*s);placed++;
   }
 }
@@ -210,7 +211,7 @@ function buildWild(reg){
   const nextReg=COURSE.regions.find(r=>r.requires===reg.id);
   const top=pts.reduce((a,b)=>b[1]<a[1]?b:a);
   if(nextReg)PATHS.push([[top[0],top[1]],[(top[0]+cx)/2,top[1]/2+20],[cx,10]]);
-  SCENE={fire:true};GROUND_TINT=th.tint;
+  SCENE={fire:true,skyLanterns:th.skyLanterns,aurora:th.aurora};GROUND_TINT=th.tint;
   buildSurface();paintGround();
   claim(PLAZA.x,PLAZA.y,PLAZA.r);
   addCampfire(PLAZA.x,PLAZA.y);
@@ -218,6 +219,7 @@ function buildWild(reg){
   addGate(cx,H-40,'hub','from'+reg.id[0].toUpperCase()+reg.id.slice(1));
   if(nextReg)addGate(cx,70,nextReg.id,'fromPrev');
   pts.forEach(([x,y],k)=>addStone(x,y,nodes[k]));
+  const ringLamps=[];
   // waypoint lecterns: evenly spaced along the path segment that leads to each stone
   const ringS=sampleCurve(ring,6);
   const near=([x,y])=>{let bi=0,bd=1e9;ringS.forEach(([sx,sy],i)=>{const d=(sx-x)**2+(sy-y)**2;if(d<bd){bd=d;bi=i;}});return bi;};
@@ -239,15 +241,20 @@ function buildWild(reg){
   });
   for(let i=24;i<ringS.length-12;i+=Math.floor(ringS.length/(th.lamps||8))){
     const [x,y]=ringS[i],[x2,y2]=ringS[Math.min(ringS.length-1,i+1)],a=Math.atan2(y2-y,x2-x);
-    const lx=x+Math.sin(a)*52,ly=y-Math.cos(a)*52;if(free(lx,ly,16))addLamp(lx,ly);
+    const lx=x+Math.sin(a)*52,ly=y-Math.cos(a)*52;if(free(lx,ly,16)){addLamp(lx,ly);ringLamps.push([lx,ly]);}
   }
+  if(th.lanternStrings){const cols=['#d9473a','#e9833a','#f1c25c','#c8433a','#e2a03a'];
+    for(let i=0;i<ringLamps.length-1;i++){const [x1,y1]=ringLamps[i],[x2,y2]=ringLamps[i+1],d=Math.hypot(x2-x1,y2-y1);if(d>560)continue;
+      const n=Math.max(3,Math.round(d/42)),lan=[];
+      for(let j=1;j<n;j++){const L={u:j/n,c:cols[(i+j)%cols.length]};L.light=addLight(0,0,j%2?58:0,[255,170,90],.7,.12);lan.push(L);}
+      STRINGS.push({x1,y1:y1-92,x2,y2:y2-92,sag:Math.min(46,d*.14),lan});}}
   if(th.crystals){for(let i=0,c=0;i<500&&c<th.crystals;i++){const a=rand(0,TAU),x=cx+Math.cos(a)*rand(RX*.45,RX*1.3),y=cy+Math.sin(a)*rand(RY*.45,RY*1.3);
     if(nearPath(x,y,30)||!free(x,y,50))continue;const s=rand(.55,1.05);addObj({kind:'crystal',x,y,spr:pick(SPR.crystals),s});colliders.push({t:'c',x,y:y-4,r:26*s});claim(x,y,50*s);
     addLight(x,y-30*s,150*s+30,[110,200,255],.8,.12);c++;}}
   pondRocks();
   for(let i=0,b=0;i<700&&b<(th.birch||0);i++){const x=rand(80,W-80),y=rand(120,H-80);if(nearPath(x,y,30)||!free(x,y,22))continue;
     addObj({kind:'birch',x,y,spr:pick(SPR.birch),s:rand(.85,1.15),sway:.6,phase:rand(0,9)});colliders.push({t:'c',x,y,r:8});claim(x,y,22);b++;}
-  scatterForest(th.trees||170,.03,{x:cx,y:cy,rx:RX*1.3,ry:RY*1.4},th.blueTrees);
+  scatterForest(th.trees||170,.03,{x:cx,y:cy,rx:RX*1.3,ry:RY*1.4},th.treeSet);
   scatterSmall(30,th.bushes??30,th.flowers??16);
   const sp={x:cx,y:H-170};
   return {start:sp,fromHub:sp,fromPrev:sp};
@@ -303,13 +310,14 @@ function addLesson(x,y,nodeId,j){
 /* --- scene switching --- */
 let SPAWNS={}, curScene=null;
 function clearScene(){
-  objects.length=colliders.length=lights.length=chimneys.length=INTER.length=GATES.length=occupied.length=0;
+  objects.length=colliders.length=lights.length=chimneys.length=INTER.length=GATES.length=occupied.length=STRINGS.length=0;
   parts.length=0;prints.length=0;tapTarget=null;
 }
 function setScene(id,spawnKey){
   clearScene();
   R=mulberry(hashStr(id)+7);
   const reg=regionById(id);
+  GROUND_IMG=IMG['ground_'+id]||null;
   if(id==='hub')sizeWorld(2000,1500);else sizeWorld(...(reg.theme.size||[2400,1800]));
   SPAWNS=id==='hub'?buildHub():buildWild(reg);
   curScene=id;

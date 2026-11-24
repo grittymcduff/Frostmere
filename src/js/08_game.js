@@ -205,10 +205,13 @@ function frame(now){
 /* ---------- boot ---------- */
 loadSave();
 registerLessons();
+loadArt().then(()=>{
 initSprites();
+applyArt();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
 renderHud();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
 window.__game={get run(){return run;},openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
 requestAnimationFrame(frame);
+});

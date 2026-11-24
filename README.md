@@ -11,6 +11,9 @@ A single-player, storybook-style browser game for studying **Applied Business Re
   - `src/style.css`, `src/body.html` – page shell
 - `python3 build.py` bundles everything into a single self-contained `index.html`, which GitHub Pages serves.
 
+## Art
+All art is drawn in code by default. Painted PNGs (e.g. from Gemini) can replace any sprite one at a time — see **[ART_GUIDE.md](ART_GUIDE.md)** for sizes, anchors, the style bible, and prompts. Art lives in `assets/` and is listed in `src/content/00_art.js`.
+
 ## Workflow
 1. Edit files in `src/`.
 2. Run `python3 build.py`.

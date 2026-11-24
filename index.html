@@ -257,6 +257,7 @@ function paintGround(){
   const g=ground.getContext('2d'); g.setTransform(GS,0,0,GS,0,0); g.globalCompositeOperation='source-over'; g.globalAlpha=1;
   let gr=g.createLinearGradient(0,0,W*.4,H);gr.addColorStop(0,'#dbe5f1');gr.addColorStop(1,'#c3d1e3');
   g.fillStyle=gr;g.fillRect(0,0,W,H);
+  if(GROUND_IMG){const pat=g.createPattern(GROUND_IMG,'repeat');pat.setTransform(new DOMMatrix().scale(ART.groundScale||.5));g.fillStyle=pat;g.fillRect(0,0,W,H);}
 
   // soft drifts
   for(let i=0;i<460;i++){
@@ -711,6 +712,8 @@ const TOD={
   day:  {amb:[30,40,80],a:0,   glow:.22,tint:[255,226,180],ta:.10},
   dusk: {amb:[44,34,100],a:.6,glow:.85,tint:[70,90,170],ta:.20},
   night:{amb:[6,10,36], a:.86, glow:1.05,tint:[50,80,160],ta:.22},
+  festival:{amb:[64,26,92],a:.6,glow:1.25,tint:[200,110,190],ta:.2},   // Lantern Hollow
+  aurora:{amb:[4,22,52],a:.72,glow:1.1,tint:[60,170,180],ta:.22},      // Crystal Reach
 };
 let todKey='dusk';
 const amb={c:[...TOD.dusk.amb],a:TOD.dusk.a,glow:TOD.dusk.glow,tint:[...TOD.dusk.tint],ta:TOD.dusk.ta};
@@ -814,6 +817,7 @@ function updateParticles(dt,t){
     // grove motes
     if(GROVE&&Math.hypot(GROVE.x-cam.x,GROVE.y-cam.y)<900&&R()<dt*12)
       emit({t:'mote',x:GROVE.x+rand(-170,170),y:GROVE.y+rand(-120,120),vx:rand(-6,6),vy:rand(-14,-4),l:0,m:rand(3,5.5),sz:rand(3,6),ph:rand(0,9)});
+    if(SCENE.skyLanterns&&amb.a>.3&&R()<dt*1.1)emit({t:'sky',x:cam.x+rand(-VW/ZOOM*.6,VW/ZOOM*.6),y:cam.y+VH/ZOOM*.55,vx:rand(-4,4),vy:-rand(14,24),l:0,m:rand(16,26),sz:rand(3,5.5),ph:rand(0,9)});
     // fireflies-ish warm motes near the plaza at dusk/night
     if(amb.a>.3&&R()<dt*3)emit({t:'mote',warm:1,x:PLAZA.x+rand(-260,260),y:PLAZA.y+rand(-200,200),vx:rand(-6,6),vy:rand(-8,0),l:0,m:rand(3,5),sz:rand(2,4),ph:rand(0,9)});
   }
@@ -824,6 +828,7 @@ function updateParticles(dt,t){
     else if(p.t==='smoke'){p.vx+=wind*14*dt;p.sz+=dt*9;}
     else if(p.t==='mote'){p.vx+=Math.sin(t*1.3+p.ph)*8*dt;p.vy+=Math.cos(t*1.1+p.ph)*6*dt;}
     else if(p.t==='spark'){p.vx*=.95;p.vy*=.95;}
+    else if(p.t==='sky'){p.vx+=(wind*6+Math.sin(t*.5+p.ph)*3)*dt;}
     p.x+=p.vx*dt;p.y+=p.vy*dt;
   }
   // snow (screen space with parallax by depth)
@@ -842,6 +847,7 @@ function updateParticles(dt,t){
 function drawSpr(g,spr,x,y,s=1){g.drawImage(spr.cv,x-spr.ox*s,y-spr.oy*s,spr.w*s,spr.h*s);}
 
 function drawPlayer(g,t){
+  if(IMG.player)return drawPlayerSheet(g,t);
   const p=player,sp=Math.hypot(p.vx,p.vy),onIce=surfaceAt(p.x,p.y)===2;
   const mv=onIce?clamp(sp/160,0,.35):clamp(sp/140,0,1);
   const sw=Math.sin(p.phase),bob=Math.abs(sw)*mv;
@@ -985,6 +991,17 @@ function render(t){
     g.globalAlpha=1;
     if(o.marker)drawMarker(g,o.marker,t);
   }
+  // festival lantern strings (overhead, drawn above the sorted world)
+  for(const s of STRINGS){
+    if(Math.max(s.x1,s.x2)<vx0-40||Math.min(s.x1,s.x2)>vx1+40||Math.max(s.y1,s.y2)<vy0-40||Math.min(s.y1,s.y2)>vy1+120)continue;
+    const sw=FX.wind?wind*4:0,mx=(s.x1+s.x2)/2+sw,my=(s.y1+s.y2)/2+s.sag;
+    g.strokeStyle='rgba(40,30,30,.75)';g.lineWidth=1;g.beginPath();g.moveTo(s.x1,s.y1);g.quadraticCurveTo(mx,my,s.x2,s.y2);g.stroke();
+    s.lan.forEach((L,i)=>{const u=L.u,x=(1-u)**2*s.x1+2*(1-u)*u*mx+u*u*s.x2,y=(1-u)**2*s.y1+2*(1-u)*u*my+u*u*s.y2,sway=Math.sin(t*2+i+s.x1)*1.5;
+      L.light.x=x+sway;L.light.y=y+6;
+      g.strokeStyle='rgba(40,30,30,.6)';g.beginPath();g.moveTo(x,y);g.lineTo(x+sway,y+4);g.stroke();
+      g.fillStyle=L.c;ell(g,x+sway,y+9,4.6,5.6);g.fillStyle='rgba(255,240,200,.55)';ell(g,x+sway-1,y+8,1.8,3.4);
+      g.fillStyle='#2a1a14';g.fillRect(x+sway-2.5,y+3,5,1.6);g.fillRect(x+sway-2,y+14.2,4,1.4);});
+  }
   // world particles
   if(FX.particles){
     for(const p of parts){
@@ -1030,6 +1047,22 @@ function render(t){
     }
     g.globalCompositeOperation='source-over';
   }
+  if(FX.particles&&SCENE.skyLanterns){
+    g.setTransform(sx,0,0,sx,ox,oy);g.globalCompositeOperation='lighter';
+    for(const p of parts)if(p.t==='sky'){const k=p.l/p.m,a=Math.min(1,k*4)*Math.min(1,(1-k)*3)*(.75+.25*Math.sin(t*6+p.ph));
+      g.globalAlpha=a*.5;g.drawImage(DOT.warm,p.x-p.sz*4,p.y-p.sz*4,p.sz*8,p.sz*8);
+      g.globalAlpha=a;g.fillStyle='#ffcf7a';g.beginPath();g.roundRect(p.x-p.sz*.55,p.y-p.sz*.8,p.sz*1.1,p.sz*1.5,p.sz*.35);g.fill();}
+    g.globalAlpha=1;g.globalCompositeOperation='source-over';
+  }
+  if(SCENE.aurora&&FX.light){
+    g.setTransform(DPR,0,0,DPR,0,0);g.globalCompositeOperation='screen';
+    const bands=[[80,255,180,.2,.12],[90,220,255,.15,.2],[200,110,255,.12,.3]];
+    bands.forEach(([r,gg,b,a,yy],k)=>{for(const [lw,al] of [[110,.35],[60,.6],[22,1]]){
+      g.strokeStyle=`rgba(${r},${gg},${b},${a*al*(.75+.25*Math.sin(t*.4+k))})`;g.lineWidth=lw;g.lineCap='round';g.beginPath();
+      for(let x=-40;x<=VW+40;x+=24){const y=VH*yy+Math.sin(x*.004+t*.25+k*1.7)*34+Math.sin(x*.011-t*.45+k)*12-cam.y*.02;x<=-40?g.moveTo(x,y):g.lineTo(x,y);}
+      g.stroke();}});
+    g.globalCompositeOperation='source-over';
+  }
   // snow
   g.setTransform(DPR,0,0,DPR,0,0);
   if(FX.particles){
@@ -1068,9 +1101,42 @@ function render(t){
 }
 
 
+/* ==== js/06_assets.js ==== */
+/* ---------- art pipeline: load optional PNGs and swap them in for procedural sprites ---------- */
+const IMG={};
+let GROUND_IMG=null;
+function loadImg(src){return new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>{console.warn('Art not found:',src);res(null);};im.src=src;});}
+async function loadArt(){
+  const jobs=[];
+  for(const [key,a] of Object.entries(ART.sprites)){if(!a.files?.length)continue;
+    jobs.push(Promise.all(a.files.map(f=>loadImg(ART.base+f))).then(ims=>{const ok=ims.filter(Boolean);if(ok.length)IMG[key]=ok;}));}
+  if(ART.player?.file)jobs.push(loadImg(ART.base+ART.player.file).then(im=>{if(im)IMG.player=im;}));
+  for(const [reg,f] of Object.entries(ART.ground||{}))if(f)jobs.push(loadImg(ART.base+f).then(im=>{if(im)IMG['ground_'+reg]=im;}));
+  await Promise.race([Promise.all(jobs),new Promise(r=>setTimeout(r,8000))]);
+}
+function applyArt(){
+  for(const [key,ims] of Object.entries(IMG)){
+    const a=ART.sprites[key];if(!a)continue;
+    if(key==='fgPine'){SPR.fgPine=ims[0];continue;}
+    const mk=im=>({cv:im,w:a.w,h:a.h,ox:a.ox,oy:a.oy,info:a.info});
+    SPR[key]=a.multi?ims.map(mk):mk(ims[0]);
+  }
+}
+/* sprite-sheet player (used only when ART.player.file is set and loads) */
+function drawPlayerSheet(g,t){
+  const P=ART.player,im=IMG.player,p=player,sp=Math.hypot(p.vx,p.vy);
+  const fx=p.face.x,fy=p.face.y,row=Math.abs(fx)>Math.abs(fy)?(fx<0?1:2):(fy<0?3:0);
+  const moving=sp>14&&!(surfaceAt(p.x,p.y)===2&&sp<60);
+  const frame=moving?Math.floor(p.phase/(Math.PI/2))%P.frames:0;
+  const bob=moving?Math.abs(Math.sin(p.phase))*1.5:0;
+  g.fillStyle='rgba(30,40,75,.38)';ell(g,p.x,p.y,12,4.6);
+  g.drawImage(im,frame*P.fw,row*P.fh,P.fw,P.fh,p.x-P.ox,p.y-P.oy-bob,P.w,P.h);
+  p.lantern.x=p.x+(row===1?-12:row===2?12:p.side*11);p.lantern.y=p.y-20;
+}
+
 /* ==== js/06_world.js ==== */
 /* ---------- world: scenes, gates, study stones ---------- */
-const objects=[], colliders=[], lights=[], chimneys=[], INTER=[], GATES=[];
+const objects=[], colliders=[], lights=[], chimneys=[], INTER=[], GATES=[], STRINGS=[];
 const occupied=[];
 function free(x,y,r){
   if(x<20||y<30||x>W-20||y>H-10)return false;
@@ -1152,6 +1218,7 @@ const SPR={};
 function initSprites(){
   SPR.pines=[0,1,2,3,4,5].map(i=>makePine(160+i*6+rand(-4,4)));
   SPR.pinesB=[0,1,2].map(i=>makePine(200+i*8));
+  SPR.pinesV=[0,1,2,3].map(i=>makePine(282+i*9));
   SPR.birch=[0,1,2,3].map(()=>makeBirch());
   SPR.rocks=[0,1,2,3,4].map(()=>makeRock());
   SPR.bush=[0,1,2,3].map(()=>makeBush());
@@ -1196,7 +1263,7 @@ function scatterForest(count,innerProb,ellipse,hue){
     if(inside&&R()>innerProb)continue;
     const s=rand(.78,1.35);
     if(nearPath(x,y,40)||!free(x,y,26*s))continue;
-    addObj({kind:'pine',x,y,spr:pick(hue?SPR.pinesB:SPR.pines),s,sway:1,phase:rand(0,9),occ:[-44,44,-170,-24]});
+    addObj({kind:'pine',x,y,spr:pick(SPR[{blue:'pinesB',violet:'pinesV'}[hue]]||SPR.pines),s,sway:1,phase:rand(0,9),occ:[-44,44,-170,-24]});
     colliders.push({t:'c',x,y:y-2,r:10*s});claim(x,y,26*s);placed++;
   }
 }
@@ -1281,7 +1348,7 @@ function buildWild(reg){
   const nextReg=COURSE.regions.find(r=>r.requires===reg.id);
   const top=pts.reduce((a,b)=>b[1]<a[1]?b:a);
   if(nextReg)PATHS.push([[top[0],top[1]],[(top[0]+cx)/2,top[1]/2+20],[cx,10]]);
-  SCENE={fire:true};GROUND_TINT=th.tint;
+  SCENE={fire:true,skyLanterns:th.skyLanterns,aurora:th.aurora};GROUND_TINT=th.tint;
   buildSurface();paintGround();
   claim(PLAZA.x,PLAZA.y,PLAZA.r);
   addCampfire(PLAZA.x,PLAZA.y);
@@ -1289,6 +1356,7 @@ function buildWild(reg){
   addGate(cx,H-40,'hub','from'+reg.id[0].toUpperCase()+reg.id.slice(1));
   if(nextReg)addGate(cx,70,nextReg.id,'fromPrev');
   pts.forEach(([x,y],k)=>addStone(x,y,nodes[k]));
+  const ringLamps=[];
   // waypoint lecterns: evenly spaced along the path segment that leads to each stone
   const ringS=sampleCurve(ring,6);
   const near=([x,y])=>{let bi=0,bd=1e9;ringS.forEach(([sx,sy],i)=>{const d=(sx-x)**2+(sy-y)**2;if(d<bd){bd=d;bi=i;}});return bi;};
@@ -1310,15 +1378,20 @@ function buildWild(reg){
   });
   for(let i=24;i<ringS.length-12;i+=Math.floor(ringS.length/(th.lamps||8))){
     const [x,y]=ringS[i],[x2,y2]=ringS[Math.min(ringS.length-1,i+1)],a=Math.atan2(y2-y,x2-x);
-    const lx=x+Math.sin(a)*52,ly=y-Math.cos(a)*52;if(free(lx,ly,16))addLamp(lx,ly);
+    const lx=x+Math.sin(a)*52,ly=y-Math.cos(a)*52;if(free(lx,ly,16)){addLamp(lx,ly);ringLamps.push([lx,ly]);}
   }
+  if(th.lanternStrings){const cols=['#d9473a','#e9833a','#f1c25c','#c8433a','#e2a03a'];
+    for(let i=0;i<ringLamps.length-1;i++){const [x1,y1]=ringLamps[i],[x2,y2]=ringLamps[i+1],d=Math.hypot(x2-x1,y2-y1);if(d>560)continue;
+      const n=Math.max(3,Math.round(d/42)),lan=[];
+      for(let j=1;j<n;j++){const L={u:j/n,c:cols[(i+j)%cols.length]};L.light=addLight(0,0,j%2?58:0,[255,170,90],.7,.12);lan.push(L);}
+      STRINGS.push({x1,y1:y1-92,x2,y2:y2-92,sag:Math.min(46,d*.14),lan});}}
   if(th.crystals){for(let i=0,c=0;i<500&&c<th.crystals;i++){const a=rand(0,TAU),x=cx+Math.cos(a)*rand(RX*.45,RX*1.3),y=cy+Math.sin(a)*rand(RY*.45,RY*1.3);
     if(nearPath(x,y,30)||!free(x,y,50))continue;const s=rand(.55,1.05);addObj({kind:'crystal',x,y,spr:pick(SPR.crystals),s});colliders.push({t:'c',x,y:y-4,r:26*s});claim(x,y,50*s);
     addLight(x,y-30*s,150*s+30,[110,200,255],.8,.12);c++;}}
   pondRocks();
   for(let i=0,b=0;i<700&&b<(th.birch||0);i++){const x=rand(80,W-80),y=rand(120,H-80);if(nearPath(x,y,30)||!free(x,y,22))continue;
     addObj({kind:'birch',x,y,spr:pick(SPR.birch),s:rand(.85,1.15),sway:.6,phase:rand(0,9)});colliders.push({t:'c',x,y,r:8});claim(x,y,22);b++;}
-  scatterForest(th.trees||170,.03,{x:cx,y:cy,rx:RX*1.3,ry:RY*1.4},th.blueTrees);
+  scatterForest(th.trees||170,.03,{x:cx,y:cy,rx:RX*1.3,ry:RY*1.4},th.treeSet);
   scatterSmall(30,th.bushes??30,th.flowers??16);
   const sp={x:cx,y:H-170};
   return {start:sp,fromHub:sp,fromPrev:sp};
@@ -1374,13 +1447,14 @@ function addLesson(x,y,nodeId,j){
 /* --- scene switching --- */
 let SPAWNS={}, curScene=null;
 function clearScene(){
-  objects.length=colliders.length=lights.length=chimneys.length=INTER.length=GATES.length=occupied.length=0;
+  objects.length=colliders.length=lights.length=chimneys.length=INTER.length=GATES.length=occupied.length=STRINGS.length=0;
   parts.length=0;prints.length=0;tapTarget=null;
 }
 function setScene(id,spawnKey){
   clearScene();
   R=mulberry(hashStr(id)+7);
   const reg=regionById(id);
+  GROUND_IMG=IMG['ground_'+id]||null;
   if(id==='hub')sizeWorld(2000,1500);else sizeWorld(...(reg.theme.size||[2400,1800]));
   SPAWNS=id==='hub'?buildHub():buildWild(reg);
   curScene=id;
@@ -1638,6 +1712,51 @@ function next(){
   const r=run;closeCard();r.onDone&&r.onDone(r.items);persist();
 }
 
+/* ==== content/00_art.js ==== */
+/* ==========================================================================
+   ART MANIFEST — optional painted art that replaces the procedural sprites.
+   1. Put a transparent PNG in /assets (see ART_GUIDE.md for sizes/prompts).
+   2. Add its file name to `files` below.  3. Run build.py.
+   Anything left empty keeps the drawn-in-code art, so you can swap pieces in
+   one at a time. Sizes are in world units; paint PNGs at 2× (or more) these.
+   w,h  = how big the sprite is drawn in the world
+   ox,oy = the anchor point inside it: where it touches the ground (base center)
+   ========================================================================== */
+const ART={
+  base:'assets/',
+  sprites:{
+    // key        files (several = random variants)          w    h   ox   oy
+    pines:     {files:[], multi:true, w:120, h:190, ox:60, oy:178},   // snowy pines (Signpost Woods + village)
+    pinesV:    {files:[], multi:true, w:120, h:190, ox:60, oy:178},   // violet pines (Lantern Hollow)
+    pinesB:    {files:[], multi:true, w:120, h:190, ox:60, oy:178},   // ice-blue pines (Crystal Reach)
+    birch:     {files:[], multi:true, w:170, h:210, ox:85, oy:200},   // bare white birches
+    rocks:     {files:[], multi:true, w:64,  h:52,  ox:32, oy:40},
+    bush:      {files:[], multi:true, w:70,  h:50,  ox:35, oy:40},    // berry bushes
+    flowers:   {files:[], multi:true, w:40,  h:30,  ox:20, oy:22},    // winter roses
+    crystals:  {files:[], multi:true, w:110, h:120, ox:55, oy:104},
+    cabins:    {files:[], multi:true, w:246, h:218, ox:123,oy:198,    // log cabins; lights/smoke use `info`
+                info:{w:176,bodyH:74,roofH:98,windows:[[-53,-45],[53,-45]],chimney:[42,-146]}},
+    lamp:      {files:[], w:36,  h:104, ox:18, oy:96},
+    crate:     {files:[], w:44,  h:48,  ox:22, oy:40},
+    barrel:    {files:[], w:40,  h:50,  ox:20, oy:42},
+    snowman:   {files:[], w:60,  h:84,  ox:30, oy:76},
+    sign:      {files:[], w:60,  h:70,  ox:30, oy:62},
+    firepit:   {files:[], w:110, h:60,  ox:55, oy:40},                // stones + logs only; flames are animated in code
+    gate:      {files:[], w:190, h:170, ox:95, oy:150},
+    stone:     {files:[], w:70,  h:110, ox:35, oy:98},                // study stone
+    owl:       {files:[], w:60,  h:100, ox:30, oy:92},                // Warden Quill on a perch
+    lectern:   {files:[], w:56,  h:72,  ox:28, oy:64},                // waypoint
+    ice:       {files:[], w:84,  h:120, ox:42, oy:104},               // frozen-stone overlay (semi-transparent)
+    cache:     {files:[], w:56,  h:52,  ox:28, oy:42},                // closed supply cache
+    cacheOpen: {files:[], w:56,  h:52,  ox:28, oy:42},
+    fgPine:    {files:[], w:320, h:520, ox:160,oy:515},               // dark foreground silhouette
+  },
+  // Player sprite sheet: rows = down, left, right, up; `frames` walk frames per row.
+  player:{file:'', fw:128, fh:160, frames:4, w:44, h:55, ox:22, oy:52},
+  // Optional seamless ground textures (tile), one per area.
+  ground:{hub:'', woods:'', hollow:'', reach:''}, groundScale:.5,
+};
+
 /* ==== content/00_course.js ==== */
 /* ==========================================================================
    COURSE MAP — Applied Business Research Tools
@@ -1671,11 +1790,11 @@ const COURSE={
        'Read output in this order: signs and units, size, precision, fit and residuals, then whether the whole specification is plausible. Off you go.',
      ]}},
     {id:'hollow',name:'Lantern Hollow',sub:'Modules 4–6 · Assumptions, testing, causation',requires:'woods',
-     theme:{tint:'#e3d8ef',tod:'night',lamps:16,birch:6,trees:150,flowers:30,lake:[230,130]},
+     theme:{tint:'#e6d0ee',tod:'festival',lamps:20,birch:6,trees:150,flowers:30,lake:[230,130],treeSet:'violet',lanternStrings:true,skyLanterns:true},
      nodes:['m4-seven','m4-plots','m5-tests','m5-three','m6-trial','m6-omit'],
      npc:{id:'owl-hollow',name:'Warden Quill',role:'Modules 4–6 guide',lines:['Lantern Hollow keeps the rules that make regression trustworthy. Six stones ring the pond: two for the classical assumptions, two for hypothesis testing, two for causation and choosing variables.','Remember the theme of this place: a clean-looking table can still be wrong. Assumptions decide which claims are credible; tests measure evidence, not truth; design — not regression — earns the word “causal.”','Same rules as the woods: waypoints before each stone, at most one miss, and a stone that freezes if you rush it.']}},
     {id:'reach',name:'Crystal Reach',sub:'Modules 7–10 · Functional form & model diagnostics',requires:'hollow',
-     theme:{tint:'#d2e5f2',tod:'night',lamps:6,birch:4,trees:140,crystals:14,blueTrees:true,bushes:16,lake:[270,150]},
+     theme:{tint:'#cfe6f2',tod:'aurora',lamps:6,birch:4,trees:140,crystals:14,treeSet:'blue',aurora:true,bushes:16,lake:[270,150]},
      nodes:['m7','m8','m9','m10'],
      npc:{id:'owl-reach',name:'Warden Quill',role:'Guide',lines:['Crystal Reach is where broken models come to be diagnosed: wrong shapes, tangled drivers, echoing errors, and fanning residuals.','These stones open in a later build.']}},
   ],
@@ -2782,13 +2901,16 @@ function frame(now){
 /* ---------- boot ---------- */
 loadSave();
 registerLessons();
+loadArt().then(()=>{
 initSprites();
+applyArt();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
 renderHud();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
 window.__game={get run(){return run;},openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
 requestAnimationFrame(frame);
+});
 
 }
 </script>

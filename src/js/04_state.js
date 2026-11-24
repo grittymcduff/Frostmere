@@ -57,6 +57,8 @@ const TOD={
   day:  {amb:[30,40,80],a:0,   glow:.22,tint:[255,226,180],ta:.10},
   dusk: {amb:[44,34,100],a:.6,glow:.85,tint:[70,90,170],ta:.20},
   night:{amb:[6,10,36], a:.86, glow:1.05,tint:[50,80,160],ta:.22},
+  festival:{amb:[64,26,92],a:.6,glow:1.25,tint:[200,110,190],ta:.2},   // Lantern Hollow
+  aurora:{amb:[4,22,52],a:.72,glow:1.1,tint:[60,170,180],ta:.22},      // Crystal Reach
 };
 let todKey='dusk';
 const amb={c:[...TOD.dusk.amb],a:TOD.dusk.a,glow:TOD.dusk.glow,tint:[...TOD.dusk.tint],ta:TOD.dusk.ta};

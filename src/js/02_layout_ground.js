@@ -44,6 +44,7 @@ function paintGround(){
   const g=ground.getContext('2d'); g.setTransform(GS,0,0,GS,0,0); g.globalCompositeOperation='source-over'; g.globalAlpha=1;
   let gr=g.createLinearGradient(0,0,W*.4,H);gr.addColorStop(0,'#dbe5f1');gr.addColorStop(1,'#c3d1e3');
   g.fillStyle=gr;g.fillRect(0,0,W,H);
+  if(GROUND_IMG){const pat=g.createPattern(GROUND_IMG,'repeat');pat.setTransform(new DOMMatrix().scale(ART.groundScale||.5));g.fillStyle=pat;g.fillRect(0,0,W,H);}
 
   // soft drifts
   for(let i=0;i<460;i++){

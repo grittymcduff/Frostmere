@@ -81,6 +81,7 @@ function updateParticles(dt,t){
     // grove motes
     if(GROVE&&Math.hypot(GROVE.x-cam.x,GROVE.y-cam.y)<900&&R()<dt*12)
       emit({t:'mote',x:GROVE.x+rand(-170,170),y:GROVE.y+rand(-120,120),vx:rand(-6,6),vy:rand(-14,-4),l:0,m:rand(3,5.5),sz:rand(3,6),ph:rand(0,9)});
+    if(SCENE.skyLanterns&&amb.a>.3&&R()<dt*1.1)emit({t:'sky',x:cam.x+rand(-VW/ZOOM*.6,VW/ZOOM*.6),y:cam.y+VH/ZOOM*.55,vx:rand(-4,4),vy:-rand(14,24),l:0,m:rand(16,26),sz:rand(3,5.5),ph:rand(0,9)});
     // fireflies-ish warm motes near the plaza at dusk/night
     if(amb.a>.3&&R()<dt*3)emit({t:'mote',warm:1,x:PLAZA.x+rand(-260,260),y:PLAZA.y+rand(-200,200),vx:rand(-6,6),vy:rand(-8,0),l:0,m:rand(3,5),sz:rand(2,4),ph:rand(0,9)});
   }
@@ -91,6 +92,7 @@ function updateParticles(dt,t){
     else if(p.t==='smoke'){p.vx+=wind*14*dt;p.sz+=dt*9;}
     else if(p.t==='mote'){p.vx+=Math.sin(t*1.3+p.ph)*8*dt;p.vy+=Math.cos(t*1.1+p.ph)*6*dt;}
     else if(p.t==='spark'){p.vx*=.95;p.vy*=.95;}
+    else if(p.t==='sky'){p.vx+=(wind*6+Math.sin(t*.5+p.ph)*3)*dt;}
     p.x+=p.vx*dt;p.y+=p.vy*dt;
   }
   // snow (screen space with parallax by depth)
@@ -109,6 +111,7 @@ function updateParticles(dt,t){
 function drawSpr(g,spr,x,y,s=1){g.drawImage(spr.cv,x-spr.ox*s,y-spr.oy*s,spr.w*s,spr.h*s);}
 
 function drawPlayer(g,t){
+  if(IMG.player)return drawPlayerSheet(g,t);
   const p=player,sp=Math.hypot(p.vx,p.vy),onIce=surfaceAt(p.x,p.y)===2;
   const mv=onIce?clamp(sp/160,0,.35):clamp(sp/140,0,1);
   const sw=Math.sin(p.phase),bob=Math.abs(sw)*mv;
@@ -252,6 +255,17 @@ function render(t){
     g.globalAlpha=1;
     if(o.marker)drawMarker(g,o.marker,t);
   }
+  // festival lantern strings (overhead, drawn above the sorted world)
+  for(const s of STRINGS){
+    if(Math.max(s.x1,s.x2)<vx0-40||Math.min(s.x1,s.x2)>vx1+40||Math.max(s.y1,s.y2)<vy0-40||Math.min(s.y1,s.y2)>vy1+120)continue;
+    const sw=FX.wind?wind*4:0,mx=(s.x1+s.x2)/2+sw,my=(s.y1+s.y2)/2+s.sag;
+    g.strokeStyle='rgba(40,30,30,.75)';g.lineWidth=1;g.beginPath();g.moveTo(s.x1,s.y1);g.quadraticCurveTo(mx,my,s.x2,s.y2);g.stroke();
+    s.lan.forEach((L,i)=>{const u=L.u,x=(1-u)**2*s.x1+2*(1-u)*u*mx+u*u*s.x2,y=(1-u)**2*s.y1+2*(1-u)*u*my+u*u*s.y2,sway=Math.sin(t*2+i+s.x1)*1.5;
+      L.light.x=x+sway;L.light.y=y+6;
+      g.strokeStyle='rgba(40,30,30,.6)';g.beginPath();g.moveTo(x,y);g.lineTo(x+sway,y+4);g.stroke();
+      g.fillStyle=L.c;ell(g,x+sway,y+9,4.6,5.6);g.fillStyle='rgba(255,240,200,.55)';ell(g,x+sway-1,y+8,1.8,3.4);
+      g.fillStyle='#2a1a14';g.fillRect(x+sway-2.5,y+3,5,1.6);g.fillRect(x+sway-2,y+14.2,4,1.4);});
+  }
   // world particles
   if(FX.particles){
     for(const p of parts){
@@ -295,6 +309,22 @@ function render(t){
       gr.addColorStop(0,rgba(L.col,a));gr.addColorStop(.3,rgba(L.col,a*.45));gr.addColorStop(1,rgba(L.col,0));
       g.fillStyle=gr;g.fillRect(L.x-r,L.y-r,r*2,r*2);
     }
+    g.globalCompositeOperation='source-over';
+  }
+  if(FX.particles&&SCENE.skyLanterns){
+    g.setTransform(sx,0,0,sx,ox,oy);g.globalCompositeOperation='lighter';
+    for(const p of parts)if(p.t==='sky'){const k=p.l/p.m,a=Math.min(1,k*4)*Math.min(1,(1-k)*3)*(.75+.25*Math.sin(t*6+p.ph));
+      g.globalAlpha=a*.5;g.drawImage(DOT.warm,p.x-p.sz*4,p.y-p.sz*4,p.sz*8,p.sz*8);
+      g.globalAlpha=a;g.fillStyle='#ffcf7a';g.beginPath();g.roundRect(p.x-p.sz*.55,p.y-p.sz*.8,p.sz*1.1,p.sz*1.5,p.sz*.35);g.fill();}
+    g.globalAlpha=1;g.globalCompositeOperation='source-over';
+  }
+  if(SCENE.aurora&&FX.light){
+    g.setTransform(DPR,0,0,DPR,0,0);g.globalCompositeOperation='screen';
+    const bands=[[80,255,180,.2,.12],[90,220,255,.15,.2],[200,110,255,.12,.3]];
+    bands.forEach(([r,gg,b,a,yy],k)=>{for(const [lw,al] of [[110,.35],[60,.6],[22,1]]){
+      g.strokeStyle=`rgba(${r},${gg},${b},${a*al*(.75+.25*Math.sin(t*.4+k))})`;g.lineWidth=lw;g.lineCap='round';g.beginPath();
+      for(let x=-40;x<=VW+40;x+=24){const y=VH*yy+Math.sin(x*.004+t*.25+k*1.7)*34+Math.sin(x*.011-t*.45+k)*12-cam.y*.02;x<=-40?g.moveTo(x,y):g.lineTo(x,y);}
+      g.stroke();}});
     g.globalCompositeOperation='source-over';
   }
   // snow
