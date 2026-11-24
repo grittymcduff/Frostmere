@@ -155,7 +155,7 @@ function buildHub(){
   addCampfire(PLAZA.x,PLAZA.y);
   const cabins=[[740,640],[1255,625],[690,1040],[1240,350],[600,420]];
   cabins.forEach(([x,y],i)=>{
-    const spr=SPR.cabins[i],w=spr.info.w;
+    const spr=SPR.cabins[i%SPR.cabins.length],w=spr.info.w;
     addObj({kind:'cabin',x,y,spr,occ:[-w/2-16,w/2+16,-spr.info.bodyH-spr.info.roofH-6,-70]});
     colliders.push({t:'r',x0:x-w/2-6,x1:x+w/2+6,y0:y-74,y1:y+2});
     claim(x,y-50,w*.65);
@@ -163,7 +163,7 @@ function buildHub(){
     chimneys.push({x:x+spr.info.chimney[0],y:y+spr.info.chimney[1],acc:rand(0,1)});
   });
   const cr=[[GROVE.x,GROVE.y+20,1],[GROVE.x-95,GROVE.y+50,.7],[GROVE.x+90,GROVE.y-10,.6]];
-  cr.forEach(([x,y,s],i)=>{addObj({kind:'crystal',x,y,spr:SPR.crystals[i%3],s});colliders.push({t:'c',x,y:y-4,r:26*s});claim(x,y,50*s);
+  cr.forEach(([x,y,s],i)=>{addObj({kind:'crystal',x,y,spr:SPR.crystals[i%SPR.crystals.length],s});colliders.push({t:'c',x,y:y-4,r:26*s});claim(x,y,50*s);
     addLight(x,y-30*s,150*s+30,[110,200,255],.8,.12);});
   for(const [x,y] of [[945,1250],[1060,1010],[940,560],[1062,300],[810,830],[470,735],[1245,850],[1400,950],[1350,560],[260,735],[955,110],[1820,480]])addLamp(x,y);
   prop(SPR.crate,880,662,13);prop(SPR.crate,905,676,13);prop(SPR.barrel,868,690,10);

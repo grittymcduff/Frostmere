@@ -32,7 +32,17 @@ def defringe(a):
     a = a.astype(np.float32)
     r, g, b, al = a[...,0], a[...,1], a[...,2], a[...,3]
     mag = np.minimum(r, b) - g                      # how magenta a pixel is
-    cast = (mag > 12) & (al > 0)
+    # only touch the rim: semi-transparent pixels or pixels within 2px of transparency,
+    # so genuinely purple art (violet pines, crystals) keeps its color inside
+    clear = al < 40
+    near = clear.copy()
+    for dy in (-2,-1,0,1,2):
+        for dx in (-2,-1,0,1,2):
+            near |= np.roll(np.roll(clear, dy, 0), dx, 1)
+    rim = near | (al < 250)
+    ys = np.where(al.max(axis=1) > 40)[0]          # plus the ground-shadow band at the very bottom
+    if len(ys): rim[max(0, ys.max()-int((ys.max()-ys.min())*.06)):] = True
+    cast = (mag > 12) & (al > 0) & rim
     faint = cast & (al < 140)
     a[faint, 3] = 0                                 # drop faint pink halo pixels
     keep = cast & ~faint
