@@ -146,12 +146,15 @@
   #calc .use{width:100%;margin-top:8px;font:inherit;font-size:14px;min-height:40px;border-radius:9px;background:#e9b35c;color:#2a1a08;border:0;font-weight:bold;cursor:pointer}
   #calc .chelp{font-size:11.5px;opacity:.6;line-height:1.5;margin:8px 0 0}#calc code{font-size:11px;background:rgba(255,255,255,.08);padding:0 3px;border-radius:3px}
   @media (max-width:600px){#calc{left:12px;right:12px;width:auto;bottom:8px}}
+  .tools button.primary{background:rgba(255,200,110,.18);border-color:rgba(255,214,150,.6);color:#ffe2a8}
+  .tools .warn{color:#ffb39a}.tools a{color:#ffd27a}
+  @media (max-width:600px){#acctBtn{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 </style>
 </head>
 <body>
 <canvas id="game" aria-label="Frostmere Village game world"></canvas>
 <div id="hud" class="panel"><span class="t1" id="hName"></span><span class="t2" id="hSub"></span><div class="line" id="hLine"></div><div class="line inv hidden" id="hInv"></div></div>
-<div class="topbtns"><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="fxBtn" class="panel">✦ Effects</button></div>
+<div class="topbtns"><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
 <div id="fx" class="panel hidden">
   <div class="sub">Layers (code only)</div>
   <label><input type="checkbox" data-fx="light" checked> Lighting &amp; glow</label>
@@ -2803,7 +2806,7 @@ const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locke
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
-function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();}
+function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;SAVE.t=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();cloudQueue();}
 
 /* ---------- progress rules ---------- */
 const regionById=id=>COURSE.regions.find(r=>r.id===id);
@@ -2924,15 +2927,16 @@ function renderLog(){
   }
   const acc=SAVE.stats.answered?Math.round(100*SAVE.stats.first/SAVE.stats.answered):0;
   h+=`<p class="meta">${invText()?`Carrying: ${invText()} · `:''}${SAVE.stats.answered} answered · ${acc}% right on the first try · ${SAVE.missed.length} pinned for review</p>
+  <details class="tools" id="acctSec"><summary>Account &amp; cloud save</summary><div id="acctBox"></div></details>
   <details class="tools"><summary>Save &amp; transfer</summary><p class="meta">Progress saves in this browser automatically. To move it to another device, copy this code and paste it there.</p>
   <textarea id="saveCode" rows="3" readonly></textarea><div class="acts"><button class="opt" id="copyCode">Copy code</button><button class="opt" id="importBtn">Paste a code…</button><button class="opt danger" id="resetBtn">Reset progress</button></div><div id="toolMsg" class="meta"></div></details>`;
-  const L=$('log');L.innerHTML=h;
+  const L=$('log');L.innerHTML=h;renderAcct();
   $('saveCode').value=btoa(unescape(encodeURIComponent(JSON.stringify(SAVE))));
   $('logClose').onclick=()=>L.classList.add('hidden');
   $('copyCode').onclick=async()=>{try{await navigator.clipboard.writeText($('saveCode').value);$('toolMsg').textContent='Copied.';}catch(e){$('saveCode').select();$('toolMsg').textContent='Select the code above and copy it.';}};
   $('importBtn').onclick=()=>{const ta=$('saveCode');ta.readOnly=false;ta.value='';ta.focus();$('toolMsg').textContent='Paste your code, then press Load.';
-    const b=$('importBtn');b.textContent='Load';b.onclick=()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));if(s.v!==1)throw 0;SAVE={...blankSave(),...s};persist();travel(SAVE.scene,'start');L.classList.add('hidden');toast('Progress loaded.');}catch(e){$('toolMsg').textContent='That code could not be read.';}};};
-  $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.arm){SAVE=blankSave();persist();travel('hub','start');L.classList.add('hidden');toast('Progress reset.');}else{b.dataset.arm=1;b.textContent='Tap again to erase everything';}};
+    const b=$('importBtn');b.textContent='Load';b.onclick=()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));if(s.v!==1)throw 0;SAVE={...blankSave(),...s,reset:Date.now()};persist();travel(SAVE.scene,'start');L.classList.add('hidden');toast('Progress loaded.');}catch(e){$('toolMsg').textContent='That code could not be read.';}};};
+  $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.arm){SAVE={...blankSave(),reset:Date.now()};persist();travel('hub','start');L.classList.add('hidden');toast('Progress reset.');}else{b.dataset.arm=1;b.textContent='Tap again to erase everything';}};
 }
 function toggleLog(){const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
 $('logBtn').onclick=toggleLog;
@@ -3020,10 +3024,122 @@ resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
 syncMusic();
 renderHud();
+cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });
+
+/* ==== js/09_cloud.js ==== */
+/* ---------- cloud saves: Google sign-in + Firestore (Firebase) ----------
+   Signed out, the game saves in this browser exactly as before. Signed in, every
+   save is also written to saves/{uid} and pulled back on sign-in and when the tab
+   regains focus. Two saves are merged: newest wins for position/settings/items,
+   but finished stones, waypoints, caches and dialogue are kept from both, so
+   playing on two devices never loses progress. A reset or an imported code
+   replaces the cloud copy instead of merging. */
+const FB_VER='13.4.0';
+const FB_CONFIG={
+  apiKey:'AIzaSyDBFKEXs_d-_7zXu0Gc7m1XOIqeWRbVhkc',
+  authDomain:'frostmere-a0ac8.firebaseapp.com',
+  projectId:'frostmere-a0ac8',
+  storageBucket:'frostmere-a0ac8.firebasestorage.app',
+  messagingSenderId:'305259573412',
+  appId:'1:305259573412:web:84522271381519448b3631',
+};
+const PLAY_URL='https://grittymcduff.github.io/Free-Market-Quest/';
+// sign-in only works on domains authorised in the Firebase console
+const CLOUD_OK=/^(grittymcduff\.github\.io|localhost|127\.0\.0\.1)$/.test(location.hostname);
+const CLOUD={fb:null,user:null,busy:false,timer:0,last:0,err:''};
+
+async function fbLoad(){
+  if(CLOUD.fb)return CLOUD.fb;
+  if(window.__FB_MOCK)return CLOUD.fb=window.__FB_MOCK;           // test harness
+  const u=m=>`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-${m}.js`;
+  const [A,Au,F]=await Promise.all([import(u('app')),import(u('auth')),import(u('firestore'))]);
+  const app=A.initializeApp(FB_CONFIG),auth=Au.getAuth(app),db=F.getFirestore(app);
+  return CLOUD.fb={
+    onUser:cb=>Au.onAuthStateChanged(auth,cb),
+    signIn:async()=>{const p=new Au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
+      try{await Au.signInWithPopup(auth,p);}catch(e){if(e.code==='auth/popup-blocked')return Au.signInWithRedirect(auth,p);throw e;}},
+    signOut:()=>Au.signOut(auth),
+    get:async uid=>{const s=await F.getDoc(F.doc(db,'saves',uid));return s.exists()?s.data():null;},
+    put:(uid,data)=>F.setDoc(F.doc(db,'saves',uid),data),
+  };
+}
+
+/* merge two saves (see header) */
+function mergeSaves(a,b){
+  if(!b)return a;if(!a)return b;
+  if((a.reset||0)!==(b.reset||0))return (a.reset||0)>(b.reset||0)?a:b;
+  const [n,o]=(a.t||0)>=(b.t||0)?[a,b]:[b,a];
+  const m=JSON.parse(JSON.stringify(n));
+  for(const k of ['lessons','caches','seen'])m[k]={...(o[k]||{}),...(n[k]||{})};
+  m.done={...(o.done||{})};
+  for(const [id,v] of Object.entries(n.done||{}))m.done[id]=m.done[id]?{best:Math.max(m.done[id].best,v.best),ts:Math.min(m.done[id].ts||v.ts,v.ts||m.done[id].ts)}:v;
+  m.locked={...(m.locked||{})};for(const id in m.done)delete m.locked[id];
+  // items from caches only the older save opened
+  for(const cid in o.caches||{})if(!(n.caches||{})[cid]){const it=NODES[cid.slice(0,-2)]?.cache?.item;if(it)m.inv[it]=(m.inv[it]||0)+1;}
+  m.stats={answered:Math.max(n.stats?.answered||0,o.stats?.answered||0),first:Math.max(n.stats?.first||0,o.stats?.first||0)};
+  return m;
+}
+const saveKey=s=>JSON.stringify({...s,t:0});
+
+function cloudQueue(){if(!CLOUD.user)return;clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(cloudPush,2500);}
+async function cloudPush(){
+  if(!CLOUD.user)return;clearTimeout(CLOUD.timer);
+  try{await CLOUD.fb.put(CLOUD.user.uid,{save:JSON.stringify(SAVE),t:SAVE.t||Date.now(),name:CLOUD.user.displayName||''});CLOUD.last=Date.now();CLOUD.err='';}
+  catch(e){CLOUD.err='Could not reach the cloud — progress is still saved on this device.';}
+  renderAcct();
+}
+async function cloudPull(first){
+  if(!CLOUD.user||CLOUD.busy)return;CLOUD.busy=true;
+  try{
+    const d=await CLOUD.fb.get(CLOUD.user.uid);
+    const remote=d?.save?JSON.parse(d.save):null;
+    if(remote&&remote.v===1){
+      const before=saveKey(SAVE),m=mergeSaves(SAVE,{...blankSave(),...remote});
+      if(saveKey(m)!==before){SAVE={...blankSave(),...m,inv:{...blankSave().inv,...(m.inv||{})}};
+        try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}
+        syncMusic();renderHud();if(!$('log').classList.contains('hidden'))renderLog();
+        if(first)toast('Cloud progress loaded.');}
+      if(saveKey(m)!==saveKey(remote))await cloudPush();else{CLOUD.last=Date.now();CLOUD.err='';}
+    }else await cloudPush();                                   // first sign-in: upload this device's progress
+  }catch(e){CLOUD.err='Could not reach the cloud — progress is still saved on this device.';}
+  CLOUD.busy=false;renderAcct();
+}
+
+/* ---- UI: top-bar button + account panel inside the quest log ---- */
+function renderAcct(){
+  const b=$('acctBtn');if(b){const u=CLOUD.user;b.textContent=u?(u.displayName||'Signed in').split(' ')[0]+' ☁':'Sign in';b.title=u?'Signed in — progress saves to your account':'Sign in to save progress to your Google account';}
+  const box=$('acctBox');if(!box)return;
+  if(!CLOUD_OK){box.innerHTML=`<p class="meta">Cloud saves work on the <a href="${PLAY_URL}" target="_blank" rel="noopener">main game site</a>. Here, progress saves in this browser only.</p>`;return;}
+  if(CLOUD.user){
+    const ago=CLOUD.last?Math.max(0,Math.round((Date.now()-CLOUD.last)/1000)):null;
+    box.innerHTML=`<p class="meta">Signed in as <b>${esc(CLOUD.user.displayName||CLOUD.user.email||'player')}</b>. Progress saves to your account and follows you to any device.${ago!==null?` Last synced ${ago<5?'just now':ago<60?ago+' s ago':Math.round(ago/60)+' min ago'}.`:''}</p>${CLOUD.err?`<p class="meta warn">${CLOUD.err}</p>`:''}<div class="acts"><button class="opt" id="syncNow">Sync now</button><button class="opt" id="signOut">Sign out</button></div>`;
+    $('syncNow').onclick=()=>cloudPull(false);
+    $('signOut').onclick=async()=>{await cloudPush();await CLOUD.fb.signOut();toast('Signed out. Progress stays on this device.');};
+  }else{
+    box.innerHTML=`<p class="meta">Sign in with Google to keep your progress in the cloud and play from any device. Your progress on this device comes with you.</p>${CLOUD.err?`<p class="meta warn">${CLOUD.err}</p>`:''}<div class="acts"><button class="opt primary" id="signIn">Sign in with Google</button></div>`;
+    $('signIn').onclick=cloudSignIn;
+  }
+}
+async function cloudSignIn(){
+  if(!CLOUD_OK){window.open(PLAY_URL,'_blank');return;}
+  try{const fb=await fbLoad();await fb.signIn();}
+  catch(e){CLOUD.err=e?.code==='auth/popup-closed-by-user'?'':'Sign-in did not finish. Please try again.';renderAcct();}
+}
+function cloudInit(){
+  const b=$('acctBtn');
+  b.onclick=()=>{if(CLOUD.user||!CLOUD_OK){if($('log').classList.contains('hidden'))toggleLog();const s=$('acctSec');if(s){s.setAttribute('open','');s.scrollIntoView({block:'end'});}}else cloudSignIn();};
+  renderAcct();
+  if(!CLOUD_OK)return;
+  fbLoad().then(fb=>fb.onUser(u=>{
+    const was=CLOUD.user;CLOUD.user=u;renderAcct();
+    if(u&&!was){cloudPull(true);if(CLOUD.user)toast(`Signed in as <b>${esc(u.displayName||u.email||'player')}</b> — progress saves to your account.`);}
+  })).catch(()=>{CLOUD.err='Cloud saves are unavailable right now — progress is saved on this device.';renderAcct();});
+  addEventListener('visibilitychange',()=>{if(!CLOUD.user)return;if(document.hidden)cloudPush();else cloudPull(false);});
+}
 
 }
 </script>

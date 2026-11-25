@@ -4,7 +4,7 @@ const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locke
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
-function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();}
+function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;SAVE.t=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();cloudQueue();}
 
 /* ---------- progress rules ---------- */
 const regionById=id=>COURSE.regions.find(r=>r.id===id);
@@ -125,15 +125,16 @@ function renderLog(){
   }
   const acc=SAVE.stats.answered?Math.round(100*SAVE.stats.first/SAVE.stats.answered):0;
   h+=`<p class="meta">${invText()?`Carrying: ${invText()} · `:''}${SAVE.stats.answered} answered · ${acc}% right on the first try · ${SAVE.missed.length} pinned for review</p>
+  <details class="tools" id="acctSec"><summary>Account &amp; cloud save</summary><div id="acctBox"></div></details>
   <details class="tools"><summary>Save &amp; transfer</summary><p class="meta">Progress saves in this browser automatically. To move it to another device, copy this code and paste it there.</p>
   <textarea id="saveCode" rows="3" readonly></textarea><div class="acts"><button class="opt" id="copyCode">Copy code</button><button class="opt" id="importBtn">Paste a code…</button><button class="opt danger" id="resetBtn">Reset progress</button></div><div id="toolMsg" class="meta"></div></details>`;
-  const L=$('log');L.innerHTML=h;
+  const L=$('log');L.innerHTML=h;renderAcct();
   $('saveCode').value=btoa(unescape(encodeURIComponent(JSON.stringify(SAVE))));
   $('logClose').onclick=()=>L.classList.add('hidden');
   $('copyCode').onclick=async()=>{try{await navigator.clipboard.writeText($('saveCode').value);$('toolMsg').textContent='Copied.';}catch(e){$('saveCode').select();$('toolMsg').textContent='Select the code above and copy it.';}};
   $('importBtn').onclick=()=>{const ta=$('saveCode');ta.readOnly=false;ta.value='';ta.focus();$('toolMsg').textContent='Paste your code, then press Load.';
-    const b=$('importBtn');b.textContent='Load';b.onclick=()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));if(s.v!==1)throw 0;SAVE={...blankSave(),...s};persist();travel(SAVE.scene,'start');L.classList.add('hidden');toast('Progress loaded.');}catch(e){$('toolMsg').textContent='That code could not be read.';}};};
-  $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.arm){SAVE=blankSave();persist();travel('hub','start');L.classList.add('hidden');toast('Progress reset.');}else{b.dataset.arm=1;b.textContent='Tap again to erase everything';}};
+    const b=$('importBtn');b.textContent='Load';b.onclick=()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));if(s.v!==1)throw 0;SAVE={...blankSave(),...s,reset:Date.now()};persist();travel(SAVE.scene,'start');L.classList.add('hidden');toast('Progress loaded.');}catch(e){$('toolMsg').textContent='That code could not be read.';}};};
+  $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.arm){SAVE={...blankSave(),reset:Date.now()};persist();travel('hub','start');L.classList.add('hidden');toast('Progress reset.');}else{b.dataset.arm=1;b.textContent='Tap again to erase everything';}};
 }
 function toggleLog(){const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
 $('logBtn').onclick=toggleLog;
@@ -221,7 +222,8 @@ resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
 syncMusic();
 renderHud();
+cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });
