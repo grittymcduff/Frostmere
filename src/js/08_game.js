@@ -1,6 +1,6 @@
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},tod:'dusk',stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5},tod:'dusk',stats:{answered:0,first:0}});
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
@@ -177,6 +177,15 @@ fxPanel.querySelectorAll('input[data-fx]').forEach(i=>i.onchange=()=>{FX[i.datas
 function syncTodButtons(){document.querySelectorAll('#tod button').forEach(x=>x.classList.toggle('on',x.dataset.t===todKey));}
 document.querySelectorAll('#tod button').forEach(b=>b.onclick=()=>{todKey=b.dataset.t;syncTodButtons();persist();});
 
+/* ---------- music controls ---------- */
+const musOn=$('musOn'),musVol=$('musVol');
+function syncMusic(){musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on,SAVE.music.vol);}
+musOn.onchange=()=>{SAVE.music.on=musOn.checked;Music.start();syncMusic();persist();};
+musVol.oninput=()=>{SAVE.music.vol=musVol.value/100;Music.start();syncMusic();};
+musVol.onchange=persist;
+const firstGesture=()=>{Music.start();syncMusic();removeEventListener('pointerdown',firstGesture);removeEventListener('keydown',firstGesture);};
+addEventListener('pointerdown',firstGesture);addEventListener('keydown',firstGesture);
+
 /* ---------- main loop ---------- */
 let last=performance.now(),dtLast=1/60,fpsAcc=0,fpsN=0,hintT=0;
 const hint=$('hint'),fpsEl=$('fps');
@@ -210,8 +219,9 @@ initSprites();
 applyArt();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
+syncMusic();
 renderHud();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
 requestAnimationFrame(frame);
 });

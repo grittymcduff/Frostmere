@@ -23,6 +23,7 @@
     background:rgba(255,255,255,.06);color:#f3ead8;border:1px solid rgba(255,214,150,.25)}
   #fx .row button.on{background:rgba(233,179,92,.3);border-color:#e9b35c;color:#fff}
   #fx .sub{font-size:11px;opacity:.6;margin:8px 0 2px;text-transform:uppercase;letter-spacing:.08em}
+  #fx label.vol{gap:10px}#fx input[type=range]{width:110px;accent-color:#e9b35c}
   #fx .fps{font-size:11px;opacity:.55;margin-top:8px}
   #hint{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);
     padding:8px 14px;font-size:12.5px;max-width:calc(100vw - 40px);text-align:center;box-sizing:border-box;transition:opacity 1.2s;pointer-events:none}
@@ -159,6 +160,9 @@
   <label><input type="checkbox" data-fx="prints" checked> Footprints</label>
   <label><input type="checkbox" data-fx="fg" checked> Foreground depth</label>
   <label><input type="checkbox" data-fx="grade" checked> Color grade</label>
+  <div class="sub">Sound</div>
+  <label><input type="checkbox" id="musOn" checked> Music</label>
+  <label class="vol">Volume <input type="range" id="musVol" min="0" max="100" value="50" aria-label="Music volume"></label>
   <div class="sub">Time of day</div>
   <div class="row" id="tod"><button data-t="day">Day</button><button data-t="dusk" class="on">Dusk</button><button data-t="night">Night</button></div>
   <div class="fps" id="fps"></div>
@@ -1460,6 +1464,7 @@ function setScene(id,spawnKey){
   if(id==='hub')sizeWorld(2000,1500);else sizeWorld(...(reg.theme.size||[2400,1800]));
   SPAWNS=id==='hub'?buildHub():buildWild(reg);
   curScene=id;
+  if(typeof Music!=='undefined')Music.setRegion(id);
   const sp=SPAWNS[spawnKey]||SPAWNS.start;
   Object.assign(player,{x:sp.x,y:sp.y,vx:0,vy:0});
   playerLight=addLight(player.x,player.y,125,[255,196,120],.95,.08);
@@ -1545,6 +1550,84 @@ function buildCalc(){
 }
 function syncUse(){const n=document.getElementById('numIn');calcEl.querySelector('#cUse').classList.toggle('hidden',!(n&&!n.disabled));}
 function toggleCalc(on){if(!calcEl.innerHTML)buildCalc();const show=on??calcEl.classList.contains('hidden');calcEl.classList.toggle('hidden',!show);if(show){syncUse();setTimeout(()=>calcEl.querySelector('#cIn').focus(),30);}}
+
+/* ==== js/07_music.js ==== */
+/* ---------- music: original ambient score, generated live with Web Audio ----------
+   Low drone + soft string pad + plucked harp arpeggios + an occasional flute line,
+   through a long synthetic reverb. Each region gets its own chords and colour.
+   Starts on the player's first click/key (browsers block audio before that). */
+const Music=(()=>{
+  let ac=null,master=null,verb=null,dry=null,timer=null,next=0,step=0,on=true,vol=.5,region='hub',started=false;
+  const midi=n=>440*2**((n-69)/12);
+  // chord progressions (MIDI roots + chord tones), tempo, and timbre per region
+  const SCORES={
+    hub:   {bpm:56,scale:[62,64,65,67,69,70,72,74],prog:[[50,57,62,65],[46,53,58,62],[53,60,65,69],[48,55,60,64]],cut:900,flute:.35},
+    woods: {bpm:52,scale:[62,64,65,67,69,71,72,74],prog:[[50,57,62,65],[48,55,60,64],[46,53,58,62],[45,52,57,61]],cut:800,flute:.3},
+    hollow:{bpm:58,scale:[60,62,64,66,67,69,71,72],prog:[[48,55,60,64],[50,57,62,66],[43,50,55,59],[45,52,57,60]],cut:1100,flute:.45},
+    reach: {bpm:48,scale:[64,66,67,69,71,72,74,76],prog:[[52,59,64,67],[48,55,60,64],[50,57,62,66],[47,54,59,62]],cut:1400,flute:.25},
+  };
+  function impulse(sec){const n=ac.sampleRate*sec,b=ac.createBuffer(2,n,ac.sampleRate);
+    for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.6);}return b;}
+  function init(){
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    master=ac.createGain();master.gain.value=0;master.connect(ac.destination);
+    const comp=ac.createDynamicsCompressor();comp.threshold.value=-24;comp.ratio.value=3;comp.connect(master);
+    verb=ac.createConvolver();verb.buffer=impulse(4.5);const wet=ac.createGain();wet.gain.value=.55;verb.connect(wet);wet.connect(comp);
+    dry=ac.createGain();dry.gain.value=.5;dry.connect(comp);
+  }
+  const out=(node,send=.8)=>{node.connect(dry);const s=ac.createGain();s.gain.value=send;node.connect(s);s.connect(verb);};
+  function pad(notes,t,dur,cut){
+    for(const n of notes){for(const det of [-6,6]){
+      const o=ac.createOscillator(),f=ac.createBiquadFilter(),g=ac.createGain();
+      o.type='sawtooth';o.frequency.value=midi(n);o.detune.value=det;
+      f.type='lowpass';f.frequency.value=cut;f.Q.value=.4;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.018,t+dur*.35);g.gain.linearRampToValueAtTime(.014,t+dur*.8);g.gain.linearRampToValueAtTime(0,t+dur+1.5);
+      o.connect(f);f.connect(g);out(g,.9);o.start(t);o.stop(t+dur+1.6);}}
+  }
+  function drone(root,t,dur){
+    for(const [n,a] of [[root-12,.05],[root-5,.025]]){
+      const o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=midi(n);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a,t+2);g.gain.setValueAtTime(a,t+dur-.5);g.gain.linearRampToValueAtTime(0,t+dur+2);
+      o.connect(g);out(g,.5);o.start(t);o.stop(t+dur+2.1);}
+  }
+  function harp(n,t,a=.07){
+    const o=ac.createOscillator(),o2=ac.createOscillator(),g=ac.createGain(),f=ac.createBiquadFilter();
+    o.type='triangle';o2.type='sine';o.frequency.value=midi(n);o2.frequency.value=midi(n+12);
+    f.type='lowpass';f.frequency.setValueAtTime(3200,t);f.frequency.exponentialRampToValueAtTime(700,t+1.2);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a,t+.008);g.gain.exponentialRampToValueAtTime(.0005,t+2.6);
+    const g2=ac.createGain();g2.gain.value=.25;o.connect(f);o2.connect(g2);g2.connect(f);f.connect(g);out(g,1);
+    o.start(t);o2.start(t);o.stop(t+2.7);o2.stop(t+2.7);
+  }
+  function flute(n,t,dur){
+    const o=ac.createOscillator(),v=ac.createOscillator(),vg=ac.createGain(),g=ac.createGain(),f=ac.createBiquadFilter();
+    o.type='sine';o.frequency.value=midi(n);v.frequency.value=5;vg.gain.setValueAtTime(0,t);vg.gain.linearRampToValueAtTime(midi(n)*.006,t+dur*.6);
+    v.connect(vg);vg.connect(o.frequency);f.type='lowpass';f.frequency.value=2400;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.035,t+.25);g.gain.setValueAtTime(.03,t+dur-.3);g.gain.linearRampToValueAtTime(0,t+dur+.4);
+    o.connect(f);f.connect(g);out(g,1.1);o.start(t);v.start(t);o.stop(t+dur+.5);v.stop(t+dur+.5);
+  }
+  let phrase=[];
+  function schedule(){
+    const S=SCORES[region]||SCORES.hub,beat=60/S.bpm,bar=beat*4;
+    while(next<ac.currentTime+1.5){
+      const t=next,chord=S.prog[Math.floor(step/16)%S.prog.length],inBar=step%16;
+      if(step%16===0){pad(chord.slice(1),t,bar*.98,S.cut);if(Math.floor(step/16)%2===0)drone(chord[0],t,bar*2);}
+      // harp: gentle broken chord on eighth notes, with rests
+      if(inBar%2===0&&Math.random()<.62){const pool=[...chord.slice(1).map(n=>n+12),chord[1]+24];harp(pool[(inBar/2+Math.floor(step/16))%pool.length],t+Math.random()*.03,.05+Math.random()*.03);}
+      // flute: a short phrase every few bars
+      if(inBar===0&&!phrase.length&&Math.random()<S.flute){let k=Math.floor(Math.random()*4)+2;const len=3+Math.floor(Math.random()*3);
+        for(let i=0;i<len;i++){k=Math.max(0,Math.min(S.scale.length-1,k+[-1,1,1,-2,2,0][Math.floor(Math.random()*6)]));phrase.push({n:S.scale[k]+12,beats:[2,2,4,3][Math.floor(Math.random()*4)]});}
+        let tt=t+beat*2;for(const p of phrase){flute(p.n,tt,p.beats*beat*.9);tt+=p.beats*beat;}setTimeout(()=>phrase=[],(tt-ac.currentTime)*1000);}
+      next+=beat/2;step+=2;
+    }
+  }
+  function level(){if(!ac)return;const target=on?vol*2.4:0;master.gain.cancelScheduledValues(ac.currentTime);master.gain.setTargetAtTime(target,ac.currentTime,.8);}
+  return {
+    start(){if(started)return;started=true;init();next=ac.currentTime+.2;timer=setInterval(schedule,250);schedule();level();},
+    setRegion(id){if(id===region)return;region=id;if(ac){master.gain.setTargetAtTime(0,ac.currentTime,.4);setTimeout(()=>{step=0;next=Math.max(next,ac.currentTime+.6);level();},1400);}},
+    set(onV,volV){on=onV;vol=volV;if(ac&&ac.state==='suspended')ac.resume();level();},
+    get started(){return started;},
+  };
+})();
 
 /* ==== js/07_puzzles.js ==== */
 /* ---------- statistics: OLS with Excel-style output ---------- */
@@ -2716,7 +2799,7 @@ CACHE('m6-omit','feather',{make:r=>{const est=round(rr(r,1.5,3.5),2),b2=round(rr
 /* ==== js/08_game.js ==== */
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},tod:'dusk',stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5},tod:'dusk',stats:{answered:0,first:0}});
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
@@ -2893,6 +2976,15 @@ fxPanel.querySelectorAll('input[data-fx]').forEach(i=>i.onchange=()=>{FX[i.datas
 function syncTodButtons(){document.querySelectorAll('#tod button').forEach(x=>x.classList.toggle('on',x.dataset.t===todKey));}
 document.querySelectorAll('#tod button').forEach(b=>b.onclick=()=>{todKey=b.dataset.t;syncTodButtons();persist();});
 
+/* ---------- music controls ---------- */
+const musOn=$('musOn'),musVol=$('musVol');
+function syncMusic(){musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on,SAVE.music.vol);}
+musOn.onchange=()=>{SAVE.music.on=musOn.checked;Music.start();syncMusic();persist();};
+musVol.oninput=()=>{SAVE.music.vol=musVol.value/100;Music.start();syncMusic();};
+musVol.onchange=persist;
+const firstGesture=()=>{Music.start();syncMusic();removeEventListener('pointerdown',firstGesture);removeEventListener('keydown',firstGesture);};
+addEventListener('pointerdown',firstGesture);addEventListener('keydown',firstGesture);
+
 /* ---------- main loop ---------- */
 let last=performance.now(),dtLast=1/60,fpsAcc=0,fpsN=0,hintT=0;
 const hint=$('hint'),fpsEl=$('fps');
@@ -2926,9 +3018,10 @@ initSprites();
 applyArt();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
+syncMusic();
 renderHud();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone};
 requestAnimationFrame(frame);
 });
 

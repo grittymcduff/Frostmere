@@ -321,6 +321,7 @@ function setScene(id,spawnKey){
   if(id==='hub')sizeWorld(2000,1500);else sizeWorld(...(reg.theme.size||[2400,1800]));
   SPAWNS=id==='hub'?buildHub():buildWild(reg);
   curScene=id;
+  if(typeof Music!=='undefined')Music.setRegion(id);
   const sp=SPAWNS[spawnKey]||SPAWNS.start;
   Object.assign(player,{x:sp.x,y:sp.y,vx:0,vy:0});
   playerLight=addLight(player.x,player.y,125,[255,196,120],.95,.08);

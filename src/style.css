@@ -17,6 +17,7 @@
     background:rgba(255,255,255,.06);color:#f3ead8;border:1px solid rgba(255,214,150,.25)}
   #fx .row button.on{background:rgba(233,179,92,.3);border-color:#e9b35c;color:#fff}
   #fx .sub{font-size:11px;opacity:.6;margin:8px 0 2px;text-transform:uppercase;letter-spacing:.08em}
+  #fx label.vol{gap:10px}#fx input[type=range]{width:110px;accent-color:#e9b35c}
   #fx .fps{font-size:11px;opacity:.55;margin-top:8px}
   #hint{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);
     padding:8px 14px;font-size:12.5px;max-width:calc(100vw - 40px);text-align:center;box-sizing:border-box;transition:opacity 1.2s;pointer-events:none}
