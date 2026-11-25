@@ -3340,6 +3340,13 @@ EXPLAIN(10,'Explain two tests that disagree',[
    Written for the ear: numbers and symbols are spelled the way they're said.
    ========================================================================== */
 const TEACH={
+  'basics':{t:'Start here: the words you’ll hear every week',lines:[
+    'Before the stones, a few words you’ll hear in every class. A regression explains one thing — Y, the dependent variable — using others: the Xs, also called explanatory or independent variables. Sales might be Y. Price and advertising, the Xs.',
+    'Coded means how a fact was turned into a number. Income coded in hundreds of dollars. Height as inches above five feet. A yes-or-no as one or zero. Always check the coding before you read a result.',
+    'The coefficient on an X — its slope — says how much Y changes when that X rises by one unit, holding the other Xs constant. The intercept is the predicted Y when every X is zero. Often it’s just where the line starts, not something to read literally.',
+    'Plug values into the equation and you get a prediction, also called a fitted value. Use it for a period you haven’t seen yet, and it’s a forecast. The gap between actual and predicted is the residual.',
+    'And everything we calculate from a sample is an estimate. The standard error says how much it might wobble from sample to sample. Significant means it’s unlikely to be zero just by chance — not that it’s large, and not that it’s causal.',
+  ]},
 'm1-signs':{t:'Signs come from theory',lines:[
  "Before you ever open the data, ask a simple question: which way should each factor push the result?",
  "Raise your own price, and you'd expect fewer sales — a negative sign. If a rival raises theirs, customers drift to you — a positive sign. Give customers bigger budgets, and demand usually rises — positive again.",
@@ -3737,6 +3744,7 @@ function renderMap(){
   const sec=(id,name,tag,body,lk,lockMsg)=>`<section class="mreg${lk?' locked':''}" id="mr-${id}"><h3><span>${esc(name)} ${id===here?'<em class="here">· you are here</em>':''}</span><small>${tag}</small></h3><p class="pl">${COURSE.plain[id]}${lk?` <i>${lockMsg}</i>`:''}</p>${body}</section>`;
   let h=`<button class="close" id="mapClose" aria-label="Close">×</button><div class="kicker">Map of Frostmere</div><h2>Where to go, and what you’ll learn there</h2>${svg}`;
   h+=sec('hub','Frostmere Village','home base',`<ul>
+    <li><i class="ic ${SAVE.taught&&SAVE.taught.basics?'done':'todo'}">🎓</i><span><b>Start here: key terms</b> — Y and X, coded, coefficient, intercept, prediction, forecast, residual, estimate <button class="lnk" data-teach="basics">🎓 play it</button><em>a one-minute lecture from Warden Quill</em></span></li>
     <li><i class="ic todo">?</i><span><b>Warden Quill</b> — your guide; replay his welcome at the sign</span></li>
     <li><i class="ic ${reviewCount()?'todo':'done'}">${reviewCount()?'!':'✓'}</i><span><b>Review board</b> — missed questions, plus ones due for a spaced refresher<em>${SAVE.missed.length} missed · ${dueKeys().length} due</em></span></li>
     <li><i class="ic todo">✎</i><span><b>Interpretation desk</b> — explain a result in your own words, then compare with a model answer</span></li>
@@ -4039,13 +4047,13 @@ let notesAll=false;
 function renderNotes(){
   const open=NOTES.filter(n=>noteOpen(n[0])).length;
   let h=`<button class="close" id="notesClose" aria-label="Close">×</button><div class="kicker">Field notes</div><h2>Formulas and rules of thumb</h2>
-    <p class="meta">${open} of ${NOTES.length} collected. A note unlocks when you finish a stone’s first waypoint or restore the stone. <button class="lnk" id="notesAll">${notesAll?'Show only collected notes':'Show all (for exam review)'}</button></p>`;
+    <p class="meta">${open} of ${NOTES.length} collected. A note unlocks when you finish a stone’s first waypoint or restore the stone. <button class="lnk" id="notesAll">${notesAll?'Show only collected notes':'Show all (for exam review)'}</button> · <button class="lnk" id="notesBasics">🎓 Key terms lecture</button></p>`;
   for(let m=1;m<=10;m++){const ns=NOTES.filter(n=>+/^m(\d+)/.exec(n[0])[1]===m);
     h+=`<section class="nsec"><h3>${esc(AREAS[m])}</h3>`;
     for(const [id,t,body] of ns){const ok=notesAll||noteOpen(id);
       h+=ok?`<div class="note"><b>${t}</b><div>${body}</div></div>`:`<div class="note locked"><b>${t}</b><div>Locked — finish a waypoint at <i>${esc(NODES[id]?.title||'')}</i>.</div></div>`;}
     h+=`</section>`;}
-  const P=$('notes');P.innerHTML=h;$('notesClose').onclick=()=>P.classList.add('hidden');$('notesAll').onclick=()=>{notesAll=!notesAll;renderNotes();};
+  const P=$('notes');P.innerHTML=h;$('notesClose').onclick=()=>P.classList.add('hidden');$('notesBasics').onclick=()=>Teach.open('basics');$('notesAll').onclick=()=>{notesAll=!notesAll;renderNotes();};
 }
 function toggleNotes(){const P=$('notes');if(P.classList.contains('hidden')){['log','map','report'].forEach(x=>$(x).classList.add('hidden'));renderNotes();P.classList.remove('hidden');keys.clear();}else P.classList.add('hidden');}
 $('notesBtn').onclick=toggleNotes;
@@ -4118,7 +4126,7 @@ function openDesk(){
 
 /* ---------- "what's new" greeting for returning players: closes itself after 15 s ---------- */
 const WHATS_NEW={v:3,items:[
-  ['🎓','Teach me','Stuck on a stone? Tap “Teach me” for a one-minute refresher from Warden Quill — on every stone card, inside questions, on the map and in your progress report.'],
+  ['🎓','Teach me','Stuck on a stone? Tap “Teach me” for a one-minute refresher from Warden Quill — on every stone card, inside questions, on the map and in your progress report. New to the course? Start with “Key terms” on the map or in Notes.'],
   ['✓','Accuracy pass','Every question was checked against the course. A few numbers, labels and generated charts were tightened so the right answer is always clear.'],
   ['❄','Crystal Reach is open','Modules 7–10: functional form, multicollinearity, serial correlation and heteroskedasticity — four new stones.'],
   ['⏱','Practice final, with exam conditions','20 questions from all ten modules. Try it with one attempt per question and a countdown — then review every miss.'],

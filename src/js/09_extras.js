@@ -36,13 +36,13 @@ let notesAll=false;
 function renderNotes(){
   const open=NOTES.filter(n=>noteOpen(n[0])).length;
   let h=`<button class="close" id="notesClose" aria-label="Close">×</button><div class="kicker">Field notes</div><h2>Formulas and rules of thumb</h2>
-    <p class="meta">${open} of ${NOTES.length} collected. A note unlocks when you finish a stone’s first waypoint or restore the stone. <button class="lnk" id="notesAll">${notesAll?'Show only collected notes':'Show all (for exam review)'}</button></p>`;
+    <p class="meta">${open} of ${NOTES.length} collected. A note unlocks when you finish a stone’s first waypoint or restore the stone. <button class="lnk" id="notesAll">${notesAll?'Show only collected notes':'Show all (for exam review)'}</button> · <button class="lnk" id="notesBasics">🎓 Key terms lecture</button></p>`;
   for(let m=1;m<=10;m++){const ns=NOTES.filter(n=>+/^m(\d+)/.exec(n[0])[1]===m);
     h+=`<section class="nsec"><h3>${esc(AREAS[m])}</h3>`;
     for(const [id,t,body] of ns){const ok=notesAll||noteOpen(id);
       h+=ok?`<div class="note"><b>${t}</b><div>${body}</div></div>`:`<div class="note locked"><b>${t}</b><div>Locked — finish a waypoint at <i>${esc(NODES[id]?.title||'')}</i>.</div></div>`;}
     h+=`</section>`;}
-  const P=$('notes');P.innerHTML=h;$('notesClose').onclick=()=>P.classList.add('hidden');$('notesAll').onclick=()=>{notesAll=!notesAll;renderNotes();};
+  const P=$('notes');P.innerHTML=h;$('notesClose').onclick=()=>P.classList.add('hidden');$('notesBasics').onclick=()=>Teach.open('basics');$('notesAll').onclick=()=>{notesAll=!notesAll;renderNotes();};
 }
 function toggleNotes(){const P=$('notes');if(P.classList.contains('hidden')){['log','map','report'].forEach(x=>$(x).classList.add('hidden'));renderNotes();P.classList.remove('hidden');keys.clear();}else P.classList.add('hidden');}
 $('notesBtn').onclick=toggleNotes;
@@ -115,7 +115,7 @@ function openDesk(){
 
 /* ---------- "what's new" greeting for returning players: closes itself after 15 s ---------- */
 const WHATS_NEW={v:3,items:[
-  ['🎓','Teach me','Stuck on a stone? Tap “Teach me” for a one-minute refresher from Warden Quill — on every stone card, inside questions, on the map and in your progress report.'],
+  ['🎓','Teach me','Stuck on a stone? Tap “Teach me” for a one-minute refresher from Warden Quill — on every stone card, inside questions, on the map and in your progress report. New to the course? Start with “Key terms” on the map or in Notes.'],
   ['✓','Accuracy pass','Every question was checked against the course. A few numbers, labels and generated charts were tightened so the right answer is always clear.'],
   ['❄','Crystal Reach is open','Modules 7–10: functional form, multicollinearity, serial correlation and heteroskedasticity — four new stones.'],
   ['⏱','Practice final, with exam conditions','20 questions from all ten modules. Try it with one attempt per question and a countdown — then review every miss.'],

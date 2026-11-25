@@ -6,6 +6,13 @@
    Written for the ear: numbers and symbols are spelled the way they're said.
    ========================================================================== */
 const TEACH={
+  'basics':{t:'Start here: the words you’ll hear every week',lines:[
+    'Before the stones, a few words you’ll hear in every class. A regression explains one thing — Y, the dependent variable — using others: the Xs, also called explanatory or independent variables. Sales might be Y. Price and advertising, the Xs.',
+    'Coded means how a fact was turned into a number. Income coded in hundreds of dollars. Height as inches above five feet. A yes-or-no as one or zero. Always check the coding before you read a result.',
+    'The coefficient on an X — its slope — says how much Y changes when that X rises by one unit, holding the other Xs constant. The intercept is the predicted Y when every X is zero. Often it’s just where the line starts, not something to read literally.',
+    'Plug values into the equation and you get a prediction, also called a fitted value. Use it for a period you haven’t seen yet, and it’s a forecast. The gap between actual and predicted is the residual.',
+    'And everything we calculate from a sample is an estimate. The standard error says how much it might wobble from sample to sample. Significant means it’s unlikely to be zero just by chance — not that it’s large, and not that it’s causal.',
+  ]},
 'm1-signs':{t:'Signs come from theory',lines:[
  "Before you ever open the data, ask a simple question: which way should each factor push the result?",
  "Raise your own price, and you'd expect fewer sales — a negative sign. If a rival raises theirs, customers drift to you — a positive sign. Give customers bigger budgets, and demand usually rises — positive again.",

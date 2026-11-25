@@ -213,6 +213,7 @@ function renderMap(){
   const sec=(id,name,tag,body,lk,lockMsg)=>`<section class="mreg${lk?' locked':''}" id="mr-${id}"><h3><span>${esc(name)} ${id===here?'<em class="here">· you are here</em>':''}</span><small>${tag}</small></h3><p class="pl">${COURSE.plain[id]}${lk?` <i>${lockMsg}</i>`:''}</p>${body}</section>`;
   let h=`<button class="close" id="mapClose" aria-label="Close">×</button><div class="kicker">Map of Frostmere</div><h2>Where to go, and what you’ll learn there</h2>${svg}`;
   h+=sec('hub','Frostmere Village','home base',`<ul>
+    <li><i class="ic ${SAVE.taught&&SAVE.taught.basics?'done':'todo'}">🎓</i><span><b>Start here: key terms</b> — Y and X, coded, coefficient, intercept, prediction, forecast, residual, estimate <button class="lnk" data-teach="basics">🎓 play it</button><em>a one-minute lecture from Warden Quill</em></span></li>
     <li><i class="ic todo">?</i><span><b>Warden Quill</b> — your guide; replay his welcome at the sign</span></li>
     <li><i class="ic ${reviewCount()?'todo':'done'}">${reviewCount()?'!':'✓'}</i><span><b>Review board</b> — missed questions, plus ones due for a spaced refresher<em>${SAVE.missed.length} missed · ${dueKeys().length} due</em></span></li>
     <li><i class="ic todo">✎</i><span><b>Interpretation desk</b> — explain a result in your own words, then compare with a model answer</span></li>
