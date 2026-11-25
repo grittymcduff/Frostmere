@@ -23,7 +23,8 @@ NODES['m3-design']={kicker:'Module 3 · Designing a regression',title:'The Archi
   lessons:[
    {title:'Six steps, mechanism first',
     teach:`<div class="ex">${SIX_STEPS.map((s,i)=>`${i+1} · ${s}`).join('<br>')}</div>
-    <p>Step 1 is the anchor: explain <b>why</b> the outcome should respond to each driver before you open the spreadsheet. Data can’t supply missing business logic. Pick variables because the mechanism supports them, not because they’re available — and write down the expected signs <b>before</b> you see results.</p>`,
+    <p>Step 1 is the anchor: explain <b>why</b> the outcome should respond to each driver before you open the spreadsheet. Data can’t supply missing business logic. Pick variables because the mechanism supports them, not because they’re available — and write down the expected signs <b>before</b> you see results.</p>
+    <p><b>Step 6, documenting</b>, means reporting enough for another manager to reproduce and challenge the model: coefficients with units, standard errors or confidence intervals, t-statistics and p-values, R² and adjusted R², sample size N, any data changes or exclusions, and the assumptions and limitations — inconvenient results included.</p>`,
     practice:[
      {type:'mc',q:'A manager wants to start by pulling every column in the data warehouse into a regression to “see what sticks.” Which step did they skip?',opts:['Anchoring the question in an economic mechanism','Documenting the model','Estimating in Excel','Inspecting the residuals'],a:0,
       why:'Choose drivers because the business mechanism supports them — not because they’re available. Mining until something “works” is the opposite of step 1.'},

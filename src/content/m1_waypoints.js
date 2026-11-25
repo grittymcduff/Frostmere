@@ -19,7 +19,9 @@ W1('m1-signs',[
   {title:'Reading a coefficient like a manager',
    teach:`<p>A coefficient is a <b>marginal relationship in the units of the problem</b>, holding the other included factors constant.</p>
    <div class="ex">Income coefficient = 0.23 → a one-unit rise in income is associated with 0.23 more units demanded, holding the other included factors constant.</div>
-   <p>Then ask the manager’s questions: is it <b>large enough</b> to matter, <b>precise enough</b> for the stakes, and likely to <b>survive</b> changes in competitors, technology, or policy? A correct sign alone never settles a decision.</p>`,
+   <p>Then ask the manager’s questions: is it <b>large enough</b> to matter, <b>precise enough</b> for the stakes, and likely to <b>survive</b> changes in competitors, technology, or policy? A correct sign alone never settles a decision.</p>
+   <div class="ex"><b>What a regression model is:</b> a disciplined way to structure assumptions, a method for comparing evidence with claims, and one input into a decision under uncertainty.<br><b>What it is not:</b> a proof-generating machine, a substitute for business judgment, or a guarantee that the future will look like the past.</div>
+   <p>The model can keep you from a blind bet, but it can’t decide for you.</p>`,
    practice:[
     {make:r=>{const b=round(rr(r,1.1,3.9),1);return {type:'mc',q:`An advertising coefficient is <b>${b}</b> (sales in units, advertising in $1,000s). Which reading is right?`,
       opts:[`$1,000 more advertising is associated with about ${b} more units sold, holding the other included factors constant`,`$1 more advertising causes ${b} more units sold`,`Advertising explains ${Math.round(b*10)}% of sales`,`Sales will rise by exactly ${b} units every time advertising rises`],a:0,
@@ -104,7 +106,8 @@ W1('m1-ledger',[
   {title:'The Excel workflow',
    teach:`<p><b>Data → Data Analysis → Regression.</b> Select the Y range (outcome) and the X range (drivers), tick Labels, and choose where the output goes.</p>
    <p>Before clicking OK, check the outcome, the predictors, the units, the sample, and the business logic. Then read the output in order:</p>
-   <div class="ex">1 Signs and units → 2 Magnitudes → 3 Standard errors, t, p → 4 Fit and residuals → 5 Plausibility of the specification</div>`,
+   <div class="ex">1 Signs and units → 2 Magnitudes → 3 Standard errors, t, p → 4 Fit and residuals → 5 Plausibility of the specification</div>
+   <p>Two numbers you’ll see in every output, covered properly in later modules: <b>R Square</b> (0 to 1) is the share of the outcome’s variation the model explains in this sample — fit, not proof. A coefficient’s <b>P-value</b> measures how surprising the estimate would be if the true effect were zero; smaller means stronger evidence. The <b>Standard Error</b> is how much the estimate would bounce around from sample to sample.</p>`,
    practice:[
     {type:'mc',q:'What should you read first in a regression output?',opts:['Coefficient signs and units','R Square','The p-values','The residual plot'],a:0,
      why:'Signs and units first: if the direction or units don’t make sense, nothing after it matters yet.'},

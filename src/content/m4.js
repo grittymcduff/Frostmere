@@ -22,7 +22,9 @@ NODES['m4-seven']={kicker:'Module 4 · The classical assumptions',title:'The Sev
    {title:'The seven, in plain language',
     teach:`<div class="ex">${SEVEN.map((s,i)=>`${i+1} · ${s}`).join('<br>')}</div>
     <p><b>Linear</b> means linear in the <b>coefficients</b>, not the variables: Y = β₀ + β₁X², or β₁ln(X), is still fine. Y = β₀ + e^(β₁X) is not.</p>
-    <p>Assumption 7 is optional: OLS can be <b>estimated</b> without normality; it matters for exact small-sample <b>inference</b>.</p>`,
+    <p>Assumption 7 is optional: OLS can be <b>estimated</b> without normality; it matters for exact small-sample <b>inference</b>.</p>
+    <div class="ex"><b>Gauss–Markov theorem:</b> when Assumptions 1–6 hold, OLS is <b>BLUE</b> — the <b>B</b>est (smallest-variance) <b>L</b>inear <b>U</b>nbiased <b>E</b>stimator. It doesn’t need normal errors.</div>
+    <p>Some violations are worse than others. Endogeneity (Assumption 3) <b>biases</b> the coefficients themselves. Serial correlation and heteroskedasticity (4 and 5) usually leave coefficients unbiased but make the <b>standard errors, t-tests, and confidence intervals unreliable</b> — so the model can look more certain than it is.</p>`,
     practice:[
      {type:'sort',q:'Is each equation linear in its parameters?',cats:['Linear in parameters','Not linear in parameters'],
       items:[{t:'Y = β₀ + β₁X²',c:0},{t:'Y = β₀ + β₁ln(X)',c:0},{t:'Y = β₀ + e^(β₁X)',c:1},{t:'Y = β₀ + β₁²X',c:1}],
@@ -71,7 +73,8 @@ NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:
    {title:'Standardized residuals and precision',
     teach:`<p>If errors are roughly normal, about <b>95%</b> of standardized residuals fall between −2 and +2. Flag |z| &gt; 2 for <b>investigation</b> — not automatic deletion.</p>
     <div class="ex">=IF(ABS(StandardizedResidual)&gt;2,"Investigate","Within range")</div>
-    <p>Precision grows with sample size: the standard error shrinks roughly with <b>1/√n</b>. Quadruple n → about half the SE.</p>`,
+    <p>Precision grows with sample size: the standard error shrinks roughly with <b>1/√n</b>. Quadruple n → about half the SE.</p>
+    <p>Picture the estimates you’d get from many different samples — the <b>sampling distribution of β̂</b>. <b>Unbiased</b> means it’s centered on the true β; <b>precise</b> means it’s tightly clustered. An estimator can be unbiased but imprecise (wide), or precise but biased (narrow and off-center). You want both: centered and tight.</p>`,
     practice:[
      {make:r=>{const z=Array.from({length:10},()=>round(rngGauss(r)*1.25,2));const a=z.filter(v=>Math.abs(v)>2).length;return {type:'num',exhibit:Exhibit.table(['Obs','Standardized residual'],z.map((v,i)=>[i+1,fmtNum(v,2)])),
       q:'How many observations should be flagged “Investigate”?',a,tol:0,hint:'Count values with absolute value above 2.',solution:`${a} with |z| > 2.`,why:'Flags start a review — they don’t prove an error.'};}},

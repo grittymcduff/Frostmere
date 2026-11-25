@@ -30,7 +30,7 @@ CACHE('m2-andy','lens',{make:r=>{const b2=round(rr(r,1.6,2.4),3),cs=ri(r,35,55),
   return {type:'num',q:`Advertising coefficient = <b>${b2}</b> (SALES and ADVERT in $1,000s). Food, labor, and franchise costs eat <b>${cs}%</b> of each extra revenue dollar. What is the incremental profit from an extra <b>$1,000</b> of advertising?`,a:pr,tol:.6,pre:'$',
    hint:`Extra revenue = ${b2} × $1,000. Keep (1 − ${cs/100}) of it, then subtract the $1,000 ad cost.`,solution:`${money(inc,0)} × ${round(1-cs/100,2)} − $1,000 = ${money(pr)}.`,why:'Revenue above ad cost isn’t profit — the extra sales carry their own costs.'};}});
 CACHE('m2-fit','charm',{make:r=>{const n=ri(r,30,60),R2a=round(rr(r,.55,.7),3),R2b=round(R2a+rr(r,.002,.012),3),ka=2,kb=3,adj=(R2,k)=>1-(1-R2)*(n-1)/(n-k-1),a=adj(R2b,kb);
-  return {type:'num',q:`Model A (2 predictors) has R² = ${R2a}. Model B adds a third predictor: R² = <b>${R2b}</b>, n = <b>${n}</b>. Compute Model B’s adjusted R².`,a,tol:.0015,
+  return {type:'num',exhibit:Exhibit.eq('Adjusted R² = 1 − (1 − R²) × (n − 1) / (n − k − 1)'),q:`Model A (2 predictors) has R² = ${R2a}. Model B adds a third predictor: R² = <b>${R2b}</b>, n = <b>${n}</b>. Compute Model B’s adjusted R² (k = 3).`,a,tol:.0015,
    hint:'1 − (1 − R²)(n − 1)/(n − k − 1), with k = 3.',solution:`1 − (1 − ${R2b}) × ${n-1}/${n-4} = ${round(a,4)} (Model A: ${round(adj(R2a,ka),4)}).`,
    why:`${a<adj(R2a,ka)?'Adjusted R² fell, so the third predictor isn’t earning its degree of freedom.':'Adjusted R² rose slightly — but theory still decides whether it belongs.'}`};}});
 CACHE('m3-design','feather',{make:r=>{const N=[ri(r,2,7),ri(r,2,7)],P=[ri(r,40,160)*1000,ri(r,40,160)*1000],I=[ri(r,40,95)*1000,ri(r,40,95)*1000],f=k=>102192-9075*N[k]+.355*P[k]+1.288*I[k],d=f(0)-f(1);

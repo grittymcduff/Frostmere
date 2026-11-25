@@ -1833,7 +1833,7 @@ NODES['m1-signs']={kicker:'Module 1 · Theory and evidence',title:'Stone of Sign
   {type:'mc',q:'Theory and data play different roles in a regression. Which split is right?',
    opts:['Theory predicts the direction (sign); data estimate the magnitude','Data predict the direction; theory estimates the magnitude','Theory tells you how reliable an effect is; data tell you its sign','Data decide which variables belong; theory just labels them'],a:0,
    why:'Theory predicts direction; data estimate magnitude. Theory cannot tell you whether an effect is large, reliable, or useful — that is the data’s job.'},
-  {type:'mc',q:'Which of these is <b>not</b> a fair description of a regression model, as the course frames it?',
+  {type:'mc',q:'Which of these is <b>not</b> a fair description of what a regression model is?',
    opts:['A proof-generating machine that decides for you','A disciplined way to structure assumptions','A method for comparing evidence with claims','An input into a decision under uncertainty'],a:0,
    why:'The model can keep you from a blind bet, but it cannot decide for you. Models reduce analytical risk; leaders still own business risk.'},
   {make:r=>{const b=round(rr(r,.12,.48),2);return {type:'mc',q:`Your demand model estimates an income coefficient of <b>${b}</b>. What is the correct managerial reading?`,
@@ -1951,7 +1951,7 @@ const svcEx=d=>Exhibit.excel(d.m,'Annual service revenue ($M)');
 NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild Ledger',
   intro:'The Service Guild ran Data → Data Analysis → Regression on 20 branches: annual service revenue ($M) against active customers. Excel did the arithmetic. Your job is judgment.',
   puzzles:[
-  {type:'order',q:'Put the course’s order for reading regression output into sequence.',
+  {type:'order',q:'Put the recommended order for reading regression output into sequence.',
    items:['Coefficient signs and units','Magnitudes and practical importance','Standard errors, t statistics, and p-values','Fit and residual behavior','Plausibility of the specification'],
    why:'Signs and units first, then size, then precision, then fit and residuals, and finally whether the whole specification is believable.'},
   {make:r=>{const d=genService(r),k=pick([3,5,8,10]),a=k*d.m.b[1];return {type:'num',exhibit:svcEx(d),
@@ -1996,7 +1996,9 @@ W1('m1-signs',[
   {title:'Reading a coefficient like a manager',
    teach:`<p>A coefficient is a <b>marginal relationship in the units of the problem</b>, holding the other included factors constant.</p>
    <div class="ex">Income coefficient = 0.23 → a one-unit rise in income is associated with 0.23 more units demanded, holding the other included factors constant.</div>
-   <p>Then ask the manager’s questions: is it <b>large enough</b> to matter, <b>precise enough</b> for the stakes, and likely to <b>survive</b> changes in competitors, technology, or policy? A correct sign alone never settles a decision.</p>`,
+   <p>Then ask the manager’s questions: is it <b>large enough</b> to matter, <b>precise enough</b> for the stakes, and likely to <b>survive</b> changes in competitors, technology, or policy? A correct sign alone never settles a decision.</p>
+   <div class="ex"><b>What a regression model is:</b> a disciplined way to structure assumptions, a method for comparing evidence with claims, and one input into a decision under uncertainty.<br><b>What it is not:</b> a proof-generating machine, a substitute for business judgment, or a guarantee that the future will look like the past.</div>
+   <p>The model can keep you from a blind bet, but it can’t decide for you.</p>`,
    practice:[
     {make:r=>{const b=round(rr(r,1.1,3.9),1);return {type:'mc',q:`An advertising coefficient is <b>${b}</b> (sales in units, advertising in $1,000s). Which reading is right?`,
       opts:[`$1,000 more advertising is associated with about ${b} more units sold, holding the other included factors constant`,`$1 more advertising causes ${b} more units sold`,`Advertising explains ${Math.round(b*10)}% of sales`,`Sales will rise by exactly ${b} units every time advertising rises`],a:0,
@@ -2081,7 +2083,8 @@ W1('m1-ledger',[
   {title:'The Excel workflow',
    teach:`<p><b>Data → Data Analysis → Regression.</b> Select the Y range (outcome) and the X range (drivers), tick Labels, and choose where the output goes.</p>
    <p>Before clicking OK, check the outcome, the predictors, the units, the sample, and the business logic. Then read the output in order:</p>
-   <div class="ex">1 Signs and units → 2 Magnitudes → 3 Standard errors, t, p → 4 Fit and residuals → 5 Plausibility of the specification</div>`,
+   <div class="ex">1 Signs and units → 2 Magnitudes → 3 Standard errors, t, p → 4 Fit and residuals → 5 Plausibility of the specification</div>
+   <p>Two numbers you’ll see in every output, covered properly in later modules: <b>R Square</b> (0 to 1) is the share of the outcome’s variation the model explains in this sample — fit, not proof. A coefficient’s <b>P-value</b> measures how surprising the estimate would be if the true effect were zero; smaller means stronger evidence. The <b>Standard Error</b> is how much the estimate would bounce around from sample to sample.</p>`,
    practice:[
     {type:'mc',q:'What should you read first in a regression output?',opts:['Coefficient signs and units','R Square','The p-values','The residual plot'],a:0,
      why:'Signs and units first: if the direction or units don’t make sense, nothing after it matters yet.'},
@@ -2134,7 +2137,8 @@ NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loo
    {title:'What least squares minimizes',
     teach:`<p>OLS picks b₀ and b₁ to minimize the <b>sum of squared residuals</b>:</p><div class="ex">Σeᵢ² = Σ(Yᵢ − Ŷᵢ)²</div>
     <p>Squaring stops positive and negative misses from canceling, and it punishes big misses more than small ones. One handy result: OLS residuals <b>sum to zero</b> — the fitted model doesn’t systematically over- or underpredict within the sample.</p>
-    <p>OLS reduces <b>model error</b>, not business risk: demand shifts, policy changes, and competitor moves are still out there.</p>`,
+    <p>OLS reduces <b>model error</b>, not business risk: demand shifts, policy changes, and competitor moves are still out there.</p>
+    <div class="ex"><b>Estimator</b> = the recipe: a procedure applied to sample data. OLS is an estimator.<br><b>Estimate</b> = the result: the number the recipe produces from one sample, like b₁ = 2.4. (Lowercase b’s mean the same as β-hats.)</div>`,
     practice:[
      {make:r=>{const d=genTiny(r);return {type:'num',exhibit:Exhibit.table(['x','y','ŷ = '+d.b0+' + '+d.b1+'x','e = y − ŷ'],d.x.map((x,i)=>[x,d.y[i],d.b0+d.b1*x,d.e[i]])),
        q:'Square each residual and add them up. What is Σe²?',a:d.sse,tol:.01,hint:'Square each value in the last column, then sum.',solution:`${d.e.map(v=>`(${v})²`).join(' + ')} = ${d.sse}.`,why:'This is exactly the quantity OLS makes as small as possible.'};}},
@@ -2143,7 +2147,8 @@ NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loo
    {title:'Explained and unexplained variation',
     teach:`<p>Total variation in Y splits into what the model explains and what it leaves behind:</p>
     <div class="ex"><b>TSS = ESS + RSS</b><br>Excel ANOVA: Total SS = Regression SS + Residual SS</div>
-    <p>Degrees of freedom are the price of complexity: Regression df = k, Residual df = n − k − 1, Total df = n − 1 (k = number of predictors).</p>`,
+    <p>Degrees of freedom are the price of complexity: Regression df = k, Residual df = n − k − 1, Total df = n − 1 (k = number of predictors).</p>
+    <p>The same table gives you fit: <b>R² = ESS / TSS = 1 − RSS / TSS</b>, the share of total variation the model explains (Regression SS ÷ Total SS in Excel).</p>`,
     practice:[
      {make:r=>{const ess=round(rr(r,200,900),1),rss=round(rr(r,80,400),1);return {type:'num',q:`Regression SS = <b>${ess}</b> and Residual SS = <b>${rss}</b>. What is Total SS?`,a:ess+rss,tol:.05,hint:'TSS = ESS + RSS',solution:`${ess} + ${rss} = ${round(ess+rss,1)}.`,why:'Total variation = explained + unexplained.'};}},
      {make:r=>{const n=ri(r,20,80),k=ri(r,1,4);return {type:'num',q:`A model has <b>${n}</b> observations and <b>${k}</b> predictor${k>1?'s':''}. What is the residual df?`,a:n-k-1,tol:0,hint:'n − k − 1',solution:`${n} − ${k} − 1 = ${n-k-1}.`,why:'Each predictor (and the intercept) uses up one degree of freedom.'};}},
@@ -2221,6 +2226,7 @@ NODES['m2-fit']={kicker:'Module 2 · Fit and model selection',title:'The Mirror 
    {title:'Adjusted R² and the price of complexity',
     teach:`<p>Adding any variable — even pure noise — can’t lower R², because TSS stays fixed and RSS can only fall or stay the same. That rewards <b>overfitting</b>.</p>
     <p><b>Adjusted R²</b> charges for each extra coefficient and <b>can fall</b> when a variable adds noise. Use it only to compare models with the <b>same dependent variable</b> in the same units.</p>
+    <div class="ex">Adjusted R² = 1 − (1 − R²) × (n − 1) / (n − k − 1)<br>n = observations, k = predictors. A new variable must cut RSS enough to pay for the degree of freedom it uses.</div>
     <div class="ex">Mozzarella = f(Income): adj R² 0.88 → add “boat drownings”: 0.97. Better fit — no credible mechanism. It doesn’t belong.</div>`,
     practice:[
      {type:'mc',q:'You add a variable of random numbers to a model. R² will…',opts:['Stay the same or rise','Definitely fall','Become negative','Stay exactly the same'],a:0,why:'RSS can only decrease or stay the same when you add a regressor, so R² can’t fall.'},
@@ -2272,7 +2278,8 @@ NODES['m3-design']={kicker:'Module 3 · Designing a regression',title:'The Archi
   lessons:[
    {title:'Six steps, mechanism first',
     teach:`<div class="ex">${SIX_STEPS.map((s,i)=>`${i+1} · ${s}`).join('<br>')}</div>
-    <p>Step 1 is the anchor: explain <b>why</b> the outcome should respond to each driver before you open the spreadsheet. Data can’t supply missing business logic. Pick variables because the mechanism supports them, not because they’re available — and write down the expected signs <b>before</b> you see results.</p>`,
+    <p>Step 1 is the anchor: explain <b>why</b> the outcome should respond to each driver before you open the spreadsheet. Data can’t supply missing business logic. Pick variables because the mechanism supports them, not because they’re available — and write down the expected signs <b>before</b> you see results.</p>
+    <p><b>Step 6, documenting</b>, means reporting enough for another manager to reproduce and challenge the model: coefficients with units, standard errors or confidence intervals, t-statistics and p-values, R² and adjusted R², sample size N, any data changes or exclusions, and the assumptions and limitations — inconvenient results included.</p>`,
     practice:[
      {type:'mc',q:'A manager wants to start by pulling every column in the data warehouse into a regression to “see what sticks.” Which step did they skip?',opts:['Anchoring the question in an economic mechanism','Documenting the model','Estimating in Excel','Inspecting the residuals'],a:0,
       why:'Choose drivers because the business mechanism supports them — not because they’re available. Mining until something “works” is the opposite of step 1.'},
@@ -2377,7 +2384,9 @@ NODES['m4-seven']={kicker:'Module 4 · The classical assumptions',title:'The Sev
    {title:'The seven, in plain language',
     teach:`<div class="ex">${SEVEN.map((s,i)=>`${i+1} · ${s}`).join('<br>')}</div>
     <p><b>Linear</b> means linear in the <b>coefficients</b>, not the variables: Y = β₀ + β₁X², or β₁ln(X), is still fine. Y = β₀ + e^(β₁X) is not.</p>
-    <p>Assumption 7 is optional: OLS can be <b>estimated</b> without normality; it matters for exact small-sample <b>inference</b>.</p>`,
+    <p>Assumption 7 is optional: OLS can be <b>estimated</b> without normality; it matters for exact small-sample <b>inference</b>.</p>
+    <div class="ex"><b>Gauss–Markov theorem:</b> when Assumptions 1–6 hold, OLS is <b>BLUE</b> — the <b>B</b>est (smallest-variance) <b>L</b>inear <b>U</b>nbiased <b>E</b>stimator. It doesn’t need normal errors.</div>
+    <p>Some violations are worse than others. Endogeneity (Assumption 3) <b>biases</b> the coefficients themselves. Serial correlation and heteroskedasticity (4 and 5) usually leave coefficients unbiased but make the <b>standard errors, t-tests, and confidence intervals unreliable</b> — so the model can look more certain than it is.</p>`,
     practice:[
      {type:'sort',q:'Is each equation linear in its parameters?',cats:['Linear in parameters','Not linear in parameters'],
       items:[{t:'Y = β₀ + β₁X²',c:0},{t:'Y = β₀ + β₁ln(X)',c:0},{t:'Y = β₀ + e^(β₁X)',c:1},{t:'Y = β₀ + β₁²X',c:1}],
@@ -2426,7 +2435,8 @@ NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:
    {title:'Standardized residuals and precision',
     teach:`<p>If errors are roughly normal, about <b>95%</b> of standardized residuals fall between −2 and +2. Flag |z| &gt; 2 for <b>investigation</b> — not automatic deletion.</p>
     <div class="ex">=IF(ABS(StandardizedResidual)&gt;2,"Investigate","Within range")</div>
-    <p>Precision grows with sample size: the standard error shrinks roughly with <b>1/√n</b>. Quadruple n → about half the SE.</p>`,
+    <p>Precision grows with sample size: the standard error shrinks roughly with <b>1/√n</b>. Quadruple n → about half the SE.</p>
+    <p>Picture the estimates you’d get from many different samples — the <b>sampling distribution of β̂</b>. <b>Unbiased</b> means it’s centered on the true β; <b>precise</b> means it’s tightly clustered. An estimator can be unbiased but imprecise (wide), or precise but biased (narrow and off-center). You want both: centered and tight.</p>`,
     practice:[
      {make:r=>{const z=Array.from({length:10},()=>round(rngGauss(r)*1.25,2));const a=z.filter(v=>Math.abs(v)>2).length;return {type:'num',exhibit:Exhibit.table(['Obs','Standardized residual'],z.map((v,i)=>[i+1,fmtNum(v,2)])),
       q:'How many observations should be flagged “Investigate”?',a,tol:0,hint:'Count values with absolute value above 2.',solution:`${a} with |z| > 2.`,why:'Flags start a review — they don’t prove an error.'};}},
@@ -2671,7 +2681,7 @@ CACHE('m2-andy','lens',{make:r=>{const b2=round(rr(r,1.6,2.4),3),cs=ri(r,35,55),
   return {type:'num',q:`Advertising coefficient = <b>${b2}</b> (SALES and ADVERT in $1,000s). Food, labor, and franchise costs eat <b>${cs}%</b> of each extra revenue dollar. What is the incremental profit from an extra <b>$1,000</b> of advertising?`,a:pr,tol:.6,pre:'$',
    hint:`Extra revenue = ${b2} × $1,000. Keep (1 − ${cs/100}) of it, then subtract the $1,000 ad cost.`,solution:`${money(inc,0)} × ${round(1-cs/100,2)} − $1,000 = ${money(pr)}.`,why:'Revenue above ad cost isn’t profit — the extra sales carry their own costs.'};}});
 CACHE('m2-fit','charm',{make:r=>{const n=ri(r,30,60),R2a=round(rr(r,.55,.7),3),R2b=round(R2a+rr(r,.002,.012),3),ka=2,kb=3,adj=(R2,k)=>1-(1-R2)*(n-1)/(n-k-1),a=adj(R2b,kb);
-  return {type:'num',q:`Model A (2 predictors) has R² = ${R2a}. Model B adds a third predictor: R² = <b>${R2b}</b>, n = <b>${n}</b>. Compute Model B’s adjusted R².`,a,tol:.0015,
+  return {type:'num',exhibit:Exhibit.eq('Adjusted R² = 1 − (1 − R²) × (n − 1) / (n − k − 1)'),q:`Model A (2 predictors) has R² = ${R2a}. Model B adds a third predictor: R² = <b>${R2b}</b>, n = <b>${n}</b>. Compute Model B’s adjusted R² (k = 3).`,a,tol:.0015,
    hint:'1 − (1 − R²)(n − 1)/(n − k − 1), with k = 3.',solution:`1 − (1 − ${R2b}) × ${n-1}/${n-4} = ${round(a,4)} (Model A: ${round(adj(R2a,ka),4)}).`,
    why:`${a<adj(R2a,ka)?'Adjusted R² fell, so the third predictor isn’t earning its degree of freedom.':'Adjusted R² rose slightly — but theory still decides whether it belongs.'}`};}});
 CACHE('m3-design','feather',{make:r=>{const N=[ri(r,2,7),ri(r,2,7)],P=[ri(r,40,160)*1000,ri(r,40,160)*1000],I=[ri(r,40,95)*1000,ri(r,40,95)*1000],f=k=>102192-9075*N[k]+.355*P[k]+1.288*I[k],d=f(0)-f(1);

@@ -31,7 +31,8 @@ NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loo
    {title:'What least squares minimizes',
     teach:`<p>OLS picks b₀ and b₁ to minimize the <b>sum of squared residuals</b>:</p><div class="ex">Σeᵢ² = Σ(Yᵢ − Ŷᵢ)²</div>
     <p>Squaring stops positive and negative misses from canceling, and it punishes big misses more than small ones. One handy result: OLS residuals <b>sum to zero</b> — the fitted model doesn’t systematically over- or underpredict within the sample.</p>
-    <p>OLS reduces <b>model error</b>, not business risk: demand shifts, policy changes, and competitor moves are still out there.</p>`,
+    <p>OLS reduces <b>model error</b>, not business risk: demand shifts, policy changes, and competitor moves are still out there.</p>
+    <div class="ex"><b>Estimator</b> = the recipe: a procedure applied to sample data. OLS is an estimator.<br><b>Estimate</b> = the result: the number the recipe produces from one sample, like b₁ = 2.4. (Lowercase b’s mean the same as β-hats.)</div>`,
     practice:[
      {make:r=>{const d=genTiny(r);return {type:'num',exhibit:Exhibit.table(['x','y','ŷ = '+d.b0+' + '+d.b1+'x','e = y − ŷ'],d.x.map((x,i)=>[x,d.y[i],d.b0+d.b1*x,d.e[i]])),
        q:'Square each residual and add them up. What is Σe²?',a:d.sse,tol:.01,hint:'Square each value in the last column, then sum.',solution:`${d.e.map(v=>`(${v})²`).join(' + ')} = ${d.sse}.`,why:'This is exactly the quantity OLS makes as small as possible.'};}},
@@ -40,7 +41,8 @@ NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loo
    {title:'Explained and unexplained variation',
     teach:`<p>Total variation in Y splits into what the model explains and what it leaves behind:</p>
     <div class="ex"><b>TSS = ESS + RSS</b><br>Excel ANOVA: Total SS = Regression SS + Residual SS</div>
-    <p>Degrees of freedom are the price of complexity: Regression df = k, Residual df = n − k − 1, Total df = n − 1 (k = number of predictors).</p>`,
+    <p>Degrees of freedom are the price of complexity: Regression df = k, Residual df = n − k − 1, Total df = n − 1 (k = number of predictors).</p>
+    <p>The same table gives you fit: <b>R² = ESS / TSS = 1 − RSS / TSS</b>, the share of total variation the model explains (Regression SS ÷ Total SS in Excel).</p>`,
     practice:[
      {make:r=>{const ess=round(rr(r,200,900),1),rss=round(rr(r,80,400),1);return {type:'num',q:`Regression SS = <b>${ess}</b> and Residual SS = <b>${rss}</b>. What is Total SS?`,a:ess+rss,tol:.05,hint:'TSS = ESS + RSS',solution:`${ess} + ${rss} = ${round(ess+rss,1)}.`,why:'Total variation = explained + unexplained.'};}},
      {make:r=>{const n=ri(r,20,80),k=ri(r,1,4);return {type:'num',q:`A model has <b>${n}</b> observations and <b>${k}</b> predictor${k>1?'s':''}. What is the residual df?`,a:n-k-1,tol:0,hint:'n − k − 1',solution:`${n} − ${k} − 1 = ${n-k-1}.`,why:'Each predictor (and the intercept) uses up one degree of freedom.'};}},
@@ -118,6 +120,7 @@ NODES['m2-fit']={kicker:'Module 2 · Fit and model selection',title:'The Mirror 
    {title:'Adjusted R² and the price of complexity',
     teach:`<p>Adding any variable — even pure noise — can’t lower R², because TSS stays fixed and RSS can only fall or stay the same. That rewards <b>overfitting</b>.</p>
     <p><b>Adjusted R²</b> charges for each extra coefficient and <b>can fall</b> when a variable adds noise. Use it only to compare models with the <b>same dependent variable</b> in the same units.</p>
+    <div class="ex">Adjusted R² = 1 − (1 − R²) × (n − 1) / (n − k − 1)<br>n = observations, k = predictors. A new variable must cut RSS enough to pay for the degree of freedom it uses.</div>
     <div class="ex">Mozzarella = f(Income): adj R² 0.88 → add “boat drownings”: 0.97. Better fit — no credible mechanism. It doesn’t belong.</div>`,
     practice:[
      {type:'mc',q:'You add a variable of random numbers to a model. R² will…',opts:['Stay the same or rise','Definitely fall','Become negative','Stay exactly the same'],a:0,why:'RSS can only decrease or stay the same when you add a regressor, so R² can’t fall.'},

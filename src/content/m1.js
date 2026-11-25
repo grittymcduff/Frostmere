@@ -15,7 +15,7 @@ NODES['m1-signs']={kicker:'Module 1 · Theory and evidence',title:'Stone of Sign
   {type:'mc',q:'Theory and data play different roles in a regression. Which split is right?',
    opts:['Theory predicts the direction (sign); data estimate the magnitude','Data predict the direction; theory estimates the magnitude','Theory tells you how reliable an effect is; data tell you its sign','Data decide which variables belong; theory just labels them'],a:0,
    why:'Theory predicts direction; data estimate magnitude. Theory cannot tell you whether an effect is large, reliable, or useful — that is the data’s job.'},
-  {type:'mc',q:'Which of these is <b>not</b> a fair description of a regression model, as the course frames it?',
+  {type:'mc',q:'Which of these is <b>not</b> a fair description of what a regression model is?',
    opts:['A proof-generating machine that decides for you','A disciplined way to structure assumptions','A method for comparing evidence with claims','An input into a decision under uncertainty'],a:0,
    why:'The model can keep you from a blind bet, but it cannot decide for you. Models reduce analytical risk; leaders still own business risk.'},
   {make:r=>{const b=round(rr(r,.12,.48),2);return {type:'mc',q:`Your demand model estimates an income coefficient of <b>${b}</b>. What is the correct managerial reading?`,
@@ -133,7 +133,7 @@ const svcEx=d=>Exhibit.excel(d.m,'Annual service revenue ($M)');
 NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild Ledger',
   intro:'The Service Guild ran Data → Data Analysis → Regression on 20 branches: annual service revenue ($M) against active customers. Excel did the arithmetic. Your job is judgment.',
   puzzles:[
-  {type:'order',q:'Put the course’s order for reading regression output into sequence.',
+  {type:'order',q:'Put the recommended order for reading regression output into sequence.',
    items:['Coefficient signs and units','Magnitudes and practical importance','Standard errors, t statistics, and p-values','Fit and residual behavior','Plausibility of the specification'],
    why:'Signs and units first, then size, then precision, then fit and residuals, and finally whether the whole specification is believable.'},
   {make:r=>{const d=genService(r),k=pick([3,5,8,10]),a=k*d.m.b[1];return {type:'num',exhibit:svcEx(d),
