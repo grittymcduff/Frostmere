@@ -12,6 +12,7 @@ const COURSE={
     'Restore every stone in a region to unseal the next gate. <b>Signpost Woods</b> (north gate) is open now.',
     'On the path before each stone stand small <b>waypoints</b> — lecterns with a short lesson and practice. Skip them and challenge the stone if you feel ready, but miss two or more and the stone <b>freezes</b> until you finish its waypoints in order.',
     'Miss a question and it gets pinned to the <b>review board</b> by the fire. It comes back with fresh numbers until you get it right first time.',
+    'Ready to test yourself? The lectern on the south path holds a <b>practice final</b>: 20 questions, two from each module, with a clock and a score.',
     'Press <b>Q</b> (or the Quests button) for the course map and your save code. Walk with WASD, arrows, a tap, or the joystick.',
   ]},
   hubNpc:{id:'owl-hub',name:'Warden Quill',role:'Keeper of the study stones',lines:[
@@ -35,12 +36,7 @@ const COURSE={
      npc:{id:'owl-hollow',name:'Warden Quill',role:'Modules 4–6 guide',lines:['Lantern Hollow keeps the rules that make regression trustworthy. Six stones ring the pond: two for the classical assumptions, two for hypothesis testing, two for causation and choosing variables.','Remember the theme of this place: a clean-looking table can still be wrong. Assumptions decide which claims are credible; tests measure evidence, not truth; design — not regression — earns the word “causal.”','Same rules as the woods: waypoints before each stone, at most one miss, and a stone that freezes if you rush it.']}},
     {id:'reach',name:'Crystal Reach',sub:'Modules 7–10 · Functional form & model diagnostics',requires:'hollow',
      theme:{tint:'#cfe6f2',tod:'aurora',lamps:6,birch:4,trees:140,crystals:14,treeSet:'blue',aurora:true,bushes:16,lake:[270,150]},
-     nodes:['m7','m8','m9','m10'],
-     npc:{id:'owl-reach',name:'Warden Quill',role:'Guide',lines:['Crystal Reach is where broken models come to be diagnosed: wrong shapes, tangled drivers, echoing errors, and fanning residuals.','These stones open in a later build.']}},
+     nodes:['m7-form','m8-multi','m9-serial','m10-hetero'],
+     npc:{id:'owl-reach',name:'Warden Quill',role:'Modules 7–10 guide',lines:['Crystal Reach is where broken models come to be diagnosed: wrong shapes, tangled drivers, echoing errors, and fanning residuals. Four stones, one for each module.','The Bending Crystal asks whether your equation has the right <b>shape</b>. The Twin Prisms ask whether two drivers overlap so much the model can’t credit either. The Echoing Ice asks whether errors repeat over time. The Widening Fan asks whether the errors grow with scale.','A theme for this place: most of these problems leave the coefficients standing but make the model <b>overconfident</b>. Diagnose first, fix the specification before patching standard errors, and let theory — not p-values — decide what stays. Same rules as before: waypoints, at most one miss, and stones that freeze if you rush.']}},
   ],
 };
-const sealed=(id,m,title,blurb)=>NODES[id]={sealed:true,kicker:`Module ${m}`,title,sealedText:`<b>${title}.</b> ${blurb} This stone's quests are added in a later build.`};
-sealed('m7',7,'Choosing the Functional Form','Linear, log, semilog, polynomial, and lagged models.');
-sealed('m8',8,'Multicollinearity','When explanatory variables tell almost the same story.');
-sealed('m9',9,'Serial Correlation','When today’s residual helps predict tomorrow’s.');
-sealed('m10',10,'Heteroskedasticity','When the error variance changes across observations.');

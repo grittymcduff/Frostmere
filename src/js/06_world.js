@@ -179,6 +179,10 @@ function buildHub(){
   sign(1090,1185,'Read the welcome sign',openWelcome,()=>SAVE.seen.welcome?'none':'todo');
   sign(860,880,'Open the review board',openReview,()=>SAVE.missed.length?'todo':'none');
   addOwl(1120,700,COURSE.hubNpc);
+  // practice final: a lectern by the south path
+  {const x=1130,y=1035;addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>SAVE.exam?'none':'todo'}});
+   colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,26);addLight(x,y-60,80,[255,215,140],.75,.1);
+   INTER.push({x,y,r:52,label:()=>'Take the practice final',act:()=>openExam()});}
   addGate(1000,70,'woods','fromHub');
   addGate(60,790,'hollow','fromHub');
   addGate(1945,440,'reach','fromHub');

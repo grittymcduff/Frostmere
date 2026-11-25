@@ -159,6 +159,9 @@
   @media (max-width:600px){#narr{bottom:12px}#narr p{font-size:14px}}
   body{position:fixed;inset:0}
   #card,#log,#calc{overscroll-behavior:contain;touch-action:pan-y}
+  .sc .cn{stroke:#2f7fb5;stroke-width:1.1;opacity:.45}
+  .clock{float:right;margin-right:30px;font-variant-numeric:tabular-nums;color:#ffd27a}
+  .exres td.mod{white-space:nowrap}.exres .ok{color:#8fe0a0}.exres .no{color:#ffb39a}
 </style>
 </head>
 <body>
@@ -1347,6 +1350,10 @@ function buildHub(){
   sign(1090,1185,'Read the welcome sign',openWelcome,()=>SAVE.seen.welcome?'none':'todo');
   sign(860,880,'Open the review board',openReview,()=>SAVE.missed.length?'todo':'none');
   addOwl(1120,700,COURSE.hubNpc);
+  // practice final: a lectern by the south path
+  {const x=1130,y=1035;addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>SAVE.exam?'none':'todo'}});
+   colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,26);addLight(x,y-60,80,[255,215,140],.75,.1);
+   INTER.push({x,y,r:52,label:()=>'Take the practice final',act:()=>openExam()});}
   addGate(1000,70,'woods','fromHub');
   addGate(60,790,'hollow','fromHub');
   addGate(1945,440,'reach','fromHub');
@@ -1722,6 +1729,7 @@ ${res.coef.map(c=>row([c.name,x(c.b),x(c.se),x(c.t),x(c.p),x(c.lo),x(c.hi)])).jo
     let svg=`<svg viewBox="0 0 ${w} ${h}" class="sc" role="img" aria-label="${o.title||'scatter plot'}">`;
     for(const t of ticks(ymin,ymax,ys_))svg+=`<line x1="${m.l}" x2="${w-m.r}" y1="${py(t)}" y2="${py(t)}" class="gl"/><text x="${m.l-6}" y="${py(t)+4}" text-anchor="end">${round(t,2)}</text>`;
     for(const t of ticks(xmin,xmax,xs_))svg+=`<text x="${px(t)}" y="${h-m.b+14}" text-anchor="middle">${round(t,2)}</text>`;
+    if(o.connect)svg+=`<polyline class="cn" fill="none" points="${xs.map((x,i)=>px(x)+','+py(ys[i])).join(' ')}"/>`;
     xs.forEach((x,i)=>svg+=`<circle cx="${px(x)}" cy="${py(ys[i])}" r="3.4" class="pt"/>`);
     if(o.hline!==undefined)svg+=`<line x1="${m.l}" x2="${w-m.r}" y1="${py(o.hline)}" y2="${py(o.hline)}" class="fit" stroke-dasharray="5 4"/>`;
     if(o.line){const [b0,b1]=o.line;svg+=`<line x1="${px(xmin)}" y1="${py(b0+b1*xmin)}" x2="${px(xmax)}" y2="${py(b0+b1*xmax)}" class="fit"/>`;}
@@ -1748,13 +1756,14 @@ function instantiate(p,seed){
   return {...p,...p.make(mulberry(seed)),make:undefined,_seed:seed};
 }
 
+const fmtClock=ms=>{const s=Math.floor(ms/1000);return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
 function startSession(title,kicker,items,onDone,mode='practice'){
   // items: [{node, idx}] ; each instantiated with a fresh seed
-  run={title,kicker,items:items.map(it=>({...it,p:instantiate(NODES[it.node].puzzles[it.idx],(Math.random()*1e9)|0),missed:false})),i:0,onDone,mode};
+  run={title,kicker,items:items.map(it=>({...it,p:instantiate(NODES[it.node].puzzles[it.idx],(Math.random()*1e9)|0),missed:false})),i:0,onDone,mode,t0:Date.now()};
   renderPuzzle();
 }
 function header(){const n=run.items.length,i=run.i;
-  return `<div class="kicker">${esc(run.kicker)}</div><h2>${esc(run.title)}</h2>
+  return `<div class="kicker">${esc(run.kicker)}${run.mode==='exam'?` · question ${i+1} of ${n} <span class="clock" id="exClock">${fmtClock(Date.now()-run.t0)}</span>`:''}</div><h2>${esc(run.title)}</h2>
   <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
 function renderPuzzle(){
   const it=run.items[run.i],p=it.p;
@@ -1818,10 +1827,10 @@ function renderPuzzle(){
 }
 function btn(label,cls){const b=document.createElement('button');b.className=cls;b.innerHTML=label;return b;}
 function stat(correctFirst){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;}
-function noteMiss(it){if(run.mode!=='stone')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function noteMiss(it){if(run.mode!=='stone'&&run.mode!=='exam')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
-  const r=run;closeCard();r.onDone&&r.onDone(r.items);persist();
+  const r=run;if(r.mode==='exam')examTime=Date.now()-r.t0;closeCard();r.onDone&&r.onDone(r.items);persist();
 }
 
 /* ==== content/00_art.js ==== */
@@ -1893,6 +1902,7 @@ const COURSE={
     'Restore every stone in a region to unseal the next gate. <b>Signpost Woods</b> (north gate) is open now.',
     'On the path before each stone stand small <b>waypoints</b> — lecterns with a short lesson and practice. Skip them and challenge the stone if you feel ready, but miss two or more and the stone <b>freezes</b> until you finish its waypoints in order.',
     'Miss a question and it gets pinned to the <b>review board</b> by the fire. It comes back with fresh numbers until you get it right first time.',
+    'Ready to test yourself? The lectern on the south path holds a <b>practice final</b>: 20 questions, two from each module, with a clock and a score.',
     'Press <b>Q</b> (or the Quests button) for the course map and your save code. Walk with WASD, arrows, a tap, or the joystick.',
   ]},
   hubNpc:{id:'owl-hub',name:'Warden Quill',role:'Keeper of the study stones',lines:[
@@ -1916,15 +1926,10 @@ const COURSE={
      npc:{id:'owl-hollow',name:'Warden Quill',role:'Modules 4–6 guide',lines:['Lantern Hollow keeps the rules that make regression trustworthy. Six stones ring the pond: two for the classical assumptions, two for hypothesis testing, two for causation and choosing variables.','Remember the theme of this place: a clean-looking table can still be wrong. Assumptions decide which claims are credible; tests measure evidence, not truth; design — not regression — earns the word “causal.”','Same rules as the woods: waypoints before each stone, at most one miss, and a stone that freezes if you rush it.']}},
     {id:'reach',name:'Crystal Reach',sub:'Modules 7–10 · Functional form & model diagnostics',requires:'hollow',
      theme:{tint:'#cfe6f2',tod:'aurora',lamps:6,birch:4,trees:140,crystals:14,treeSet:'blue',aurora:true,bushes:16,lake:[270,150]},
-     nodes:['m7','m8','m9','m10'],
-     npc:{id:'owl-reach',name:'Warden Quill',role:'Guide',lines:['Crystal Reach is where broken models come to be diagnosed: wrong shapes, tangled drivers, echoing errors, and fanning residuals.','These stones open in a later build.']}},
+     nodes:['m7-form','m8-multi','m9-serial','m10-hetero'],
+     npc:{id:'owl-reach',name:'Warden Quill',role:'Modules 7–10 guide',lines:['Crystal Reach is where broken models come to be diagnosed: wrong shapes, tangled drivers, echoing errors, and fanning residuals. Four stones, one for each module.','The Bending Crystal asks whether your equation has the right <b>shape</b>. The Twin Prisms ask whether two drivers overlap so much the model can’t credit either. The Echoing Ice asks whether errors repeat over time. The Widening Fan asks whether the errors grow with scale.','A theme for this place: most of these problems leave the coefficients standing but make the model <b>overconfident</b>. Diagnose first, fix the specification before patching standard errors, and let theory — not p-values — decide what stays. Same rules as before: waypoints, at most one miss, and stones that freeze if you rush.']}},
   ],
 };
-const sealed=(id,m,title,blurb)=>NODES[id]={sealed:true,kicker:`Module ${m}`,title,sealedText:`<b>${title}.</b> ${blurb} This stone's quests are added in a later build.`};
-sealed('m7',7,'Choosing the Functional Form','Linear, log, semilog, polynomial, and lagged models.');
-sealed('m8',8,'Multicollinearity','When explanatory variables tell almost the same story.');
-sealed('m9',9,'Serial Correlation','When today’s residual helps predict tomorrow’s.');
-sealed('m10',10,'Heteroskedasticity','When the error variance changes across observations.');
 
 /* ==== content/m1.js ==== */
 /* ==========================================================================
@@ -2084,6 +2089,80 @@ NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild L
     opts:['Customers and revenue are strongly associated in this sample — but fit alone doesn’t prove that adding customers causes revenue','The model proves that adding customers causes revenue to rise','Every future branch will land almost exactly on the fitted line','A high R² means the intercept can now be read literally'],a:0,
     why:'The goal is not to celebrate a high R² but to interpret what the model does and does not support. The teaching data are deliberately clean; real operating data are noisier.'};}},
 ]};
+
+/* exam-guide gap: why managers use econometrics */
+NODES['m1-signs'].puzzles.push({type:'mc',q:'What is econometrics mainly for in a managerial setting?',
+  opts:['Putting numbers — and honest uncertainty — on relationships so decisions under uncertainty are better informed','Proving that a theory is true','Replacing managerial judgment with a formula','Finding whichever variables are significant in the data'],a:0,
+  why:'Regression quantifies a relationship and its uncertainty; theory supplies the story and judgment makes the decision.'});
+
+/* ==== content/m10.js ==== */
+/* ==========================================================================
+   MODULE 10 — Heteroskedasticity
+   Stone: the Widening Fan (residual-spread patterns, functional form vs
+   changing variance, Breusch–Pagan and White, what it does and doesn't harm).
+   ========================================================================== */
+const CHI5={1:3.841,2:5.991,3:7.815,4:9.488,5:11.070,9:16.919};   // χ² critical values at α = .05
+
+NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widening Fan',
+  intro:'Frost fans out from the stone, thin at one end and wide at the other. When the size of the errors grows with the size of the observation, the average relationship can be fine — but the model’s confidence in itself is not.',
+  lessons:[
+   {title:'Constant spread versus a fan',
+    teach:`<p><b>Homoskedasticity:</b> the error variance is the same for every observation (Var(εᵢ) = σ²). <b>Heteroskedasticity:</b> it changes systematically (Var(εᵢ) = σᵢ²) — usually growing with scale. It is most common in <b>cross-sectional</b> data that mixes small and large firms, stores, or missions.</p>
+    <div class="ex">Residual plot warning shapes: a <b>spray</b> (widening), a <b>funnel</b> (narrowing), or a <b>bow-tie</b>.<br>A residual pattern that <b>curves</b> around zero is different: that points to the wrong <b>functional form</b> (a mean problem), not changing variance.</div>
+    <p><b>Pure</b> heteroskedasticity: the equation is right, the variance still changes. <b>Impure</b>: caused by misspecification — an omitted variable or the wrong form. Check the equation first.</p>
+    <p><b>Consequences:</b> coefficients are <b>not biased</b>, but OLS is no longer BLUE and the usual <b>standard errors are wrong</b>, so t-tests, p-values, and confidence intervals are unreliable.</p>`,
+    practice:[
+     {make:r=>{const k=pick(['spray','funnel','random']),d=genResid(r,k),keys=['random','spray','funnel'];return {type:'mc',exhibit:residPlot(d,'Store size'),
+      q:'Residuals from a cross-section of stores. What does the plot suggest?',opts:keys.map(x=>RES_PATTERNS[x].d),a:keys.indexOf(k),
+      why:'A spread that grows or shrinks with X is the visual signature of heteroskedasticity; an even band is what you hope to see.'};}},
+     {type:'sort',q:'Under pure heteroskedasticity, which of these still hold?',cats:['Still OK','No longer trustworthy'],
+      items:[{t:'Coefficient estimates are unbiased',c:0},{t:'The usual standard errors',c:1},{t:'p-values and confidence intervals from Excel’s default output',c:1},{t:'OLS is the minimum-variance (BLUE) estimator',c:1}],
+      why:'Heteroskedasticity is a credibility problem for inference, not mainly a coefficient problem.'},
+    ]},
+   {title:'Breusch–Pagan and White',
+    teach:`<p>Both tests regress the <b>squared residuals</b> on explanatory variables and ask whether anything explains the error size. H₀: constant variance.</p>
+    <div class="ex"><b>Breusch–Pagan:</b> e² on the original Xs (a <i>narrow</i>, linear search). df = number of Xs.<br>
+    <b>White:</b> e² on the Xs, their <b>squares</b>, and their <b>cross-products</b> (a <i>wide</i> search). With 2 Xs, df = 5.<br>
+    Test statistic: <b>LM = n × R²</b> of that auxiliary regression → compare with χ²(df). Reject H₀ if LM &gt; critical value (or p ≤ .05).</div>
+    <p>They can disagree without contradicting each other: in the course’s space-mission data, Breusch–Pagan found nothing (LM = 2.16, p = .34) while White did (LM = 12.81, p = .025). White simply looked for more kinds of patterns.</p>
+    <p><b>Response:</b> fix the mean equation first (a U-shaped residual plot means a missing curve), re-estimate, re-test. If the variance still changes, use <b>robust standard errors</b>. Don’t pick the test that gives the answer you prefer.</p>`,
+    practice:[
+     {make:r=>{const n=pick([24,30,40,50]),R=round(rr(r,.05,.35),3),lm=n*R;return {type:'num',q:`A Breusch–Pagan auxiliary regression on <b>n = ${n}</b> observations has R² = <b>${R}</b>. What is the LM statistic?`,a:lm,tol:.02,
+      hint:'LM = n × R² of the auxiliary regression',solution:`${n} × ${R} = ${round(lm,3)}.`,why:'Compare LM with the χ² critical value for the test’s degrees of freedom.'};}},
+     {type:'mc',q:'Breusch–Pagan says “no heteroskedasticity” (p = .34); White says “yes” (p = .025) on the same data. Why?',
+      opts:['White also searches squared and interaction patterns that Breusch–Pagan’s linear search can miss','One of the tests was run incorrectly','White is always right and Breusch–Pagan is obsolete','They test different null hypotheses about the coefficients'],a:0,
+      why:'Narrow search found nothing; wider search found a pattern. That’s not a contradiction.'},
+    ]},
+  ],
+  puzzles:[
+   {make:r=>{const k=pick(['curve','spray']),d=genResid(r,k);return {type:'mc',exhibit:residPlot(d,'Fitted value'),
+    q:'What is the first problem to address in this residual plot?',
+    opts:k==='curve'?['The functional form — residuals curve around zero, so the mean equation is missing a shape','Heteroskedasticity — switch to robust standard errors','Serial correlation — run Durbin–Watson','Nothing — the residuals average zero']
+                    :['Heteroskedasticity — the spread widens as the fitted value grows','The functional form — the residuals curve','Multicollinearity','Nothing — the residuals average zero'],a:0,
+    why:k==='curve'?'A systematic curve is a mean problem. Fix the equation before testing the variance — robust SEs can’t repair the wrong shape.':'A widening spread with no curve is the classic heteroskedasticity signature: the uncertainty grows with scale.'};}},
+   {make:r=>{const test=pick(['BP','White']),df=test==='BP'?2:5,n=pick([24,30,40]),R=round(rr(r,.05,.45),3),lm=n*R,crit=CHI5[df];
+    return {type:'mc',exhibit:Exhibit.table(['Test','n','Auxiliary R²','df','χ² critical (5%)'],[[test==='BP'?'Breusch–Pagan':'White',n,R,df,crit]]),
+     q:`Compute LM = n × R² and decide at the 5% level.`,
+     opts:[`LM = ${round(lm,2)} ${lm>crit?'>':'<'} ${crit} → ${lm>crit?'reject H₀: evidence of heteroskedasticity':'do not reject H₀: no convincing evidence'}`,
+           `LM = ${round(lm,2)} ${lm>crit?'>':'<'} ${crit} → ${lm>crit?'do not reject H₀: no convincing evidence':'reject H₀: evidence of heteroskedasticity'}`,
+           `LM = ${round(R/n,4)} → do not reject H₀`,`LM = ${round(n*(1-R),2)} → reject H₀`],a:0,
+     why:`${n} × ${R} = ${round(lm,2)}, which is ${lm>crit?'above':'below'} the χ²(${df}) critical value of ${crit}.`};}},
+   {type:'mc',q:'Why might White detect heteroskedasticity that Breusch–Pagan misses?',
+    opts:['White adds squared and interaction terms, so it can catch curved or combined patterns in the error size','White uses the original Y instead of residuals','Breusch–Pagan only works with time-series data','White always has fewer degrees of freedom'],a:0,
+    why:'Two flashlights: Breusch–Pagan a narrow beam, White a wider one.'},
+   {type:'mc',q:'Payload mass looks highly significant (p = 0.001), but residual spread widens sharply for heavier missions. What should the program manager conclude?',
+    opts:['The coefficient’s direction may be fine, but its reported precision is suspect — don’t size risk reserves on that p-value alone','The coefficient is biased, so payload mass doesn’t matter','Heteroskedasticity makes the coefficient more reliable','Nothing — significance settles it'],a:0,
+    why:'The danger is false confidence: understated uncertainty exactly where the stakes are largest.'},
+   {type:'order',q:'Put the response to a suspicious residual plot in order.',
+    items:['Plot the residuals against fitted values or key Xs','If they curve, fix the mean equation (add the justified nonlinear term) and re-estimate','Re-check the new residuals and run Breusch–Pagan / White','If the variance still changes, use robust standard errors'],
+    why:'Specification first, variance testing second, robust inference third.'},
+   {type:'sort',q:'Where is heteroskedasticity most likely?',cats:['Likely','Less likely'],
+    items:[{t:'Profits of a mix of corner shops and national chains',c:0},{t:'Cost overruns across routine launches and first-of-a-kind missions',c:0},{t:'Daily output of identical machines in one plant',c:1},{t:'Household spending across incomes from $20k to $2M',c:0}],
+    why:'Whenever the size of the observation changes dramatically, ask whether the size of the error changes too.'},
+   {type:'mc',q:'Which statement is correct?',
+    opts:['Heteroskedasticity mainly harms inference (SEs, p-values), while a wrong functional form harms the average relationship itself','Both problems bias the coefficients in the same way','Robust standard errors fix a wrong functional form','Heteroskedasticity only occurs in time-series data'],a:0,
+    why:'Mean problem vs variance problem: fixing standard errors cannot repair an incorrectly specified equation.'},
+  ]};
 
 /* ==== content/m1_waypoints.js ==== */
 /* ==========================================================================
@@ -2569,6 +2648,11 @@ NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:
     why:'Unbiased means centered on the true β across samples; precise means tightly clustered. C is biased; A is unbiased but imprecise.'},
   ]};
 
+/* exam-guide gap: biased vs imprecise */
+NODES['m4-seven'].puzzles.push({type:'sort',q:'Does each problem mainly make estimates <b>biased</b> (aimed at the wrong target) or <b>imprecise</b> (aimed right, but shaky)?',cats:['Biased','Imprecise / unreliable inference'],
+  items:[{t:'An omitted variable that moves with X and affects Y',c:0},{t:'Two explanatory variables that overlap heavily (multicollinearity)',c:1},{t:'Endogeneity: X correlated with the error',c:0},{t:'Error variance that grows with firm size (heteroskedasticity)',c:1},{t:'A very small sample',c:1}],
+  why:'Bias shifts the center of the sampling distribution; imprecision widens it (or makes the reported width wrong). A biased estimate can look very precise — and a precise one can still be biased.'});
+
 /* ==== content/m5.js ==== */
 /* ==========================================================================
    MODULE 5 — Hypothesis testing
@@ -2668,6 +2752,11 @@ NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The 
     why:'Size without precision is fragile evidence. Report both magnitude and uncertainty before acting.'},
   ]};
 
+/* exam-guide gap: statistical significance is not causation */
+NODES['m5-three'].puzzles.push({type:'mc',q:'Customers who use the loyalty app spend more, and the app dummy is highly significant (p < 0.001). Does the app <b>cause</b> the extra spending?',
+  opts:['Not necessarily — significance only says the association is unlikely to be zero; heavy spenders may choose the app','Yes — p < 0.001 proves causation','Yes, as long as R² is high','No — significant coefficients are never causal'],a:0,
+  why:'A tiny p-value measures evidence against β = 0, not why the association exists. Causal claims need a design — like random assignment — that rules out self-selection and confounders.'});
+
 /* ==== content/m6.js ==== */
 /* ==========================================================================
    MODULE 6 — Regression and causation; choosing independent variables
@@ -2759,6 +2848,225 @@ NODES['m6-omit']={kicker:'Module 6 · Choosing independent variables',title:'The
     why:'Sensitivity analysis tests a story; data mining creates one from the sample. Document the specifications you tried.'},
   ]};
 
+/* ==== content/m7.js ==== */
+/* ==========================================================================
+   MODULE 7 — Choosing the functional form
+   Stone: the Bending Crystal (linear, double-log, semilog, quadratic, lags,
+   extrapolation, curved residuals).
+   ========================================================================== */
+NODES['m7-form']={kicker:'Module 7 · Choosing the functional form',title:'The Bending Crystal',
+  intro:'The crystal bends light the way the right equation bends a line: to match how the business actually works. Pick the shape from the mechanism, read the coefficients in the right units, and beware of what happens past the edge of the data.',
+  lessons:[
+   {title:'Shape follows the mechanism',
+    teach:`<p>OLS needs the equation to be linear in the <b>coefficients</b>, not in the variables. X², ln(X), and ln(Y) are all fine, because each coefficient still just multiplies something and gets added.</p>
+    <div class="ex"><b>Linear</b> Y = β₀ + β₁X → each extra unit of X adds β₁ (constant effect)<br>
+    <b>Double-log</b> ln Y = β₀ + β₁ln X → β₁ is the <b>elasticity</b>: 1% more X → about β₁% more Y<br>
+    <b>Semilog on X</b> Y = β₀ + β₁ln X → slope = β₁ / X (diminishing effect)<br>
+    <b>Semilog on Y</b> ln Y = β₀ + β₁X → one more unit of X → about 100·β₁% more Y<br>
+    <b>Quadratic</b> Y = β₀ + β₁X + β₂X² → slope = β₁ + 2β₂X (the effect changes with X)</div>
+    <p>In a <b>linear</b> model the slope is constant but the elasticity is not: elasticity = β₁·X̄/Ȳ. Don’t choose a form just for a slightly higher R² — and you can’t compare R² at all once Y is logged in one model and not the other.</p>`,
+    practice:[
+     {type:'sort',q:'Which form tells each business story?',cats:['Linear','Double-log','Semilog on X (ln X)','Quadratic'],
+      items:[{t:'Each extra delivery truck adds the same $4,000 of weekly revenue',c:0},{t:'A 1% price cut always lifts unit sales by about 1.8%, at any price level',c:1},{t:'The first $100 of extra income adds more food spending than the tenth $100',c:2},{t:'Crowding: output rises with staff up to a point, then falls',c:3}],
+      why:'Constant unit effect → linear; constant elasticity → double-log; diminishing effect → ln X; a turning point → quadratic.'},
+     {make:r=>{const b=round(rr(r,8,14),2),xb=round(rr(r,15,25),1),yb=round(rr(r,250,360),0),e=b*xb/yb;return {type:'num',
+      exhibit:Exhibit.eq(`FoodExp = 92.3 + ${b}·Income &nbsp;·&nbsp; Income in $100s · mean Income = ${xb} · mean FoodExp = $${yb}`),
+      q:'Compute the <b>elasticity at the means</b> for this linear model.',a:e,tol:.006,hint:'Elasticity = β₁ × X̄ / Ȳ',
+      solution:`${b} × ${xb} / ${yb} = ${round(e,3)}.`,why:`A 1% rise in income is associated with about a ${round(e,2)}% rise in food spending — at the means. In a linear model the elasticity changes along the line.`};}},
+    ]},
+   {title:'Curves, lags, and the edge of the data',
+    teach:`<p><b>Quadratic:</b> with Y = β₀ + β₁X + β₂X², the slope at a point is <b>β₁ + 2β₂X</b>. If β₁ > 0 and β₂ < 0 the curve rises then falls, peaking at <b>X* = −β₁ / (2β₂)</b>.</p>
+    <p><b>Lags:</b> when cause and effect don’t happen together — advertising this month, sales next month — model the delay: Salesₜ = β₀ + β₁Advertisingₜ₋₁ + εₜ. The lag should come from how the business works, not a search for significance.</p>
+    <p><b>Extrapolation:</b> every form is only checked inside the range you observed. Outside it, a polynomial can swing wildly, a log model can flatten too soon, and a straight line can miss a turning point.</p>
+    <div class="ex">Residuals that <b>curve</b> systematically around zero (negative → positive → negative) say the shape is wrong: add the missing curve and re-estimate before trusting anything else.</div>`,
+    practice:[
+     {make:r=>{const b1=round(rr(r,40,90),1),b2=-round(rr(r,.8,2.5),2),X=ri(r,5,15),s=b1+2*b2*X;return {type:'num',
+      exhibit:Exhibit.eq(`Profit = 120 + ${b1}·Ads − ${-b2}·Ads² &nbsp;·&nbsp; Ads in $000s`),
+      q:`What is the slope — the change in predicted profit from one more $1,000 of ads — when Ads = <b>${X}</b>?`,a:s,tol:.02,hint:'Slope = β₁ + 2β₂X',
+      solution:`${b1} + 2 × (−${-b2}) × ${X} = ${round(s,2)}.`,why:'In a quadratic the payoff from one more unit depends on where you start.'};}},
+     {type:'mc',q:'A model of sales on house size was fit to homes from 800 to 3,000 sq. ft. A developer asks for a forecast for a 9,000 sq. ft. estate. Best response?',
+      opts:['Warn that it’s far outside the data — the chosen shape may not hold there','Use the forecast; the R² is high','Switch to whichever form gives the biggest number','Extrapolation is safe if the form is quadratic'],a:0,
+      why:'Predictions outside the observed range are where a wrong functional form does the most damage.'},
+    ]},
+  ],
+  puzzles:[
+   {type:'sort',q:'Match each mechanism to the functional form that fits it.',cats:['Linear','Double-log','Semilog on X (ln X)','Semilog on Y (ln Y)','Quadratic'],
+    items:[{t:'Every extra customer adds the same $35 in revenue',c:0},{t:'Price responds to square footage with a stable elasticity',c:1},{t:'Training hours help, but each extra hour helps less',c:2},{t:'Each extra year of experience raises salary by about 4%',c:3},{t:'Delivery time falls with more drivers until congestion makes it rise',c:4}],
+    why:'Pick the form that matches the mechanism — constant effect, constant elasticity, diminishing returns, constant % growth, or a turning point — not the prettiest R².'},
+   {make:r=>{const b1=round(rr(r,6,14),2),b2=-round(rr(r,.15,.45),3),xs=-b1/(2*b2);return {type:'num',
+    exhibit:Exhibit.eq(`Output = 40 + ${b1}·Staff − ${-b2}·Staff²`),
+    q:'At what staffing level does predicted output <b>peak</b>?',a:xs,tol:.06,unit:'staff',hint:'The peak is where the slope β₁ + 2β₂X equals zero: X* = −β₁ / (2β₂).',
+    solution:`X* = −${b1} / (2 × −${-b2}) = ${round(xs,2)}.`,why:'Past the peak, adding staff lowers predicted output — something a linear model could never show.'};}},
+   {type:'mc',q:'Why can OLS estimate Y = β₀ + β₁X + β₂X² even though the relationship is curved?',
+    opts:['It is still linear in the coefficients — X² is just another variable','OLS automatically bends the line','Because R² is higher','It can’t; you need a different estimator'],a:0,
+    why:'OLS requires linearity in the coefficients, not in the variables. Y = β₀ + X^β₁ would not qualify.'},
+   {make:r=>{const a=round(rr(r,3.8,4.6),4),b=round(rr(r,.92,1.12),4),S=ri(r,15,32)*100,p=Math.exp(a+b*Math.log(S));return {type:'num',
+    exhibit:Exhibit.eq(`ln(Price) = ${a} + ${b}·ln(SQFT)`),
+    q:`Predict the price, in dollars, of a <b>${S.toLocaleString()}</b> sq. ft. house.`,a:p,tol:p*.01,pre:'$',hint:'Compute ln(SQFT), plug it in to get ln(Price), then exponentiate: Price = e^(ln Price).',
+    solution:`ln(${S}) = ${round(Math.log(S),4)}; ln(Price) = ${a} + ${b} × ${round(Math.log(S),4)} = ${round(a+b*Math.log(S),4)}; Price ≈ e^${round(a+b*Math.log(S),4)} ≈ ${money(p,0)}.`,
+    why:`Interpret in logs, report in dollars. Here ${b} is the elasticity: 1% more space → about ${b}% higher price.`};}},
+   {type:'mc',q:'Advertising runs this month, but customers take weeks to notice, compare, and buy. Which model fits the mechanism?',
+    opts:['Salesₜ = β₀ + β₁Advertisingₜ₋₁ + εₜ','Salesₜ = β₀ + β₁Advertisingₜ + εₜ, because it’s simpler','Drop advertising — it isn’t significant this month','Salesₜ₋₁ = β₀ + β₁Advertisingₜ + εₜ'],a:0,
+    why:'A lag represents the real timing of the decision; using only current advertising can understate the campaign.'},
+   {make:r=>{const d=genResid(r,'curve');return {type:'mc',exhibit:residPlot(d,'Fitted value'),
+    q:'A straight-line model leaves these residuals. What should you do first?',
+    opts:['Revise the shape — add the missing curve (e.g. an X² or log term) and re-estimate','Nothing; residuals average zero','Drop the observations at both ends','Report robust standard errors and move on'],a:0,
+    why:'A systematic curve means the average relationship is misspecified. Fixing standard errors can’t repair the wrong shape.'};}},
+   {type:'mc',q:'Model A (linear) has R² = 0.41; Model B (Y on ln X) has R² = 0.39. Theory predicts diminishing returns. Which should you prefer?',
+    opts:['Model B — it matches the mechanism, and the fit difference is trivial','Model A — higher R² always wins','Neither — R² below 0.5 is useless','Average the two forecasts'],a:0,
+    why:'With the same Y, R² is comparable — but a tiny fit gap is no reason to pick a form that contradicts the theory.'},
+  ]};
+
+/* ==== content/m8.js ==== */
+/* ==========================================================================
+   MODULE 8 — Multicollinearity
+   Stone: the Twin Prisms (perfect vs imperfect, consequences, high R² with
+   weak t-tests, correlations and VIFs, remedies and their risks).
+   ========================================================================== */
+// two predictors that move together: a regression with a strong F-test but weak individual t-tests
+function genCollinear(r){
+  for(let tries=0;tries<300;tries++){
+    const n=ri(r,12,16),tv=[],on=[],y=[];
+    for(let i=0;i<n;i++){const a=round(rr(r,10,60),1);tv.push(a);on.push(round(a*rr(r,.55,.65)+rngGauss(r)*1.2,1));}
+    for(let i=0;i<n;i++)y.push(round(200+3.1*tv[i]+2.4*on[i]+rngGauss(r)*22,1));
+    const res=Stats.ols(tv.map((v,i)=>[v,on[i]]),y,['TV_Ads','Online_Ads']);
+    if(res.pF<.001&&res.coef[1].p>.12&&res.coef[2].p>.12&&res.R2>.85)return {res,tv,on,y};
+  }
+  return null;
+}
+NODES['m8-multi']={kicker:'Module 8 · Multicollinearity',title:'The Twin Prisms',
+  intro:'Two prisms, nearly identical, split the same beam of light. When two drivers tell almost the same story, the regression still fits — but it can’t tell who deserves the credit.',
+  lessons:[
+   {title:'Perfect, imperfect, and what it costs',
+    teach:`<p><b>Perfect</b> multicollinearity: one X is an exact linear function of others — distance in miles <i>and</i> kilometers, or a dummy for every category plus an intercept. OLS can’t estimate separate coefficients at all. It’s rare and easy to spot.</p>
+    <p><b>Imperfect</b> multicollinearity: Xs move strongly together but not exactly — TV and online ad budgets. OLS still works, and if the other assumptions hold the estimates stay <b>unbiased</b>. The cost is <b>precision</b>:</p>
+    <div class="ex">Standard errors rise → |t| falls → p-values rise<br>Coefficients swing when you add or drop a related variable or a few observations<br>Overall fit (R²) barely changes</div>
+    <p>The classic warning sign: <b>high R² and a significant F-test, but few or no significant individual t-tests</b>. Together the variables clearly matter; the model just can’t separate them.</p>`,
+    practice:[
+     {type:'sort',q:'Perfect or imperfect multicollinearity?',cats:['Perfect','Imperfect'],
+      items:[{t:'Store size in square feet and in square meters',c:0},{t:'TV and online ad spending, which usually rise together',c:1},{t:'Dummies for North, South, East, and West, plus an intercept',c:0},{t:'Household income and years of education',c:1}],
+      why:'Perfect = an exact linear relationship (same information twice); imperfect = strong but not exact overlap.'},
+     {type:'mc',q:'Two related ad variables are both in the model. Compared with a model where they were unrelated, their coefficients are…',
+      opts:['Still unbiased, but less precise — larger standard errors','Biased toward zero','Biased away from zero','Exactly the same, with the same standard errors'],a:0,
+      why:'Multicollinearity is a precision problem, not automatically a bias problem: the aim is still on target, just shakier.'},
+    ]},
+   {title:'Detecting it — and deciding what to do',
+    teach:`<p><b>Correlation</b> between pairs of Xs is a quick screen (worry above about |r| = 0.7–0.8), but a <i>group</i> of variables can overlap without any single high pair.</p>
+    <p>A <b>VIF</b> (variance inflation factor) asks how predictable one X is from all the others. Regress that X on the other Xs (an auxiliary regression) and take its R²:</p>
+    <div class="ex">VIF = 1 / (1 − R²<sub>aux</sub>) &nbsp;·&nbsp; above 5 = warning, above 10 = serious (no universal cutoff)</div>
+    <p><b>Remedies, in order:</b> 1 · often <b>do nothing</b> — if signs are right and the estimates are useful, leave it. 2 · drop a variable only if theory says it’s <b>redundant</b> — otherwise you trade imprecision for omitted-variable bias. 3 · get more data, if you can.</p>`,
+    practice:[
+     {make:r=>{const R=round(rr(r,.55,.95),2),v=1/(1-R);return {type:'num',q:`Regressing Cadence on the other explanatory variables gives an auxiliary R² of <b>${R}</b>. What is Cadence’s VIF?`,a:v,tol:.02,
+      hint:'VIF = 1 / (1 − auxiliary R²)',solution:`1 / (1 − ${R}) = ${round(v,2)}.`,why:v>10?'Above 10: serious multicollinearity for Cadence.':v>5?'Above 5: a warning sign.':'Below 5: usually not a concern on its own.'};}},
+     {type:'mc',q:'Price has a VIF of 8, the expected negative sign, and p = 0.002. What should you do about the multicollinearity?',
+      opts:['Probably nothing — the estimate is still useful for the decision','Drop price to lower the VIF','Drop every variable with a VIF above 5','Collect a new sample before using the model'],a:0,
+      why:'A high VIF doesn’t automatically mean removing a variable. Adjust only if multicollinearity is actually damaging the estimates you need.'},
+    ]},
+  ],
+  puzzles:[
+   {make:r=>{const d=genCollinear(r);if(!d)return {type:'mc',q:'High R² and a significant F-test, but no individual t-test is significant. What is the classic explanation?',opts:['Multicollinearity — the variables matter jointly but can’t be separated','The model is useless','Heteroskedasticity','A coding error'],a:0,why:'Joint significance with individual weakness is the signature of overlapping predictors.'};
+    return {type:'mc',exhibit:Exhibit.excel(d.res,'Sales ($000)'),
+     q:`The F-test is highly significant and R² = ${round(d.res.R2,2)}, but neither ad coefficient is significant on its own. Best reading?`,
+     opts:['The two ad budgets matter jointly but overlap so much the model can’t separate their effects','Advertising has no effect on sales','The model is misspecified and should be discarded','One of the variables must be dropped to fix the bias'],a:0,
+     why:'High R² + significant F + weak t-tests is the classic warning sign of multicollinearity: precision, not bias.'};}},
+   {make:r=>{const rr_=round(rr(r,.80,.97),2),v=1/(1-rr_*rr_);return {type:'num',
+    q:`A model has just two explanatory variables, and their correlation is <b>r = ${rr_}</b>. With only two Xs, the auxiliary R² is r². What is the VIF for each?`,a:v,tol:.05,
+    hint:'Auxiliary R² = r²; then VIF = 1 / (1 − r²).',solution:`r² = ${round(rr_*rr_,4)}; VIF = 1 / (1 − ${round(rr_*rr_,4)}) = ${round(v,2)}.`,
+    why:`${v>10?'Serious':v>5?'A warning-level':'Mild'} multicollinearity. Note how fast VIF climbs as r approaches 1.`};}},
+   {type:'mc',q:'Which statement about the consequences of imperfect multicollinearity is correct?',
+    opts:['Coefficients stay unbiased, but standard errors rise and estimates become sensitive to specification','Coefficients become biased and R² falls sharply','OLS can no longer be computed','t-scores rise, so everything looks more significant'],a:0,
+    why:'Not bias — less precision, larger p-values, unexpected signs more likely, and big swings when related variables are added or dropped.'},
+   {type:'mc',q:'Dropping Infrastructure makes Cadence’s p-value fall from 0.80 to 0.0002. What’s the risk in celebrating?',
+    opts:['If Infrastructure truly matters and moves with Cadence, Cadence now carries omitted-variable bias','None — a lower p-value means a better model','Cadence’s coefficient can’t change','R² will collapse'],a:0,
+    why:'Better significance is not automatically a better specification. Theory decides whether a variable belongs.'},
+   {type:'sort',q:'Sort each response to multicollinearity.',cats:['Defensible','Not defensible'],
+    items:[{t:'Leave it alone: signs are as expected and the key estimate is precise enough to decide',c:0},{t:'Drop whichever variable has the weaker p-value in this sample',c:1},{t:'Drop one of two variables that measure the same concept, keeping the one theory favors',c:0},{t:'Remove every variable with a VIF above 5',c:1},{t:'Collect more observations if that’s feasible',c:0}],
+    why:'Diagnose first; adjust only if it’s hurting the model you need — and let theory, not p-values, choose what stays.'},
+   {type:'mc',q:'Why does multicollinearity damage interpretation more than forecasting?',
+    opts:['Overall fit and predictions can stay good while the separate coefficients are unstable and imprecise','Forecasts become biased while coefficients don’t','It lowers R², which only affects forecasts','It doesn’t affect either'],a:0,
+    why:'If the Xs keep moving together as they did in the sample, joint predictions still work; it’s the “who gets the credit” question that suffers.'},
+   {type:'mc',q:'No pair of explanatory variables has a correlation above 0.5, yet one VIF is 14. How is that possible?',
+    opts:['A combination of several other variables predicts it well, even though no single pair is highly correlated','The VIF must be wrong','VIFs only use pairwise correlations','It means perfect multicollinearity'],a:0,
+    why:'Correlation is a pairwise screen; VIF uses all the other Xs at once, so it catches group overlap.'},
+  ]};
+
+/* ==== content/m9.js ==== */
+/* ==========================================================================
+   MODULE 9 — Serial correlation
+   Stone: the Echoing Ice (positive vs negative, residuals over time, pure vs
+   impure, Durbin–Watson and its limits, effect on standard errors).
+   ========================================================================== */
+// Durbin–Watson 5% critical values [dL, dU] by sample size T and number of predictors k
+const DWT={20:{1:[1.20,1.41],2:[1.10,1.54],3:[1.00,1.68]},25:{1:[1.29,1.45],2:[1.21,1.55],3:[1.12,1.65]},
+           30:{1:[1.35,1.49],2:[1.28,1.57],3:[1.21,1.65]},40:{1:[1.44,1.54],2:[1.39,1.60],3:[1.34,1.66]}};
+const SC_KIND={pos:'Positive serial correlation — residuals stay on the same side for runs of periods',none:'No serial correlation — residuals hop around at random',neg:'Negative serial correlation — residuals tend to flip sign every period'};
+function genAR(r,rho,n=30){const e=[];let prev=0;for(let t=0;t<n;t++){prev=rho*prev+rngGauss(r)*(rho?Math.sqrt(1-rho*rho):1);e.push(prev);}
+  const m=e.reduce((a,b)=>a+b,0)/n;return e.map(v=>round((v-m)*10,2));}
+const timePlot=e=>Exhibit.scatter(e.map((_,i)=>i+1),e,{xl:'Time period',yl:'Residual',hline:0,connect:true,title:'Residuals over time'});
+const dwOf=e=>{let num=0,den=0;e.forEach((v,i)=>{den+=v*v;if(i)num+=(v-e[i-1])**2;});return num/den;};
+
+NODES['m9-serial']={kicker:'Module 9 · Serial correlation',title:'The Echoing Ice',
+  intro:'Shout into the ice and it answers a moment later. When today’s residual helps predict tomorrow’s, the model’s “noise” isn’t really noise — and its p-values claim more certainty than they’ve earned.',
+  lessons:[
+   {title:'When errors echo over time',
+    teach:`<p>In time-series data, the error in one period can be related to the error in the next. That breaks Classical Assumption 4 (no serial correlation).</p>
+    <div class="ex"><b>Positive</b> (ρ &gt; 0): residuals keep the same sign for runs of periods — the common business case, because shocks take time to work through.<br>
+    <b>Negative</b> (ρ &lt; 0): residuals tend to flip sign each period. Possible, but less common.<br>ρ is estimated as the correlation between eₜ and eₜ₋₁.</div>
+    <p><b>Pure</b> serial correlation: the model is correctly specified but the errors still persist. <b>Impure</b>: the pattern is a <i>symptom</i> of a specification error — an omitted variable that moves over time, a missing <b>trend</b> or <b>seasonality</b>, a missing <b>lag</b>, or the wrong <b>functional form</b>.</p>
+    <p><b>Consequences (pure case):</b> coefficients stay unbiased, but OLS is no longer BLUE and the usual <b>standard errors are biased — typically too small</b>, so t-statistics look too big and p-values too optimistic.</p>`,
+    practice:[
+     {make:r=>{const k=pick(['pos','none','neg']),rho={pos:.85,none:0,neg:-.75}[k],e=genAR(r,rho,24);const keys=['pos','none','neg'];return {type:'mc',exhibit:timePlot(e),
+      q:'Residuals from a monthly sales model, in time order. What do they show?',opts:keys.map(x=>SC_KIND[x]),a:keys.indexOf(k),
+      why:'Runs of same-signed residuals mean positive serial correlation; sign-flipping every period means negative; no pattern means none.'};}},
+     {type:'sort',q:'Pure or impure serial correlation?',cats:['Pure','Impure (a specification problem)'],
+      items:[{t:'A correctly specified model where supply shocks take several quarters to fade',c:0},{t:'Quarterly sales model with no holiday-quarter dummy',c:1},{t:'A straight line fit to costs that fall fast and then level off',c:1},{t:'Retail sales model that omits a slowly cycling consumer-confidence index',c:1}],
+      why:'Impure serial correlation is the model telling you something is missing: a seasonal pattern, the right shape, or a persistent variable.'},
+    ]},
+   {title:'The Durbin–Watson test',
+    teach:`<div class="ex">DW = Σ(eₜ − eₜ₋₁)² / Σeₜ² &nbsp;·&nbsp; ≈ 0 strong positive · ≈ 2 none · ≈ 4 strong negative</div>
+    <p>To test for <b>positive</b> first-order serial correlation (H₀: ρ ≤ 0, Hₐ: ρ &gt; 0), look up <b>dL</b> and <b>dU</b> for your sample size T and number of predictors k:</p>
+    <div class="ex">DW &lt; dL → <b>reject H₀</b> (positive serial correlation)<br>DW &gt; dU → <b>do not reject</b><br>dL ≤ DW ≤ dU → <b>inconclusive</b> — proceed with caution</div>
+    <p><b>Limits:</b> DW requires an intercept, only checks <b>first-order</b> correlation, and is <b>not valid when a lagged dependent variable</b> (Yₜ₋₁) is an explanatory variable. The inconclusive zone is part of the test, not a mistake.</p>
+    <p><b>Response:</b> diagnose first — look for an omitted trend, seasonality, a missing lag, or the wrong form. Advanced fixes (GLS, Newey–West standard errors) are for pure serial correlation and are beyond this course.</p>`,
+    practice:[
+     {make:r=>{const num=round(rr(r,20,140),1),den=round(rr(r,60,110),1),dw=num/den;return {type:'num',q:`For a regression’s residuals, Σ(eₜ − eₜ₋₁)² = <b>${num}</b> and Σeₜ² = <b>${den}</b>. What is the Durbin–Watson statistic?`,a:dw,tol:.006,
+      hint:'DW = Σ(eₜ − eₜ₋₁)² ÷ Σeₜ²',solution:`${num} / ${den} = ${round(dw,3)}.`,why:dw<1.2?'Well below 2 — a sign of positive serial correlation (check dL/dU to decide).':dw>2.6?'Well above 2 — a hint of negative serial correlation.':'Fairly close to 2 — compare with dU before relaxing.'};}},
+     {type:'mc',q:'Which equation makes the Durbin–Watson test unreliable?',
+      opts:['Salesₜ = β₀ + β₁Priceₜ + β₂Salesₜ₋₁ + εₜ','Salesₜ = β₀ + β₁Priceₜ + β₂Incomeₜ + εₜ','Salesₜ = β₀ + β₁Advertisingₜ₋₁ + εₜ','Salesₜ = β₀ + β₁Priceₜ + β₂Q4ₜ + εₜ'],a:0,
+      why:'DW is not valid when the lagged dependent variable (Salesₜ₋₁) is an explanatory variable. A lagged X like Advertisingₜ₋₁ is fine.'},
+    ]},
+  ],
+  puzzles:[
+   {make:r=>{const k=pick(['pos','neg','none']),rho={pos:.88,none:0,neg:-.8}[k],e=genAR(r,rho,28),keys=['pos','none','neg'];return {type:'mc',exhibit:timePlot(e),
+    q:'Quarterly residuals in time order. Which pattern is this?',opts:keys.map(x=>SC_KIND[x]),a:keys.indexOf(k),
+    why:k==='pos'?'Long runs above and below zero: positive serial correlation — the most common case in business time series.':k==='neg'?'Residuals keep flipping sign: negative serial correlation.':'No visible persistence — consistent with independent errors.'};}},
+   {make:r=>{const n=8,rho=pick([.75,.6,-.5]);let e=genAR(r,rho,n).map(v=>round(v/4,2));const d=e.map((v,i)=>i?round(v-e[i-1],2):'—');
+    const num=d.slice(1).reduce((s,v)=>s+v*v,0),den=e.reduce((s,v)=>s+v*v,0),dw=num/den;return {type:'num',
+    exhibit:Exhibit.table(['t','eₜ','eₜ − eₜ₋₁'],e.map((v,i)=>[i+1,fmtNum(v),d[i]==='—'?'—':fmtNum(d[i])])),
+    q:'Compute the Durbin–Watson statistic for these residuals.',a:dw,tol:.012,
+    hint:'Square and add the differences (skip t = 1), square and add the residuals, then divide: DW = Σ(eₜ − eₜ₋₁)² / Σeₜ². The calculator’s sumsq(…) helps.',
+    solution:`Σ(eₜ − eₜ₋₁)² = ${round(num,4)}; Σeₜ² = ${round(den,4)}; DW = ${round(dw,3)}.`,
+    why:dw<1.5?'Low DW: residuals move together from one period to the next.':dw>2.5?'High DW: residuals tend to reverse each period.':'Near 2: little first-order pattern.'};}},
+   {make:r=>{const T=pick([20,25,30,40]),k=pick([1,2,3]),[dL,dU]=DWT[T][k],zone=pick(['rej','inc','no']);
+    const dw=zone==='rej'?round(rr(r,.4,dL-.08),2):zone==='inc'?round(rr(r,dL+.03,dU-.03),2):round(rr(r,dU+.08,2.3),2);
+    const opts=['Reject H₀ — evidence of positive serial correlation','Inconclusive — don’t over-trust the p-values','Do not reject H₀ — no evidence of positive serial correlation'];
+    return {type:'mc',exhibit:Exhibit.table(['T','k','DW','dL (5%)','dU (5%)'],[[T,k,dw,dL.toFixed(2),dU.toFixed(2)]]),
+     q:'Test for positive first-order serial correlation at the 5% level. Decision?',opts,a:{rej:0,inc:1,no:2}[zone],
+     why:`DW = ${dw} is ${zone==='rej'?`below dL = ${dL}: reject H₀`:zone==='inc'?`between dL = ${dL} and dU = ${dU}: inconclusive`:`above dU = ${dU}: do not reject H₀`}.`};}},
+   {type:'mc',q:'A time-series demand model shows strong positive serial correlation, but every coefficient has p < 0.01. What should a manager conclude?',
+    opts:['The p-values are probably too optimistic — standard errors are likely understated','The model is extra reliable because everything is significant','The coefficients must be biased, so ignore the signs','Serial correlation only matters for R²'],a:0,
+    why:'Serial correlation can make weak evidence look strong. In the pure case the coefficients are unbiased; the reported precision is what you can’t trust.'},
+   {type:'sort',q:'Sort each statement about pure serial correlation.',cats:['True','False'],
+    items:[{t:'OLS coefficients are still unbiased',c:0},{t:'OLS is still the minimum-variance (BLUE) estimator',c:1},{t:'The usual standard errors and t-tests become unreliable',c:0},{t:'It always means a variable was omitted',c:1}],
+    why:'Pure serial correlation hurts efficiency and inference, not the center of the estimates. Impure serial correlation is the one caused by specification errors.'},
+   {type:'mc',q:'Monthly ice-cream sales residuals are positive every summer and negative every winter. What’s the best first move?',
+    opts:['Add seasonal dummies (or the missing seasonal driver) and re-estimate','Apply an advanced correction to the standard errors right away','Drop the summer months','Ignore it; DW only matters for annual data'],a:0,
+    why:'That pattern is impure serial correlation from missing seasonality. Fix the specification before reaching for statistical patches.'},
+   {type:'mc',q:'DW = 1.31 with T = 25 and k = 3 (dL = 1.12, dU = 1.65). What does “inconclusive” mean for a decision?',
+    opts:['The test can’t confirm or rule out positive serial correlation — proceed cautiously and don’t over-trust the p-values','There is definitely no serial correlation','There is definitely serial correlation','The test was run incorrectly'],a:0,
+    why:'The inconclusive zone is part of the Durbin–Watson test, not an error.'},
+  ]};
+
 /* ==== content/z_caches.js ==== */
 /* ==========================================================================
    SUPPLY CACHES — one hidden near each stone. Each lock is a short problem
@@ -2823,6 +3131,20 @@ CACHE('m6-trial','lens',{make:r=>{const n=4,T=[],C=[];const eff=ri(r,6,18)*1000;
 CACHE('m6-omit','feather',{make:r=>{const est=round(rr(r,1.5,3.5),2),b2=round(rr(r,.4,1.2),2),a1=round(rr(r,.3,.9),2),tru=est-b2*a1;
   return {type:'num',q:`Omitting X₂ gave an estimated β₁* = <b>${est}</b>. You know β₂ = <b>${b2}</b> and α₁ = <b>${a1}</b>. What is the true β₁?`,a:tru,tol:.006,
    hint:'β₁* = β₁ + β₂·α₁, so β₁ = β₁* − β₂·α₁.',solution:`${est} − ${b2} × ${a1} = ${round(tru,4)}.`,why:'Positive β₂ and positive α₁ make the bias positive — the short model overstated β₁.'};}});
+
+/* ---- Crystal Reach: Modules 7–10 ---- */
+CACHE('m7-form','feather',{make:r=>{const b=round(rr(r,.00035,.00048),6),P=ri(r,10,50)*10000,S=ri(r,12,32)*100;
+  return {type:'num',exhibit:Exhibit.eq(`ln(Price) = 10.84 + ${b}·SQFT`),q:`In this semilog-on-Y model, the slope is β₁ × Price. How many dollars does one more square foot add to a house whose predicted price is <b>${money(P,0)}</b>?`,a:b*P,tol:.06,pre:'$',
+   hint:'Slope = β₁ × Y',solution:`${b} × ${P.toLocaleString()} = ${money(b*P,2)}.`,why:`In ln(Y) models the dollar effect grows with the price level (and the elasticity at ${S} sq. ft. would be β₁ × SQFT = ${round(b*S,2)}).`};}});
+CACHE('m8-multi','lens',{make:r=>{const vars=[['Cadence',round(rr(r,.82,.93),2)],['Pad capacity',round(rr(r,.7,.86),2)],['Payload mass',round(rr(r,.15,.45),2)]],k=ri(r,0,2),R=vars[k][1],v=1/(1-R);
+  return {type:'num',exhibit:Exhibit.table(['Variable','Auxiliary R²'],vars.map(x=>[x[0],x[1]])),q:`What is the VIF for <b>${vars[k][0]}</b>?`,a:v,tol:.02,
+   hint:'VIF = 1 / (1 − auxiliary R²)',solution:`1 / (1 − ${R}) = ${round(v,2)}.`,why:v>10?'Serious multicollinearity for this variable.':v>5?'Warning-level multicollinearity.':'Low — this variable isn’t the source of the overlap.'};}});
+CACHE('m9-serial','charm',{make:r=>{let e=genAR(r,.8,6).map(v=>round(v/4,2));const num=e.slice(1).reduce((s,v,i)=>s+(v-e[i])**2,0),den=e.reduce((s,v)=>s+v*v,0),dw=num/den;
+  return {type:'num',exhibit:Exhibit.table(['t','eₜ'],e.map((v,i)=>[i+1,fmtNum(v)])),q:'Compute the Durbin–Watson statistic for these six residuals.',a:dw,tol:.012,
+   hint:'Find each eₜ − eₜ₋₁ (five of them), square and add; divide by the sum of squared residuals.',solution:`Σ(eₜ − eₜ₋₁)² = ${round(num,4)}; Σeₜ² = ${round(den,4)}; DW = ${round(dw,3)}.`,why:dw<1.5?'Well below 2: these residuals persist.':'Not far from 2.'};}});
+CACHE('m10-hetero','lens',{make:r=>{const n=pick([24,30,36]),R=round(rr(r,.25,.5),3),lm=n*R;
+  return {type:'num',q:`A White test on <b>n = ${n}</b> observations gives an auxiliary R² of <b>${R}</b>. What is LM = n × R²?`,a:lm,tol:.02,
+   hint:'LM = n × R²',solution:`${n} × ${R} = ${round(lm,3)}.`,why:`With 2 Xs the White test has 5 df; the 5% critical value is 11.07, so this ${lm>11.07?'rejects':'does not reject'} constant variance.`};}});
 
 /* ==== js/08_game.js ==== */
 /* ---------- save ---------- */
@@ -2949,6 +3271,34 @@ function freezeFx(id){const o=stoneObj(id);ICEFX[id]={k:'freeze',t0:nowS()};shak
   for(let i=0;i<70;i++){const a=rand(0,TAU),v=rand(30,160);emit({t:'spark',x:o.x+rand(-14,14),y:o.y-rand(10,70),vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6,l:0,m:rand(.6,1.4),sz:rand(3,7)});}}
 function thawFx(id){const o=stoneObj(id);ICEFX[id]={k:'thaw',t0:nowS()};if(!o||!FX.particles)return;setTimeout(()=>iceBurst(o,60),450);shake=.25;
   for(let i=0;i<50;i++){emit({t:'mote',warm:1,x:o.x+rand(-20,20),y:o.y-rand(0,80),vx:rand(-20,20),vy:rand(-60,-20),l:0,m:rand(1,2),sz:rand(2,5),ph:rand(0,9)});}}
+/* ---------- practice final: 2 questions from every module, mixed ---------- */
+const EXAM_PER=2;
+function examPool(){const pool={};for(const [id,n] of Object.entries(NODES)){const m=/^m(\d+)-[a-z]+$/.exec(id);if(!m||n.sealed||!n.puzzles)continue;
+  (pool[+m[1]]=pool[+m[1]]||[]).push(...n.puzzles.map((_,idx)=>({node:id,idx})));}return pool;}
+function openExam(){
+  const pool=examPool(),mods=Object.keys(pool).map(Number).sort((a,b)=>a-b),N=mods.length*EXAM_PER,E=SAVE.exam;
+  showCard(`<div class="kicker">Village exam hall</div><h2>Practice final</h2>
+    <p class="say">${N} questions — ${EXAM_PER} from each of Modules ${mods[0]}–${mods[mods.length-1]}, drawn at random from the study stones and shuffled, with fresh numbers where a question uses data. The clock runs while you work.</p>
+    <p class="say">Your score is the number you get right <b>on the first try</b>. Items don’t work here, but the calculator does. Anything you miss is pinned to the review board.</p>
+    ${E?`<p class="meta">Best: <b>${E.best} / ${E.n}</b> · last: ${E.last} / ${E.n} in ${fmtClock(E.time)} · taken ${E.count} time${E.count>1?'s':''}</p>`:''}<div class="acts"></div>`);
+  const b=btn('Start the practice final','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  b.onclick=()=>{const items=shuffle(mods.flatMap(m=>shuffle(pool[m]).slice(0,EXAM_PER)));
+    startSession('Practice final','Village exam hall',items,res=>examResult(res,mods),'exam');};
+}
+setInterval(()=>{const c=document.getElementById('exClock');if(c&&run?.mode==='exam')c.textContent=fmtClock(Date.now()-run.t0);},500);
+function examResult(items,mods){
+  const n=items.length,score=items.filter(x=>!x.missed).length;
+  const by=m=>items.filter(x=>+/^m(\d+)/.exec(x.node)[1]===m);
+  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};persist();
+  const weak=mods.filter(m=>by(m).some(x=>x.missed));
+  const rows=mods.map(m=>{const its=by(m),ok=its.filter(x=>!x.missed).length;return `<tr><td class="mod">Module ${m}</td><td class="n ${ok===its.length?'ok':'no'}">${ok} / ${its.length}</td><td>${[...new Set(its.filter(x=>x.missed).map(x=>esc(NODES[x.node].title)))].join(', ')||'—'}</td></tr>`;}).join('');
+  setTimeout(()=>{showCard(`<div class="kicker">Village exam hall · results</div><h2>${score} / ${n} on the first try</h2>
+    <p class="say">${score>=n*.9?'Excellent — exam-ready across the board.':score>=n*.75?'Solid. Tighten up the modules marked below.':score>=n*.5?'Getting there. Revisit the stones listed below, and do their waypoints if you skipped them.':'Plenty to review — work through the waypoints and stones listed below, then try again.'} Time: <b>${fmtClock(examTime)}</b>.${prev?` Best so far: ${SAVE.exam.best} / ${n}.`:''}</p>
+    <table class="tb exres"><tr><th>Module</th><th class="n">Right first try</th><th>Revisit</th></tr>${rows}</table>
+    ${weak.length?`<p class="meta">Missed questions are pinned to the review board by the fire.</p>`:''}<div class="acts"></div>`);
+    const a=btn('Take it again','primary'),c=btn('Close','sol');card.querySelector('.acts').append(a,c);a.onclick=openExam;c.onclick=closeCard;},60);
+}
+let examTime=0;
 function openReview(){
   if(!SAVE.missed.length){showCard(`<div class="kicker">Review board</div><h2>Nothing to review</h2><p class="say">Questions you miss anywhere in the world are pinned here, so you can retry them with fresh numbers. The board is empty — nice work.</p>`);return;}
   const pickN=shuffle(SAVE.missed).slice(0,6);
@@ -3080,7 +3430,7 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });
 

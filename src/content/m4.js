@@ -95,3 +95,8 @@ NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:
    {type:'mc',q:'Three sampling distributions of β̂: A is centered on β but wide, B is centered on β and narrow, C is centered away from β. Which describes an unbiased, precise estimator?',opts:['B','A','C','None — precision and unbiasedness conflict'],a:0,
     why:'Unbiased means centered on the true β across samples; precise means tightly clustered. C is biased; A is unbiased but imprecise.'},
   ]};
+
+/* exam-guide gap: biased vs imprecise */
+NODES['m4-seven'].puzzles.push({type:'sort',q:'Does each problem mainly make estimates <b>biased</b> (aimed at the wrong target) or <b>imprecise</b> (aimed right, but shaky)?',cats:['Biased','Imprecise / unreliable inference'],
+  items:[{t:'An omitted variable that moves with X and affects Y',c:0},{t:'Two explanatory variables that overlap heavily (multicollinearity)',c:1},{t:'Endogeneity: X correlated with the error',c:0},{t:'Error variance that grows with firm size (heteroskedasticity)',c:1},{t:'A very small sample',c:1}],
+  why:'Bias shifts the center of the sampling distribution; imprecision widens it (or makes the reported width wrong). A biased estimate can look very precise — and a precise one can still be biased.'});

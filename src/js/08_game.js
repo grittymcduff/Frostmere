@@ -122,6 +122,34 @@ function freezeFx(id){const o=stoneObj(id);ICEFX[id]={k:'freeze',t0:nowS()};shak
   for(let i=0;i<70;i++){const a=rand(0,TAU),v=rand(30,160);emit({t:'spark',x:o.x+rand(-14,14),y:o.y-rand(10,70),vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6,l:0,m:rand(.6,1.4),sz:rand(3,7)});}}
 function thawFx(id){const o=stoneObj(id);ICEFX[id]={k:'thaw',t0:nowS()};if(!o||!FX.particles)return;setTimeout(()=>iceBurst(o,60),450);shake=.25;
   for(let i=0;i<50;i++){emit({t:'mote',warm:1,x:o.x+rand(-20,20),y:o.y-rand(0,80),vx:rand(-20,20),vy:rand(-60,-20),l:0,m:rand(1,2),sz:rand(2,5),ph:rand(0,9)});}}
+/* ---------- practice final: 2 questions from every module, mixed ---------- */
+const EXAM_PER=2;
+function examPool(){const pool={};for(const [id,n] of Object.entries(NODES)){const m=/^m(\d+)-[a-z]+$/.exec(id);if(!m||n.sealed||!n.puzzles)continue;
+  (pool[+m[1]]=pool[+m[1]]||[]).push(...n.puzzles.map((_,idx)=>({node:id,idx})));}return pool;}
+function openExam(){
+  const pool=examPool(),mods=Object.keys(pool).map(Number).sort((a,b)=>a-b),N=mods.length*EXAM_PER,E=SAVE.exam;
+  showCard(`<div class="kicker">Village exam hall</div><h2>Practice final</h2>
+    <p class="say">${N} questions — ${EXAM_PER} from each of Modules ${mods[0]}–${mods[mods.length-1]}, drawn at random from the study stones and shuffled, with fresh numbers where a question uses data. The clock runs while you work.</p>
+    <p class="say">Your score is the number you get right <b>on the first try</b>. Items don’t work here, but the calculator does. Anything you miss is pinned to the review board.</p>
+    ${E?`<p class="meta">Best: <b>${E.best} / ${E.n}</b> · last: ${E.last} / ${E.n} in ${fmtClock(E.time)} · taken ${E.count} time${E.count>1?'s':''}</p>`:''}<div class="acts"></div>`);
+  const b=btn('Start the practice final','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  b.onclick=()=>{const items=shuffle(mods.flatMap(m=>shuffle(pool[m]).slice(0,EXAM_PER)));
+    startSession('Practice final','Village exam hall',items,res=>examResult(res,mods),'exam');};
+}
+setInterval(()=>{const c=document.getElementById('exClock');if(c&&run?.mode==='exam')c.textContent=fmtClock(Date.now()-run.t0);},500);
+function examResult(items,mods){
+  const n=items.length,score=items.filter(x=>!x.missed).length;
+  const by=m=>items.filter(x=>+/^m(\d+)/.exec(x.node)[1]===m);
+  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};persist();
+  const weak=mods.filter(m=>by(m).some(x=>x.missed));
+  const rows=mods.map(m=>{const its=by(m),ok=its.filter(x=>!x.missed).length;return `<tr><td class="mod">Module ${m}</td><td class="n ${ok===its.length?'ok':'no'}">${ok} / ${its.length}</td><td>${[...new Set(its.filter(x=>x.missed).map(x=>esc(NODES[x.node].title)))].join(', ')||'—'}</td></tr>`;}).join('');
+  setTimeout(()=>{showCard(`<div class="kicker">Village exam hall · results</div><h2>${score} / ${n} on the first try</h2>
+    <p class="say">${score>=n*.9?'Excellent — exam-ready across the board.':score>=n*.75?'Solid. Tighten up the modules marked below.':score>=n*.5?'Getting there. Revisit the stones listed below, and do their waypoints if you skipped them.':'Plenty to review — work through the waypoints and stones listed below, then try again.'} Time: <b>${fmtClock(examTime)}</b>.${prev?` Best so far: ${SAVE.exam.best} / ${n}.`:''}</p>
+    <table class="tb exres"><tr><th>Module</th><th class="n">Right first try</th><th>Revisit</th></tr>${rows}</table>
+    ${weak.length?`<p class="meta">Missed questions are pinned to the review board by the fire.</p>`:''}<div class="acts"></div>`);
+    const a=btn('Take it again','primary'),c=btn('Close','sol');card.querySelector('.acts').append(a,c);a.onclick=openExam;c.onclick=closeCard;},60);
+}
+let examTime=0;
 function openReview(){
   if(!SAVE.missed.length){showCard(`<div class="kicker">Review board</div><h2>Nothing to review</h2><p class="say">Questions you miss anywhere in the world are pinned here, so you can retry them with fresh numbers. The board is empty — nice work.</p>`);return;}
   const pickN=shuffle(SAVE.missed).slice(0,6);
@@ -253,6 +281,6 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });

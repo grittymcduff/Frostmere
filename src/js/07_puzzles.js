@@ -63,6 +63,7 @@ ${res.coef.map(c=>row([c.name,x(c.b),x(c.se),x(c.t),x(c.p),x(c.lo),x(c.hi)])).jo
     let svg=`<svg viewBox="0 0 ${w} ${h}" class="sc" role="img" aria-label="${o.title||'scatter plot'}">`;
     for(const t of ticks(ymin,ymax,ys_))svg+=`<line x1="${m.l}" x2="${w-m.r}" y1="${py(t)}" y2="${py(t)}" class="gl"/><text x="${m.l-6}" y="${py(t)+4}" text-anchor="end">${round(t,2)}</text>`;
     for(const t of ticks(xmin,xmax,xs_))svg+=`<text x="${px(t)}" y="${h-m.b+14}" text-anchor="middle">${round(t,2)}</text>`;
+    if(o.connect)svg+=`<polyline class="cn" fill="none" points="${xs.map((x,i)=>px(x)+','+py(ys[i])).join(' ')}"/>`;
     xs.forEach((x,i)=>svg+=`<circle cx="${px(x)}" cy="${py(ys[i])}" r="3.4" class="pt"/>`);
     if(o.hline!==undefined)svg+=`<line x1="${m.l}" x2="${w-m.r}" y1="${py(o.hline)}" y2="${py(o.hline)}" class="fit" stroke-dasharray="5 4"/>`;
     if(o.line){const [b0,b1]=o.line;svg+=`<line x1="${px(xmin)}" y1="${py(b0+b1*xmin)}" x2="${px(xmax)}" y2="${py(b0+b1*xmax)}" class="fit"/>`;}
@@ -89,13 +90,14 @@ function instantiate(p,seed){
   return {...p,...p.make(mulberry(seed)),make:undefined,_seed:seed};
 }
 
+const fmtClock=ms=>{const s=Math.floor(ms/1000);return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
 function startSession(title,kicker,items,onDone,mode='practice'){
   // items: [{node, idx}] ; each instantiated with a fresh seed
-  run={title,kicker,items:items.map(it=>({...it,p:instantiate(NODES[it.node].puzzles[it.idx],(Math.random()*1e9)|0),missed:false})),i:0,onDone,mode};
+  run={title,kicker,items:items.map(it=>({...it,p:instantiate(NODES[it.node].puzzles[it.idx],(Math.random()*1e9)|0),missed:false})),i:0,onDone,mode,t0:Date.now()};
   renderPuzzle();
 }
 function header(){const n=run.items.length,i=run.i;
-  return `<div class="kicker">${esc(run.kicker)}</div><h2>${esc(run.title)}</h2>
+  return `<div class="kicker">${esc(run.kicker)}${run.mode==='exam'?` · question ${i+1} of ${n} <span class="clock" id="exClock">${fmtClock(Date.now()-run.t0)}</span>`:''}</div><h2>${esc(run.title)}</h2>
   <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
 function renderPuzzle(){
   const it=run.items[run.i],p=it.p;
@@ -159,8 +161,8 @@ function renderPuzzle(){
 }
 function btn(label,cls){const b=document.createElement('button');b.className=cls;b.innerHTML=label;return b;}
 function stat(correctFirst){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;}
-function noteMiss(it){if(run.mode!=='stone')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function noteMiss(it){if(run.mode!=='stone'&&run.mode!=='exam')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
-  const r=run;closeCard();r.onDone&&r.onDone(r.items);persist();
+  const r=run;if(r.mode==='exam')examTime=Date.now()-r.t0;closeCard();r.onDone&&r.onDone(r.items);persist();
 }

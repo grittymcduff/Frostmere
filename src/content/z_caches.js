@@ -61,3 +61,17 @@ CACHE('m6-trial','lens',{make:r=>{const n=4,T=[],C=[];const eff=ri(r,6,18)*1000;
 CACHE('m6-omit','feather',{make:r=>{const est=round(rr(r,1.5,3.5),2),b2=round(rr(r,.4,1.2),2),a1=round(rr(r,.3,.9),2),tru=est-b2*a1;
   return {type:'num',q:`Omitting X₂ gave an estimated β₁* = <b>${est}</b>. You know β₂ = <b>${b2}</b> and α₁ = <b>${a1}</b>. What is the true β₁?`,a:tru,tol:.006,
    hint:'β₁* = β₁ + β₂·α₁, so β₁ = β₁* − β₂·α₁.',solution:`${est} − ${b2} × ${a1} = ${round(tru,4)}.`,why:'Positive β₂ and positive α₁ make the bias positive — the short model overstated β₁.'};}});
+
+/* ---- Crystal Reach: Modules 7–10 ---- */
+CACHE('m7-form','feather',{make:r=>{const b=round(rr(r,.00035,.00048),6),P=ri(r,10,50)*10000,S=ri(r,12,32)*100;
+  return {type:'num',exhibit:Exhibit.eq(`ln(Price) = 10.84 + ${b}·SQFT`),q:`In this semilog-on-Y model, the slope is β₁ × Price. How many dollars does one more square foot add to a house whose predicted price is <b>${money(P,0)}</b>?`,a:b*P,tol:.06,pre:'$',
+   hint:'Slope = β₁ × Y',solution:`${b} × ${P.toLocaleString()} = ${money(b*P,2)}.`,why:`In ln(Y) models the dollar effect grows with the price level (and the elasticity at ${S} sq. ft. would be β₁ × SQFT = ${round(b*S,2)}).`};}});
+CACHE('m8-multi','lens',{make:r=>{const vars=[['Cadence',round(rr(r,.82,.93),2)],['Pad capacity',round(rr(r,.7,.86),2)],['Payload mass',round(rr(r,.15,.45),2)]],k=ri(r,0,2),R=vars[k][1],v=1/(1-R);
+  return {type:'num',exhibit:Exhibit.table(['Variable','Auxiliary R²'],vars.map(x=>[x[0],x[1]])),q:`What is the VIF for <b>${vars[k][0]}</b>?`,a:v,tol:.02,
+   hint:'VIF = 1 / (1 − auxiliary R²)',solution:`1 / (1 − ${R}) = ${round(v,2)}.`,why:v>10?'Serious multicollinearity for this variable.':v>5?'Warning-level multicollinearity.':'Low — this variable isn’t the source of the overlap.'};}});
+CACHE('m9-serial','charm',{make:r=>{let e=genAR(r,.8,6).map(v=>round(v/4,2));const num=e.slice(1).reduce((s,v,i)=>s+(v-e[i])**2,0),den=e.reduce((s,v)=>s+v*v,0),dw=num/den;
+  return {type:'num',exhibit:Exhibit.table(['t','eₜ'],e.map((v,i)=>[i+1,fmtNum(v)])),q:'Compute the Durbin–Watson statistic for these six residuals.',a:dw,tol:.012,
+   hint:'Find each eₜ − eₜ₋₁ (five of them), square and add; divide by the sum of squared residuals.',solution:`Σ(eₜ − eₜ₋₁)² = ${round(num,4)}; Σeₜ² = ${round(den,4)}; DW = ${round(dw,3)}.`,why:dw<1.5?'Well below 2: these residuals persist.':'Not far from 2.'};}});
+CACHE('m10-hetero','lens',{make:r=>{const n=pick([24,30,36]),R=round(rr(r,.25,.5),3),lm=n*R;
+  return {type:'num',q:`A White test on <b>n = ${n}</b> observations gives an auxiliary R² of <b>${R}</b>. What is LM = n × R²?`,a:lm,tol:.02,
+   hint:'LM = n × R²',solution:`${n} × ${R} = ${round(lm,3)}.`,why:`With 2 Xs the White test has 5 df; the 5% critical value is 11.07, so this ${lm>11.07?'rejects':'does not reject'} constant variance.`};}});

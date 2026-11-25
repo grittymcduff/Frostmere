@@ -155,3 +155,8 @@ NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild L
     opts:['Customers and revenue are strongly associated in this sample — but fit alone doesn’t prove that adding customers causes revenue','The model proves that adding customers causes revenue to rise','Every future branch will land almost exactly on the fitted line','A high R² means the intercept can now be read literally'],a:0,
     why:'The goal is not to celebrate a high R² but to interpret what the model does and does not support. The teaching data are deliberately clean; real operating data are noisier.'};}},
 ]};
+
+/* exam-guide gap: why managers use econometrics */
+NODES['m1-signs'].puzzles.push({type:'mc',q:'What is econometrics mainly for in a managerial setting?',
+  opts:['Putting numbers — and honest uncertainty — on relationships so decisions under uncertainty are better informed','Proving that a theory is true','Replacing managerial judgment with a formula','Finding whichever variables are significant in the data'],a:0,
+  why:'Regression quantifies a relationship and its uncertainty; theory supplies the story and judgment makes the decision.'});

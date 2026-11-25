@@ -95,3 +95,8 @@ NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The 
    {type:'mc',q:'Infrastructure spending has b = 12 with p = 0.28. A manager wants to cite it as proof of a big payoff. Your response?',opts:['The estimate is large but statistically unreliable — the true effect could be zero','It’s significant because 12 is large','p = 0.28 means a 28% effect','It proves the opposite effect'],a:0,
     why:'Size without precision is fragile evidence. Report both magnitude and uncertainty before acting.'},
   ]};
+
+/* exam-guide gap: statistical significance is not causation */
+NODES['m5-three'].puzzles.push({type:'mc',q:'Customers who use the loyalty app spend more, and the app dummy is highly significant (p < 0.001). Does the app <b>cause</b> the extra spending?',
+  opts:['Not necessarily — significance only says the association is unlikely to be zero; heavy spenders may choose the app','Yes — p < 0.001 proves causation','Yes, as long as R² is high','No — significant coefficients are never causal'],a:0,
+  why:'A tiny p-value measures evidence against β = 0, not why the association exists. Causal claims need a design — like random assignment — that rules out self-selection and confounders.'});

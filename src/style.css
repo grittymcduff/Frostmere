@@ -153,3 +153,6 @@
   @media (max-width:600px){#narr{bottom:12px}#narr p{font-size:14px}}
   body{position:fixed;inset:0}
   #card,#log,#calc{overscroll-behavior:contain;touch-action:pan-y}
+  .sc .cn{stroke:#2f7fb5;stroke-width:1.1;opacity:.45}
+  .clock{float:right;margin-right:30px;font-variant-numeric:tabular-nums;color:#ffd27a}
+  .exres td.mod{white-space:nowrap}.exres .ok{color:#8fe0a0}.exres .no{color:#ffb39a}
