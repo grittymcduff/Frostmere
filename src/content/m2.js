@@ -101,7 +101,7 @@ NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s B
     q:`Predict monthly sales revenue, in dollars, for PRICE = <b>$${p.toFixed(2)}</b> and ADVERT = <b>$${ad.toLocaleString()}</b>.`,a:pred,tol:15,pre:'$',
     hint:`Convert ADVERT to $1,000s (${ad/1000}), plug both into the equation, then multiply the result by 1,000.`,solution:`(${Exhibit.xl(d.b0)} + ${Exhibit.xl(d.b1)} × ${p} + ${Exhibit.xl(d.b2)} × ${ad/1000}) × 1,000 ≈ ${money(pred,0)}.`,
     why:'A prediction is a planning baseline. Competition, local events, service, and weather can all move the actual result.'};}},
-   {type:'mc',q:'Option A (cut price $0.10) leaves ~$791 before other costs; Option B (+$500 ads) leaves ~$432 after the ad spend. What should Andy conclude?',
+   {type:'mc',exhibit:Exhibit.eq('Course estimates: SALES ($000) = 118.91 − 7.908·PRICE + 1.863·ADVERT ($000)'),q:'Using the course’s Big Andy estimates: Option A (cut price $0.10) leaves ~$791 before other costs; Option B (+$500 ads) leaves ~$432 after the ad spend. What should Andy conclude?',
     opts:['A looks better, but neither figure is profit yet','Choose A — the model shows it earns $791 more profit','Choose B — ads build long-run sales the model can’t see','Either — the regression has already settled it'],a:0,
     why:'Regression compares expected outcomes; managers decide whether the expected gain justifies the cost and the risk.'},
   ]};

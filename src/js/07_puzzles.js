@@ -119,6 +119,7 @@ function renderPuzzle(){
   const drawTools=()=>{
     const tb=card.querySelector('#ptools');if(!tb)return;const solved=card.querySelector('#fb').classList.contains('ok');
     let h=`<button class="tool" data-t="calc">Calculator</button>`;
+    if(!['exam','examc'].includes(run.mode)&&TEACH[stoneOfNode(it.node)])h+=`<button class="tool" data-t="teach">🎓 Teach me</button>`;
     if(run.mode==='stone'&&!solved){
       const inv=SAVE.inv,hasHint=!!p.hint;
       if(p.type==='mc')h+=`<button class="tool item" data-t="lens" ${inv.lens&&!it.lens?'':'disabled'}>Lens <i>${inv.lens}</i></button>`;
@@ -128,6 +129,7 @@ function renderPuzzle(){
     tb.innerHTML=h;
     tb.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=b.dataset.t;
       if(k==='calc'){toggleCalc();return;}
+      if(k==='teach'){Teach.open(stoneOfNode(it.node));return;}
       if(!SAVE.inv[k])return;SAVE.inv[k]--;persist();
       if(k==='lens'){const wrong=[...pz.querySelectorAll('button.opt')].filter(x=>!x.disabled&&x.dataset.k!=String(p.a));const g=pick(wrong);if(g){g.disabled=true;g.classList.add('gone');}it.lens=true;feedback('', '<b>Lens:</b> one wrong answer struck out.');}
       if(k==='feather'){it.feather=true;feedback('', `<b>Feather — first step:</b> ${p.hint}`);}

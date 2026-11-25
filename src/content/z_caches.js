@@ -65,10 +65,10 @@ CACHE('m6-omit','feather',{make:r=>{const est=round(rr(r,1.5,3.5),2),b2=round(rr
 /* ---- Crystal Reach: Modules 7–10 ---- */
 CACHE('m7-form','feather',{make:r=>{const b=round(rr(r,.00035,.00048),6),P=ri(r,10,50)*10000,S=ri(r,12,32)*100;
   return {type:'num',exhibit:Exhibit.eq(`ln(Price) = 10.84 + ${b}·SQFT`),q:`In this semilog-on-Y model, the slope is β₁ × Price. How many dollars does one more square foot add to a house whose predicted price is <b>${money(P,0)}</b>?`,a:b*P,tol:.06,pre:'$',
-   hint:'Slope = β₁ × Y',solution:`${b} × ${P.toLocaleString()} = ${money(b*P,2)}.`,why:`In ln(Y) models the dollar effect grows with the price level (and the elasticity at ${S} sq. ft. would be β₁ × SQFT = ${round(b*S,2)}).`};}});
+   hint:'Slope = β₁ × Y',solution:`${b} × ${P.toLocaleString()} = ${money(b*P,2)}.`,why:`In ln(Y) models the dollar effect grows with the price level (and the elasticity at ${S} sq. ft. would be β₁ × SQFT = ${(b*S).toFixed(2)}).`};}});
 CACHE('m8-multi','lens',{make:r=>{const vars=[['Cadence',round(rr(r,.82,.93),2)],['Pad capacity',round(rr(r,.7,.86),2)],['Payload mass',round(rr(r,.15,.45),2)]],k=ri(r,0,2),R=vars[k][1],v=1/(1-R);
   return {type:'num',exhibit:Exhibit.table(['Variable','Auxiliary R²'],vars.map(x=>[x[0],x[1]])),q:`What is the VIF for <b>${vars[k][0]}</b>?`,a:v,tol:.02,
-   hint:'VIF = 1 / (1 − auxiliary R²)',solution:`1 / (1 − ${R}) = ${round(v,2)}.`,why:v>10?'Serious multicollinearity for this variable.':v>5?'Warning-level multicollinearity.':'Low — this variable isn’t the source of the overlap.'};}});
+   hint:'VIF = 1 / (1 − auxiliary R²)',solution:`1 / (1 − ${R}) = ${round(v,2)}.`,why:v>10?'Above 10: serious multicollinearity for this variable.':v>5?'Above 5: a warning sign for this variable.':'Below the usual warning level of 5 — not alarming on its own.'};}});
 CACHE('m9-serial','charm',{make:r=>{let e=genAR(r,.8,6).map(v=>round(v/4,2));const num=e.slice(1).reduce((s,v,i)=>s+(v-e[i])**2,0),den=e.reduce((s,v)=>s+v*v,0),dw=num/den;
   return {type:'num',exhibit:Exhibit.table(['t','eₜ'],e.map((v,i)=>[i+1,fmtNum(v)])),q:'Compute the Durbin–Watson statistic for these six residuals.',a:dw,tol:.012,
    hint:'Find each eₜ − eₜ₋₁ (five of them), square and add; divide by the sum of squared residuals.',solution:`Σ(eₜ − eₜ₋₁)² = ${round(num,4)}; Σeₜ² = ${round(den,4)}; DW = ${round(dw,3)}.`,why:dw<1.5?'Well below 2: these residuals persist.':'Not far from 2.'};}});

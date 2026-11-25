@@ -253,6 +253,16 @@
   #whatsnew .wnbar i{display:block;height:100%;width:100%;background:#e9b35c;transition:width .1s linear}
   #whatsnew .go{font:inherit;font-size:13.5px;padding:8px 16px;border-radius:9px;cursor:pointer;background:#e9b35c;color:#2a1d0c;border:none}
   @media (max-width:600px){#whatsnew .wn{grid-template-columns:1fr}#whatsnew h2{font-size:19px}}
+  #lecture{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(600px,calc((100vw - 20px)/var(--ts,1)));max-height:calc((100dvh - 40px)/var(--ts,1));overflow:auto;box-sizing:border-box;padding:18px 20px 14px;z-index:14;zoom:var(--ts,1);border-color:rgba(143,200,255,.35);background:rgba(16,22,40,.97);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  #lecture h2{margin:2px 0 10px;font-size:21px;color:#ffe2a8;font-weight:normal}#lecture .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-right:36px}
+  #lecture .close{position:absolute;right:10px;top:8px;background:none;border:none;color:#f3ead8;font-size:22px;cursor:pointer;opacity:.6;width:40px;height:40px;z-index:2}
+  #lecture .lec p{margin:0 0 10px;font-size:15px;line-height:1.55;opacity:.45;transition:opacity .4s;cursor:pointer;font-style:italic}
+  #lecture .lec p.past{opacity:.7}#lecture .lec p.on{opacity:1;color:#fff4dc}
+  #lecture .lacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}#lecture .lacts .meta{font-size:12px;opacity:.6}
+  .go.ghost{background:rgba(255,255,255,.04)!important;color:#ffe2a8!important;border:1px solid rgba(255,214,150,.4)!important}
+  #lecture .go{font:inherit;font-size:13px;padding:7px 13px;border-radius:9px;cursor:pointer;background:#e9b35c;color:#2a1d0c;border:none}
+  #report .fb2{display:flex;gap:6px;flex:none}
+  #map li .lnk{background:none;border:none;color:#ffd27a;text-decoration:underline;cursor:pointer;font:inherit;font-size:12px;padding:0}
 </style>
 </head>
 <body>
@@ -282,6 +292,7 @@
 <div id="log" class="panel hidden" role="dialog" aria-label="Quest log"></div>
 <div id="map" class="panel hidden" role="dialog" aria-label="Map of Frostmere"></div>
 <div id="report" class="panel hidden" role="dialog" aria-label="Study report"></div>
+<div id="lecture" class="panel hidden" role="dialog" aria-label="Teach me"></div>
 <div id="whatsnew" class="panel hidden" role="dialog" aria-label="What’s new"></div>
 <div id="notes" class="panel hidden" role="dialog" aria-label="Field notes"></div>
 <div id="hint" class="panel">WASD / arrows to move · Shift to jog · tap to walk · drag for joystick · E to interact</div>
@@ -826,7 +837,7 @@ const endPtr=e=>{
 };
 // stop the browser treating joystick drags as page gestures (pull-to-refresh, swipe-to-close):
 // block touch scrolling everywhere except inside the scrollable panels
-const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx,#report,#notes,#whatsnew');
+const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx,#report,#notes,#whatsnew,#lecture');
 document.addEventListener('touchmove',e=>{if(!scrollable(e.target))e.preventDefault();},{passive:false});
 cv.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
@@ -1886,6 +1897,7 @@ function renderPuzzle(){
   const drawTools=()=>{
     const tb=card.querySelector('#ptools');if(!tb)return;const solved=card.querySelector('#fb').classList.contains('ok');
     let h=`<button class="tool" data-t="calc">Calculator</button>`;
+    if(!['exam','examc'].includes(run.mode)&&TEACH[stoneOfNode(it.node)])h+=`<button class="tool" data-t="teach">🎓 Teach me</button>`;
     if(run.mode==='stone'&&!solved){
       const inv=SAVE.inv,hasHint=!!p.hint;
       if(p.type==='mc')h+=`<button class="tool item" data-t="lens" ${inv.lens&&!it.lens?'':'disabled'}>Lens <i>${inv.lens}</i></button>`;
@@ -1895,6 +1907,7 @@ function renderPuzzle(){
     tb.innerHTML=h;
     tb.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=b.dataset.t;
       if(k==='calc'){toggleCalc();return;}
+      if(k==='teach'){Teach.open(stoneOfNode(it.node));return;}
       if(!SAVE.inv[k])return;SAVE.inv[k]--;persist();
       if(k==='lens'){const wrong=[...pz.querySelectorAll('button.opt')].filter(x=>!x.disabled&&x.dataset.k!=String(p.a));const g=pick(wrong);if(g){g.disabled=true;g.classList.add('gone');}it.lens=true;feedback('', '<b>Lens:</b> one wrong answer struck out.');}
       if(k==='feather'){it.feather=true;feedback('', `<b>Feather — first step:</b> ${p.hint}`);}
@@ -2327,7 +2340,7 @@ NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widenin
     items:[{t:'Profits of a mix of corner shops and national chains',c:0},{t:'Cost overruns across routine launches and first-of-a-kind missions',c:0},{t:'Daily output of identical machines in one plant',c:1},{t:'Household spending across incomes from $20k to $2M',c:0}],
     why:'Whenever the size of the observation changes dramatically, ask whether the size of the error changes too.'},
    {type:'mc',q:'Which statement is correct?',
-    opts:['Heteroskedasticity harms inference; wrong form harms the fit','Both problems bias the coefficients in the same direction','Robust standard errors repair a wrong functional form too','Heteroskedasticity only arises in time-series data'],a:0,
+    opts:['Heteroskedasticity harms inference; a wrong form biases the estimates','Both problems bias the coefficients in the same direction','Robust standard errors repair a wrong functional form too','Heteroskedasticity only arises in time-series data'],a:0,
     why:'Mean problem vs variance problem: fixing standard errors cannot repair an incorrectly specified equation.'},
   ]};
 
@@ -2564,7 +2577,7 @@ NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s B
     q:`Predict monthly sales revenue, in dollars, for PRICE = <b>$${p.toFixed(2)}</b> and ADVERT = <b>$${ad.toLocaleString()}</b>.`,a:pred,tol:15,pre:'$',
     hint:`Convert ADVERT to $1,000s (${ad/1000}), plug both into the equation, then multiply the result by 1,000.`,solution:`(${Exhibit.xl(d.b0)} + ${Exhibit.xl(d.b1)} × ${p} + ${Exhibit.xl(d.b2)} × ${ad/1000}) × 1,000 ≈ ${money(pred,0)}.`,
     why:'A prediction is a planning baseline. Competition, local events, service, and weather can all move the actual result.'};}},
-   {type:'mc',q:'Option A (cut price $0.10) leaves ~$791 before other costs; Option B (+$500 ads) leaves ~$432 after the ad spend. What should Andy conclude?',
+   {type:'mc',exhibit:Exhibit.eq('Course estimates: SALES ($000) = 118.91 − 7.908·PRICE + 1.863·ADVERT ($000)'),q:'Using the course’s Big Andy estimates: Option A (cut price $0.10) leaves ~$791 before other costs; Option B (+$500 ads) leaves ~$432 after the ad spend. What should Andy conclude?',
     opts:['A looks better, but neither figure is profit yet','Choose A — the model shows it earns $791 more profit','Choose B — ads build long-run sales the model can’t see','Either — the regression has already settled it'],a:0,
     why:'Regression compares expected outcomes; managers decide whether the expected gain justifies the cost and the risk.'},
   ]};
@@ -2920,7 +2933,7 @@ NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The 
   ]};
 
 /* exam-guide gap: statistical significance is not causation */
-NODES['m5-three'].puzzles.push({type:'mc',q:'Customers who use the loyalty app spend more, and the app dummy is highly significant (p < 0.001). Does the app <b>cause</b> the extra spending?',
+NODES['m5-three'].puzzles.push({type:'mc',q:'Customers who use the loyalty app spend more, and the app dummy is highly significant (p &lt; 0.001). Does the app <b>cause</b> the extra spending?',
   opts:['Not necessarily — heavy spenders may choose the app','Yes — p < 0.001 rules out other explanations','Yes, as long as the model’s R² is also high','No — significant coefficients are never causal'],a:0,
   why:'A tiny p-value measures evidence against β = 0, not why the association exists. Causal claims need a design — like random assignment — that rules out self-selection and confounders.'});
 
@@ -3042,7 +3055,7 @@ NODES['m7-form']={kicker:'Module 7 · Choosing the functional form',title:'The B
       solution:`${b} × ${xb} / ${yb} = ${round(e,3)}.`,why:`A 1% rise in income is associated with about a ${round(e,2)}% rise in food spending — at the means. In a linear model the elasticity changes along the line.`};}},
     ]},
    {title:'Curves, lags, and the edge of the data',
-    teach:`<p><b>Quadratic:</b> with Y = β₀ + β₁X + β₂X², the slope at a point is <b>β₁ + 2β₂X</b>. If β₁ > 0 and β₂ < 0 the curve rises then falls, peaking at <b>X* = −β₁ / (2β₂)</b>.</p>
+    teach:`<p><b>Quadratic:</b> with Y = β₀ + β₁X + β₂X², the slope at a point is <b>β₁ + 2β₂X</b>. If β₁ &gt; 0 and β₂ &lt; 0 the curve rises then falls, peaking at <b>X* = −β₁ / (2β₂)</b>.</p>
     <p><b>Lags:</b> when cause and effect don’t happen together — advertising this month, sales next month — model the delay: Salesₜ = β₀ + β₁Advertisingₜ₋₁ + εₜ. The lag should come from how the business works, not a search for significance.</p>
     <p><b>Extrapolation:</b> every form is only checked inside the range you observed. Outside it, a polynomial can swing wildly, a log model can flatten too soon, and a straight line can miss a turning point.</p>
     <div class="ex">Residuals that <b>curve</b> systematically around zero (negative → positive → negative) say the shape is wrong: add the missing curve and re-estimate before trusting anything else.</div>`,
@@ -3139,7 +3152,7 @@ NODES['m8-multi']={kicker:'Module 8 · Multicollinearity',title:'The Twin Prisms
    {make:r=>{const rr_=round(rr(r,.80,.97),2),v=1/(1-rr_*rr_);return {type:'num',
     q:`A model has just two explanatory variables, and their correlation is <b>r = ${rr_}</b>. With only two Xs, the auxiliary R² is r². What is the VIF for each?`,a:v,tol:.05,
     hint:'Auxiliary R² = r²; then VIF = 1 / (1 − r²).',solution:`r² = ${round(rr_*rr_,4)}; VIF = 1 / (1 − ${round(rr_*rr_,4)}) = ${round(v,2)}.`,
-    why:`${v>10?'Serious':v>5?'A warning-level':'Mild'} multicollinearity. Note how fast VIF climbs as r approaches 1.`};}},
+    why:`${v>10?'Above 10: serious multicollinearity.':v>5?'Above 5: a warning sign.':'Just under the usual warning level of 5.'} Note how fast VIF climbs as r approaches 1.`};}},
    {type:'mc',q:'Which statement about the consequences of imperfect multicollinearity is correct?',
     opts:['Unbiased, but larger SEs and unstable estimates','Biased coefficients and a sharply lower R²','OLS can no longer be computed at all','Higher t-scores, so more looks significant'],a:0,
     why:'Not bias — less precision, larger p-values, unexpected signs more likely, and big swings when related variables are added or dropped.'},
@@ -3167,7 +3180,11 @@ NODES['m8-multi']={kicker:'Module 8 · Multicollinearity',title:'The Twin Prisms
 const DWT={20:{1:[1.20,1.41],2:[1.10,1.54],3:[1.00,1.68]},25:{1:[1.29,1.45],2:[1.21,1.55],3:[1.12,1.65]},
            30:{1:[1.35,1.49],2:[1.28,1.57],3:[1.21,1.65]},40:{1:[1.44,1.54],2:[1.39,1.60],3:[1.34,1.66]}};
 const SC_KIND={pos:'Positive serial correlation — residuals stay on one side in long runs',none:'No serial correlation — residuals jump around with no pattern',neg:'Negative serial correlation — residuals tend to flip sign every period'};
-function genAR(r,rho,n=30){const e=[];let prev=0;for(let t=0;t<n;t++){prev=rho*prev+rngGauss(r)*(rho?Math.sqrt(1-rho*rho):1);e.push(prev);}
+function genAR(r,rho,n=30){
+  const lag1=e=>{let a=0,b=0;for(let i=0;i<e.length;i++){b+=e[i]*e[i];if(i)a+=e[i]*e[i-1];}return a/b;};
+  for(let k=0;k<40;k++){const e=genAR1(r,rho,n),c=lag1(e);if(rho>0?c>.45:rho<0?c<-.45:Math.abs(c)<.15)return e;}
+  return genAR1(r,rho,n);}
+function genAR1(r,rho,n){const e=[];let prev=0;for(let t=0;t<n;t++){prev=rho*prev+rngGauss(r)*(rho?Math.sqrt(1-rho*rho):1);e.push(prev);}
   const m=e.reduce((a,b)=>a+b,0)/n;return e.map(v=>round((v-m)*10,2));}
 const timePlot=e=>Exhibit.scatter(e.map((_,i)=>i+1),e,{xl:'Time period',yl:'Residual',hline:0,connect:true,title:'Residuals over time'});
 const dwOf=e=>{let num=0,den=0;e.forEach((v,i)=>{den+=v*v;if(i)num+=(v-e[i-1])**2;});return num/den;};
@@ -3269,7 +3286,7 @@ EXPLAIN(4,'Explain a residual plot',[
  {make:r=>({exhibit:residPlot(genResid(r,'spray'),'Store size'),
   q:'Explain what this residual plot tells you about the model and what it means for a manager reading its p-values.',
   model:'The residuals fan out as store size grows — the errors are much bigger for large stores. That is heteroskedasticity: the constant-variance assumption fails. The coefficients aren’t biased by this alone, but the usual standard errors are wrong, so the reported p-values and confidence intervals can’t be trusted as printed; robust standard errors (after checking the model’s form) are the usual response.',
-  points:['Spread grows with store size (a fan / spray)','Names it heteroskedasticity / non-constant variance','Coefficients still unbiased','Standard errors and p-values are unreliable']})},
+  points:['Spread grows with store size (a fan / spray)','Names it heteroskedasticity / non-constant variance','Coefficients still unbiased','Standard errors and p-values are unreliable'],why:'Spread problems hit the model’s reported precision, not the center of its estimates.'})},
 ]);
 EXPLAIN(5,'Explain a significance result',[
  {exhibit:Exhibit.table(['','Coefficient','Std. error','t','p-value'],[['Training hours','0.84','0.29','2.90','0.006'],['Bonus ($000)','0.02','0.01','2.10','0.042']]),
@@ -3293,7 +3310,7 @@ EXPLAIN(7,'Explain a log model',[
   why:'Interpret in percentages, report in dollars, and stay inside the data.'},
 ]);
 EXPLAIN(8,'Explain multicollinearity',[
- {exhibit:Exhibit.table(['','Coefficient','p-value','VIF'],[['TV ads','2.9','0.31','11.4'],['Online ads','2.1','0.38','11.4'],['Model: R² = 0.91, F-test p < 0.001','','','']]),
+ {exhibit:Exhibit.table(['','Coefficient','p-value','VIF'],[['TV ads','2.9','0.31','11.4'],['Online ads','2.1','0.38','11.4'],['Model: R² = 0.91, F-test p &lt; 0.001','','','']]),
   q:'A manager concludes that neither ad channel works because neither is significant. Explain why that’s the wrong conclusion and what you’d do.',
   model:'The overall F-test is highly significant and R² is high, so the two channels matter jointly. Their VIFs above 10 show severe multicollinearity: TV and online spend move together, so the model can’t separate their individual effects and their standard errors are inflated — that’s why the individual p-values look weak. The estimates aren’t biased, just imprecise. I wouldn’t drop a channel to “fix” it (that risks omitted-variable bias); I’d report their combined effect or get more varied data.',
   points:['Jointly significant: F-test and R² show the ads matter together','High VIFs = severe multicollinearity; the two move together','Weak t-tests come from inflated standard errors, not irrelevance','Don’t just drop one — risk of omitted-variable bias'],
@@ -3313,6 +3330,117 @@ EXPLAIN(10,'Explain two tests that disagree',[
   points:['Breusch–Pagan searches only linear patterns','White also searches squared/interaction patterns — a wider search','Not a contradiction: White found something BP couldn’t look for','Check functional form first, then robust standard errors if needed'],
   why:'Don’t choose the test that gives the answer you prefer.'},
 ]);
+
+/* ==== content/y_teach.js ==== */
+/* ==========================================================================
+   "TEACH ME" MINI-LECTURES — one per stone, in Warden Quill's voice.
+   Each is ~45–75 seconds spoken. Lines are the subtitle chunks and, for the
+   voice actor, the script. Voice clips (optional) live at
+   assets/voice/teach_<stone-id>.mp3 — without one, the subtitles play alone.
+   Written for the ear: numbers and symbols are spelled the way they're said.
+   ========================================================================== */
+const TEACH={
+'m1-signs':{t:'Signs come from theory',lines:[
+ "Before you ever open the data, ask a simple question: which way should each factor push the result?",
+ "Raise your own price, and you'd expect fewer sales — a negative sign. If a rival raises theirs, customers drift to you — a positive sign. Give customers bigger budgets, and demand usually rises — positive again.",
+ "That is theory's job: direction. The data's job is size — how big the effect is, and how sure we can be.",
+ "So write your expected signs down first. And when the estimate arrives with the sign you predicted, don't celebrate yet. Ask the manager's question: is it big enough, and precise enough, to change what we do?"]},
+'m1-cross':{t:'Cause, or coincidence?',lines:[
+ "When two things move together, there are four stories that could explain it.",
+ "One: A causes B. Two: B causes A — reverse causality, like stores getting extra security because they already had more theft. Three: a hidden third factor drives both — hot weather sells both ice cream and sunscreen. Four: pure coincidence.",
+ "A regression coefficient can't tell these apart on its own. A careful design can. If you randomly assign who gets a discount, the two groups are alike in every other way — so the difference is the discount.",
+ "Remember the difference between the error and the residual, too. The error is the true, unseen miss. The residual — actual minus predicted — is the miss you can actually compute."]},
+'m1-magic':{t:'Predictions and residuals',lines:[
+ "A fitted line turns an input into a prediction. Plug in the value — coded exactly the way the model was built — and read off the answer.",
+ "At the Magic Hill booth, height is measured in inches above five feet. So someone five foot nine is a nine, not sixty-nine. Coding it that way also makes the intercept mean something: the predicted weight of a five-foot customer.",
+ "The residual is actual minus predicted. Negative means the model guessed too high. Positive means it guessed too low.",
+ "And judge the model in the units that matter. Here, that's dollars: within ten pounds you keep two dollars, miss by more and you lose three."]},
+'m1-units':{t:'Reading a coefficient in real units',lines:[
+ "A coefficient is a rate, measured in the units of the problem. Read it slowly: one more unit of X goes with this many units of Y, holding the other factors steady.",
+ "If income is coded in hundreds of dollars, a slope of ten means each extra hundred dollars of weekly income goes with about ten more dollars of food spending. Not each extra dollar.",
+ "To forecast, convert first. Two thousand dollars a week is a twenty in hundreds. Then substitute.",
+ "As for the intercept: it's the prediction when every X is zero. If zero is far outside your data — a house with no square feet — don't read it literally. Trust the slope inside the range you actually observed."]},
+'m1-ledger':{t:'Reading Excel output in order',lines:[
+ "Excel hands you a wall of numbers. Read it in a sensible order, and it becomes a story.",
+ "First, the signs and units. Do they make sense? Second, the sizes. Do they matter for the decision? Third, precision — the standard errors, t statistics, and p-values. Fourth, the fit and the residuals. And last, whether the whole specification is believable.",
+ "To scale a decision, multiply. If each customer adds about four million dollars a year, five more customers add about twenty million. The intercept drops out of any change.",
+ "Then bring back the caution: is it causal, can the operation handle it, and how wide is the uncertainty?"]},
+'m2-ols':{t:'How least squares picks the line',lines:[
+ "Ordinary least squares chooses the line that makes the sum of the squared residuals as small as possible.",
+ "Why square them? Because positive and negative misses would otherwise cancel out — and because squaring punishes big misses more than small ones.",
+ "With an intercept, the residuals always add up to zero. That's a built-in property, not evidence that the model is right.",
+ "The total variation in Y splits into two parts: what the model explains, and what's left over. R squared is the explained share — regression sum of squares divided by total sum of squares. And remember the words: OLS is the estimator, the recipe. The number it produces is the estimate."]},
+'m2-andy':{t:'Holding other factors constant',lines:[
+ "In a multiple regression, each coefficient answers one question: what happens to Y when this X rises by one unit, with the others held fixed?",
+ "At Big Andy's, sales are in thousands of dollars and price is in dollars. A price coefficient of about minus seven point nine means a one-dollar price increase goes with roughly seven thousand nine hundred dollars less monthly revenue — with advertising held constant.",
+ "Scale it to the move you're considering. A ten-cent price cut: point one times seven point nine, about seven hundred ninety dollars more revenue.",
+ "But revenue isn't profit. More burgers mean more food and labor. The regression compares expected outcomes; the manager still has to weigh costs and risk."]},
+'m2-fit':{t:'R squared and adjusted R squared',lines:[
+ "R squared is the share of the variation in Y, in this sample, that the model explains. It describes fit. It does not prove cause, and it doesn't promise good forecasts.",
+ "Here's the catch: adding any variable — even random noise — can never lower R squared. So R squared rewards clutter.",
+ "Adjusted R squared charges a price for every extra variable. If a new driver doesn't pull its weight, adjusted R squared falls.",
+ "Two rules. Only compare these numbers between models with the same dependent variable, in the same units. And even a big jump in fit doesn't earn a variable its place without a sensible reason it belongs."]},
+'m3-design':{t:'Building a model, step by step',lines:[
+ "Good models are built, not discovered. There are six steps.",
+ "One: anchor the question in a real mechanism. Two: specify Y, the Xs, their units, and the shape. Three: write down the expected signs. Four: inspect the data and justify any changes. Five: estimate and evaluate. Six: document it, so someone else could reproduce and challenge it.",
+ "Step one matters most. Pulling every column into a regression to see what sticks is mining, not modeling.",
+ "And when one observation looks wildly unusual, don't delete it to tidy the fit. Flag it, check the records, and exclude it only with a reason you could defend out loud."]},
+'m3-dummy':{t:'Dummy variables',lines:[
+ "A dummy variable turns a yes-or-no fact into a number: one if it applies, zero if it doesn't.",
+ "Its coefficient is the difference from the baseline group, holding the other factors constant. A degree dummy of two point eight, with salary in thousands, means degree holders earn about two thousand eight hundred dollars more than otherwise similar people without one.",
+ "With several categories, you include one fewer dummy than there are groups. The group you leave out is the baseline that every coefficient is compared against.",
+ "Include all of them alongside an intercept, and they add up to exactly the intercept's column. That's perfect multicollinearity — the dummy-variable trap. And never code categories as one, two, three. That invents an order that isn't there."]},
+'m4-seven':{t:'The seven ground rules',lines:[
+ "Regression leans on seven classical assumptions. One: the model is linear in its coefficients. Two: the error averages zero. Three: no endogeneity — the Xs aren't tangled up with the error. Four: no serial correlation. Five: constant error variance. Six: no perfect multicollinearity. Seven, optional: normally distributed errors.",
+ "When one through six hold, the Gauss–Markov theorem says OLS is BLUE: the best linear unbiased estimator.",
+ "Not all broken rules hurt the same way. Endogeneity — say, an omitted factor that moves with your X — biases the coefficients themselves.",
+ "Serial correlation and changing variance usually leave the coefficients centered correctly, but make the standard errors and tests unreliable. Biased means aimed at the wrong target. Imprecise means aimed right, but shaky."]},
+'m4-plots':{t:'Reading residual plots',lines:[
+ "Plot the residuals against X or against the predictions. What you hope to see is a calm, even band around zero.",
+ "A spray that widens as X grows, a funnel that narrows, or a bow-tie — those are changing variance, called heteroskedasticity.",
+ "A curve is different. If the residuals bend — negative, then positive, then negative — the model's shape is wrong, or a driver is missing.",
+ "For single points, divide each residual by the regression's standard error. Anything beyond plus or minus two gets a closer look — not automatic deletion. And remember: more data shrinks standard errors, roughly with one over the square root of the sample size. It does not cure bias."]},
+'m5-tests':{t:'Setting up a hypothesis test',lines:[
+ "A test starts with two claims. The null hypothesis is the benchmark — usually, no effect. The alternative is what you'll conclude if the evidence is strong enough.",
+ "Let theory choose the tail. If you expect a positive effect, test whether beta is greater than zero. Expect negative, test the left tail. If either direction would matter, use two tails.",
+ "The t statistic is the estimate divided by its standard error, with n minus k minus one degrees of freedom. Compare it with the critical value. And we never prove the null — we only reject it, or fail to.",
+ "Two ways to be wrong. Type one: rejecting a null that's true — a false alarm. Type two: missing an effect that's real. When a miss could be dangerous, like a safety defect, you may accept more false alarms."]},
+'m5-three':{t:'p-values, intervals, and the F-test',lines:[
+ "Excel's p-value tests one thing: whether the coefficient is zero, two-sided. If it's at or below your alpha, reject.",
+ "A confidence interval says the same thing more usefully: the estimate, plus or minus the critical value times the standard error. If zero sits outside it, reject — and you also see the plausible range.",
+ "The F-test asks whether the variables, together, explain anything at all. A significant F says the group matters. It doesn't say which member.",
+ "Two last cautions. Significant is not the same as important — a tiny effect can be very precise. And significant is not the same as causal. A small p-value tells you the association is unlikely to be zero, not why it exists."]},
+'m6-trial':{t:'Experiments and cause',lines:[
+ "To know what something causes, you need to know what would have happened without it. That's the counterfactual — and for any one store, we can never see both versions.",
+ "So we build a stand-in: a control group. And the cleanest way to make the control group a fair comparison is random assignment. Flip a coin for which stores get the extra advertising, and the two groups end up alike in everything but the advertising, on average.",
+ "Then regress sales on a treatment dummy. The intercept is the control group's average. The coefficient is the treatment average minus the control average.",
+ "Randomization earns the causal reading. Sample size still decides how precise it is — ten stores is a lesson, not a verdict."]},
+'m6-omit':{t:'Leaving out what matters',lines:[
+ "Leave out a variable that matters, and its effect doesn't vanish. It slips into the error term — and if it moves with one of your Xs, that X takes the credit.",
+ "Omitted-variable bias needs two things at once: the missing variable affects Y, and it's correlated with an included X. The bias equals its effect times that correlation slope. Same signs, you overestimate. Opposite signs, you underestimate.",
+ "Including a useless variable is the gentler mistake. It doesn't bias the others; it just adds noise.",
+ "So judge a variable by theory first, then its t test, adjusted R squared, and whether the other coefficients shift when it comes and goes. Checking that a result survives sensible alternatives is sensitivity analysis. Hunting until something looks significant is data mining."]},
+'m7-form':{t:'Choosing the right shape',lines:[
+ "OLS only needs the model to be linear in its coefficients. You're free to use squares and logs of the variables — so pick the shape that matches how the business works.",
+ "A constant effect per unit: linear. A constant percentage response — an elasticity: logs on both sides. Diminishing returns: log of X. Steady percentage growth: log of Y. A rise that peaks and then falls: add a squared term.",
+ "In a quadratic, the slope changes with X: beta one plus two times beta two times X. The peak sits at minus beta one over two beta two.",
+ "Use a lag when the effect arrives later, like advertising that pays off next month. And be wary of predicting far outside your data. That's where a wrong shape does the most damage."]},
+'m8-multi':{t:'When two factors move together',lines:[
+ "Perfect multicollinearity means one X is an exact copy of others — square feet and square meters, say. OLS simply can't separate them.",
+ "The common case is imperfect: TV and online ad budgets that rise together. OLS still works, and the estimates stay unbiased. But they become imprecise — larger standard errors, smaller t statistics, and coefficients that swing when you add or drop a related variable.",
+ "The classic warning sign: a high R squared and a significant F-test, but few significant individual coefficients. Together they matter; the model can't say who deserves the credit.",
+ "The variance inflation factor measures it: one divided by one minus the R squared from regressing that X on the others. Above five is a warning; above ten is serious. Often the best response is to do nothing. Dropping a variable that belongs just swaps imprecision for bias."]},
+'m9-serial':{t:'Errors that echo over time',lines:[
+ "In time-series data, this period's error can spill into the next. Positive serial correlation — the common business case — shows up as long runs of residuals on the same side of zero. Negative shows up as residuals flipping sign every period.",
+ "Sometimes it's pure: the model is right, and shocks just take time to fade. Often it's impure: a missing trend, a missing season, a missing lag, or the wrong shape.",
+ "Either way, the usual standard errors tend to be too small, so the p-values look more convincing than they should.",
+ "The Durbin–Watson statistic checks for it. Near two, no problem. Toward zero, positive correlation. Below the lower critical value, reject. Above the upper value, don't. In between, the test is inconclusive. And it doesn't work when last period's Y is one of your explanatory variables."]},
+'m10-hetero':{t:'Errors that grow with size',lines:[
+ "Heteroskedasticity means the size of the errors changes across observations — usually growing with scale. Mix corner shops and national chains in one model, and the big ones miss by bigger amounts.",
+ "It shows up as a spray, a funnel, or a bow-tie in the residual plot. A curve is a different problem: the wrong functional form.",
+ "The coefficients aren't biased by it. But the usual standard errors are wrong, so the t tests, p-values, and confidence intervals can't be trusted as printed.",
+ "Two tests check it, by regressing the squared residuals on the explanatory variables. Breusch–Pagan uses the Xs themselves. White adds their squares and products, a wider search, so the two can disagree. The statistic is n times R squared. Fix the shape of the model first; if the spread still changes, use robust standard errors."]},
+};
 
 /* ==== content/z_caches.js ==== */
 /* ==========================================================================
@@ -3382,10 +3510,10 @@ CACHE('m6-omit','feather',{make:r=>{const est=round(rr(r,1.5,3.5),2),b2=round(rr
 /* ---- Crystal Reach: Modules 7–10 ---- */
 CACHE('m7-form','feather',{make:r=>{const b=round(rr(r,.00035,.00048),6),P=ri(r,10,50)*10000,S=ri(r,12,32)*100;
   return {type:'num',exhibit:Exhibit.eq(`ln(Price) = 10.84 + ${b}·SQFT`),q:`In this semilog-on-Y model, the slope is β₁ × Price. How many dollars does one more square foot add to a house whose predicted price is <b>${money(P,0)}</b>?`,a:b*P,tol:.06,pre:'$',
-   hint:'Slope = β₁ × Y',solution:`${b} × ${P.toLocaleString()} = ${money(b*P,2)}.`,why:`In ln(Y) models the dollar effect grows with the price level (and the elasticity at ${S} sq. ft. would be β₁ × SQFT = ${round(b*S,2)}).`};}});
+   hint:'Slope = β₁ × Y',solution:`${b} × ${P.toLocaleString()} = ${money(b*P,2)}.`,why:`In ln(Y) models the dollar effect grows with the price level (and the elasticity at ${S} sq. ft. would be β₁ × SQFT = ${(b*S).toFixed(2)}).`};}});
 CACHE('m8-multi','lens',{make:r=>{const vars=[['Cadence',round(rr(r,.82,.93),2)],['Pad capacity',round(rr(r,.7,.86),2)],['Payload mass',round(rr(r,.15,.45),2)]],k=ri(r,0,2),R=vars[k][1],v=1/(1-R);
   return {type:'num',exhibit:Exhibit.table(['Variable','Auxiliary R²'],vars.map(x=>[x[0],x[1]])),q:`What is the VIF for <b>${vars[k][0]}</b>?`,a:v,tol:.02,
-   hint:'VIF = 1 / (1 − auxiliary R²)',solution:`1 / (1 − ${R}) = ${round(v,2)}.`,why:v>10?'Serious multicollinearity for this variable.':v>5?'Warning-level multicollinearity.':'Low — this variable isn’t the source of the overlap.'};}});
+   hint:'VIF = 1 / (1 − auxiliary R²)',solution:`1 / (1 − ${R}) = ${round(v,2)}.`,why:v>10?'Above 10: serious multicollinearity for this variable.':v>5?'Above 5: a warning sign for this variable.':'Below the usual warning level of 5 — not alarming on its own.'};}});
 CACHE('m9-serial','charm',{make:r=>{let e=genAR(r,.8,6).map(v=>round(v/4,2));const num=e.slice(1).reduce((s,v,i)=>s+(v-e[i])**2,0),den=e.reduce((s,v)=>s+v*v,0),dw=num/den;
   return {type:'num',exhibit:Exhibit.table(['t','eₜ'],e.map((v,i)=>[i+1,fmtNum(v)])),q:'Compute the Durbin–Watson statistic for these six residuals.',a:dw,tol:.012,
    hint:'Find each eₜ − eₜ₋₁ (five of them), square and add; divide by the sum of squared residuals.',solution:`Σ(eₜ − eₜ₋₁)² = ${round(num,4)}; Σeₜ² = ${round(den,4)}; DW = ${round(dw,3)}.`,why:dw<1.5?'Well below 2: these residuals persist.':'Not far from 2.'};}});
@@ -3447,12 +3575,12 @@ function openNode(id){
   if(!n||n.sealed){showCard(`<div class="kicker">${esc(n?.kicker||'Sealed stone')}</div><h2>${esc(n?.title||'Sealed')}</h2><p class="say">${n?.sealedText||'This stone is still sealed. Its quests are added in a later build.'}</p>`);return;}
   const L=lessonsOf(id).length,ld=lessonsDone(id),prev=SAVE.done[id];
   if(nodeState(id)==='frozen'){
-    showCard(`<div class="kicker">${esc(n.kicker)} · frozen</div><h2>${esc(n.title)}</h2><p class="say">The stone rejected your answers and froze solid. To thaw it, finish its waypoints on the path behind you, in order — each is a short lesson with practice questions.</p>${lessonListHtml(id)}<p class="meta">${ld} of ${L} waypoints complete</p>`);return;}
+    showCard(`<div class="kicker">${esc(n.kicker)} · frozen</div><h2>${esc(n.title)}</h2><p class="say">The stone rejected your answers and froze solid. To thaw it, finish its waypoints on the path behind you, in order — each is a short lesson with practice questions.</p>${lessonListHtml(id)}<p class="meta">${ld} of ${L} waypoints complete</p><div class="acts"></div>`);addTeach(id);return;}
   const rule=L&&!prev?(ld<L?`<p class="rule">Restore it with <b>at most one miss</b>. Miss ${FREEZE_AT} or more and it freezes until you finish its ${L} waypoints (${ld} done so far). Feeling unsure? The waypoints are on the path just before this stone.</p>`
       :`<p class="rule">You've finished all ${L} waypoints. Restore it with at most one miss — it won't freeze again.</p>`):'';
   showCard(`<div class="kicker">${esc(n.kicker)}</div><h2>${esc(n.title)}</h2><p class="say">${n.intro}</p>${rule}
     <p class="meta">${n.puzzles.length} challenges${prev?` · best first-try score ${prev.best} / ${n.puzzles.length}`:''}${invText()?` · you carry ${invText()}`:''}</p><div class="acts"></div>`);
-  const b=btn(prev?'Study again':'Challenge the stone','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  const b=btn(prev?'Study again':'Challenge the stone','primary');card.querySelector('.acts').appendChild(b);b.focus();addTeach(id);
   b.onclick=()=>startSession(n.title,n.kicker,n.puzzles.map((_,idx)=>({node:id,idx})),items=>{
     const miss=items.filter(x=>x.missed).length,first=items.length-miss,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
     if(wasDone){SAVE.done[id].best=Math.max(first,SAVE.done[id].best);persist();toast(`Studied again · ${first} / ${items.length} on the first try`);return;}
@@ -3474,7 +3602,7 @@ function openLesson(id,j){
   if(st==='blocked'){showCard(`<div class="kicker">${esc(kick)}</div><h2>${esc(L.title)}</h2><p class="say">The pages are blank for now. Waypoints open in order — finish <b>${esc(Ls[j-1].title)}</b> first; it's back along the path.</p>`);return;}
   showCard(`<div class="kicker">${esc(kick)}</div><h2>${esc(L.title)}</h2><div class="teach">${L.teach}</div>
     <p class="meta">${L.practice.length} practice question${L.practice.length>1?'s':''}${SAVE.lessons[lid]?' · completed':''}</p><div class="acts"></div>`);
-  const b=btn(SAVE.lessons[lid]?'Practice again':'Practice','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  const b=btn(SAVE.lessons[lid]?'Practice again':'Practice','primary');card.querySelector('.acts').appendChild(b);b.focus();addTeach(id);
   b.onclick=()=>startSession(L.title,kick,L.practice.map((_,idx)=>({node:lid,idx})),()=>{
     const was=SAVE.lessons[lid];SAVE.lessons[lid]=true;
     const all=lessonsDone(id)===Ls.length;
@@ -3616,13 +3744,14 @@ function renderMap(){
 ;
   for(const r of R){const un=regionUnlocked(r.id),req=r.requires?regionById(r.requires).name:'';
     const items=r.nodes.map(id=>{const n=NODES[id],st=un?nodeState(id):'sealed',L=lessonsOf(id).length;
-      return `<li>${icon(st)}<span><b>${esc(n.title)}</b> — ${COURSE.about[id]||esc(n.kicker||'')}<em>${st==='done'?'restored':st==='frozen'?'frozen — finish its waypoints':un?`${L?`${lessonsDone(id)} of ${L} lessons done`:''}`:'locked'}${n.kicker?` · <span class="tag">${esc(n.kicker.split('·')[0].trim())}</span>`:''}</em></span></li>`;}).join('');
+      return `<li>${icon(st)}<span><b>${esc(n.title)}</b> — ${COURSE.about[id]||esc(n.kicker||'')}${TEACH[id]?` <button class="lnk" data-teach="${id}">🎓 teach me</button>`:''}<em>${st==='done'?'restored':st==='frozen'?'frozen — finish its waypoints':un?`${L?`${lessonsDone(id)} of ${L} lessons done`:''}`:'locked'}${n.kicker?` · <span class="tag">${esc(n.kicker.split('·')[0].trim())}</span>`:''}</em></span></li>`;}).join('');
     const tag=(r.sub.split('·')[0]||'').trim();
     h+=sec(r.id,r.name,tag,`<ul>${items}</ul>${un&&r.id!==here?`<div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="go" data-go="${r.id}">Travel to ${esc(r.name)}</button></div>`:''}`,!un,`Opens once every stone in ${esc(req)} is restored.`);}
   if(here!=='hub')h+=`<div class="acts" style="justify-content:flex-start"><button class="go" data-go="hub">Return to the village</button></div>`;
   const M=$('map');M.innerHTML=h;
   $('mapClose').onclick=()=>M.classList.add('hidden');
   M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{M.classList.add('hidden');const to=b.dataset.go;travel(to,to==='hub'?('from'+here[0].toUpperCase()+here.slice(1)):'fromHub');});
+  M.querySelectorAll('[data-teach]').forEach(b=>b.onclick=()=>Teach.open(b.dataset.teach));
   M.querySelectorAll('svg .rg').forEach(g=>g.onclick=()=>$('mr-'+g.dataset.r)?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
 function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');$('report').classList.add('hidden');$('notes').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
@@ -3638,7 +3767,7 @@ function tapPick(wx,wy){let best=null,bd=1e9;for(const it of INTER){const dx=wx-
 function tryRead(){if(nearI&&!uiOpen())nearI.act();}
 readBtn.onclick=tryRead;
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();if(k==='m'&&card.classList.contains('hidden'))toggleMap();if(k==='n'&&card.classList.contains('hidden'))toggleNotes();
-  if(k==='escape'){closeCard();['log','map','notes'].forEach(x=>$(x).classList.add('hidden'));}
+  if(k==='escape'){if(Teach.open_){Teach.close();return;}closeCard();['log','map','notes'].forEach(x=>$(x).classList.add('hidden'));}
   if(k==='enter'&&!uiOpen())tryRead();});
 function travel(to,spawnKey){
   fading=true;const f=$('fade');f.classList.add('on');
@@ -3988,7 +4117,9 @@ function openDesk(){
 }
 
 /* ---------- "what's new" greeting for returning players: closes itself after 15 s ---------- */
-const WHATS_NEW={v:2,items:[
+const WHATS_NEW={v:3,items:[
+  ['🎓','Teach me','Stuck on a stone? Tap “Teach me” for a one-minute refresher from Warden Quill — on every stone card, inside questions, on the map and in your progress report.'],
+  ['✓','Accuracy pass','Every question was checked against the course. A few numbers, labels and generated charts were tightened so the right answer is always clear.'],
   ['❄','Crystal Reach is open','Modules 7–10: functional form, multicollinearity, serial correlation and heteroskedasticity — four new stones.'],
   ['⏱','Practice final, with exam conditions','20 questions from all ten modules. Try it with one attempt per question and a countdown — then review every miss.'],
   ['📈','Progress report','Strength by area, what to focus on next, and one-tap practice for your weakest topics. Press P.'],
@@ -4156,7 +4287,7 @@ function renderReport(){
   if(R.focus.length){
     h+=`<h3 class="rh">Focus next</h3><div class="focus">`;
     R.focus.forEach((a,i)=>{const why=a.mastery!==null?`${pct(a.mastery)} right on your recent tries${a.weakStone?` · weakest: ${esc(NODES[a.weakStone.id].title)}`:''}`:a.seen?`only ${a.seen} of ${a.total} questions tried so far`:'not started yet';
-      h+=`<div class="fc"><div><b>${i+1}. ${esc(a.name)}</b><span>${why}${a.pinned?` · ${a.pinned} on the review board`:''}</span></div><button class="go" data-pr="${a.m}">Practice now</button></div>`;});
+      h+=`<div class="fc"><div><b>${i+1}. ${esc(a.name)}</b><span>${why}${a.pinned?` · ${a.pinned} on the review board`:''}</span></div><span class="fb2">${a.weakStone&&TEACH[a.weakStone.id]?`<button class="go ghost" data-tc="${a.weakStone.id}">🎓 Teach me</button>`:''}<button class="go" data-pr="${a.m}">Practice now</button></span></div>`;});
     h+=`</div>`;
   }
   h+=`<h3 class="rh">All areas</h3><div class="areas">`;
@@ -4169,6 +4300,7 @@ function renderReport(){
   h+=`<p class="meta">Mastery uses each question’s last three attempts, so improvement shows up quickly. Areas are rated after 3 different questions. ${mins?`About ${mins} min of question time so far.`:''}</p>`;
   const P=$('report');P.innerHTML=h;$('repClose').onclick=()=>P.classList.add('hidden');
   P.querySelectorAll('[data-pr]').forEach(b=>b.onclick=()=>{P.classList.add('hidden');practiceArea(+b.dataset.pr);});
+  P.querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>Teach.open(b.dataset.tc));
   $('dailyGo')&&($('dailyGo').onclick=()=>{P.classList.add('hidden');openDaily();});
   $('swGo')&&($('swGo').onclick=()=>{P.classList.add('hidden');const ks=shuffle(Object.entries(SAVE.qs).filter(([k,q])=>q.sw&&NODES[k.split('|')[0]]).map(([k])=>k)).slice(0,8);
     startSession('Sure — but missed','Calibration practice',ks.map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};}),res=>{toast(`${res.filter(x=>!x.missed).length} / ${res.length} right this time`);},'focus');});
@@ -4249,6 +4381,46 @@ sfxVol.onchange=persist;
 {const go=()=>{removeEventListener('pointerdown',go);removeEventListener('keydown',go);Sfx.start();syncSfx();Sfx.setRegion(curScene||'hub');};
  addEventListener('pointerdown',go);addEventListener('keydown',go);}
 syncSfx();
+
+/* ==== js/09_teach.js ==== */
+/* ---------- "Teach me": Quill's one-minute mini-lectures, one per stone ----------
+   Plays assets/voice/teach_<id>.mp3 if it exists; otherwise the transcript plays as
+   paced subtitles. The current paragraph is highlighted; music dips while it plays. */
+const Teach=(()=>{
+  const P=$('lecture');let id=null,i=0,au=null,timer=0,playing=false,useAudio=false,starts=[];
+  const words=s=>s.split(/\s+/).length,paceMs=s=>Math.max(3500,words(s)*430);
+  function render(){const T=TEACH[id];if(!T)return;
+    P.innerHTML=`<button class="close" id="lecClose" aria-label="Close">×</button><div class="kicker">Warden Quill · teach me</div><h2>${esc(T.t)}</h2>
+      <div class="lec">${T.lines.map((l,k)=>`<p data-k="${k}" class="${k===i?'on':k<i?'past':''}">${esc(l)}</p>`).join('')}</div>
+      <div class="lacts"><button class="go" id="lecPlay">${playing?'❚❚ Pause':'▶ Play'}</button><button class="go ghost" id="lecRe">↺ From the start</button><span class="meta">${useAudio?'':'Subtitles only — no recording for this one yet'}</span></div>`;
+    $('lecClose').onclick=close;$('lecPlay').onclick=()=>playing?pause():play();$('lecRe').onclick=()=>{i=0;if(au)au.currentTime=0;play();};
+    P.querySelectorAll('.lec p').forEach(p=>p.onclick=()=>{i=+p.dataset.k;if(useAudio&&au)au.currentTime=starts[i]*(au.duration||0);play();});
+    const cur=P.querySelector('.lec p.on');cur&&cur.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  function step(){clearTimeout(timer);const T=TEACH[id];if(!playing||!T)return;
+    if(useAudio){const f=au.duration?au.currentTime/au.duration:0;let k=0;starts.forEach((s,j)=>{if(f>=s)k=j;});if(k!==i){i=k;render();}timer=setTimeout(step,300);return;}
+    timer=setTimeout(()=>{if(i<T.lines.length-1){i++;render();step();}else{playing=false;Music.duck(false);render();}},paceMs(T.lines[i]));}
+  function play(){playing=true;Music.duck(true);if(useAudio&&au){au.play().catch(()=>{useAudio=false;step();});}render();step();}
+  function pause(){playing=false;clearTimeout(timer);if(au)au.pause();Music.duck(false);render();}
+  function close(){if(id)pause();P.classList.add('hidden');if(au){au.pause();au=null;}}
+  function open(sid){
+    if(!TEACH[sid])return;if(typeof Narr!=='undefined'&&Narr.playing)Narr.stop(false);
+    close();id=sid;i=0;playing=false;useAudio=false;
+    const T=TEACH[sid],tot=T.lines.reduce((s,l)=>s+words(l),0);let acc=0;starts=T.lines.map(l=>{const s=acc/tot;acc+=words(l);return s;});
+    au=new Audio(`assets/voice/teach_${sid}.mp3`);au.preload='auto';
+    au.addEventListener('loadedmetadata',()=>{useAudio=true;if(!playing)render();},{once:true});
+    au.addEventListener('ended',()=>{playing=false;Music.duck(false);i=T.lines.length-1;render();});
+    au.addEventListener('error',()=>{useAudio=false;},{once:true});
+    P.classList.remove('hidden');render();
+    SAVE.taught=SAVE.taught||{};SAVE.taught[sid]=(SAVE.taught[sid]||0)+1;persist();
+    setTimeout(play,350);   // give the clip a moment to report whether it exists
+  }
+  return {open,close,get open_(){return !P.classList.contains('hidden');}};
+})();
+const stoneOfNode=node=>String(node).split('#')[0];
+function addTeach(id){const sid=stoneOfNode(id);if(!TEACH[sid])return;const a=card.querySelector('.acts');if(!a)return;
+  const t=btn('🎓 Teach me','sol');t.title='A one-minute refresher from Warden Quill';t.onclick=()=>Teach.open(sid);a.prepend(t);}
+// Esc closes the lecture first, leaving the card underneath open
+addEventListener('keydown',e=>{if(e.key==='Escape'&&Teach.open_){Teach.close();e.stopImmediatePropagation();e.preventDefault();}},true);
 
 }
 </script>

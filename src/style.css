@@ -247,3 +247,13 @@
   #whatsnew .wnbar i{display:block;height:100%;width:100%;background:#e9b35c;transition:width .1s linear}
   #whatsnew .go{font:inherit;font-size:13.5px;padding:8px 16px;border-radius:9px;cursor:pointer;background:#e9b35c;color:#2a1d0c;border:none}
   @media (max-width:600px){#whatsnew .wn{grid-template-columns:1fr}#whatsnew h2{font-size:19px}}
+  #lecture{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(600px,calc((100vw - 20px)/var(--ts,1)));max-height:calc((100dvh - 40px)/var(--ts,1));overflow:auto;box-sizing:border-box;padding:18px 20px 14px;z-index:14;zoom:var(--ts,1);border-color:rgba(143,200,255,.35);background:rgba(16,22,40,.97);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  #lecture h2{margin:2px 0 10px;font-size:21px;color:#ffe2a8;font-weight:normal}#lecture .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-right:36px}
+  #lecture .close{position:absolute;right:10px;top:8px;background:none;border:none;color:#f3ead8;font-size:22px;cursor:pointer;opacity:.6;width:40px;height:40px;z-index:2}
+  #lecture .lec p{margin:0 0 10px;font-size:15px;line-height:1.55;opacity:.45;transition:opacity .4s;cursor:pointer;font-style:italic}
+  #lecture .lec p.past{opacity:.7}#lecture .lec p.on{opacity:1;color:#fff4dc}
+  #lecture .lacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}#lecture .lacts .meta{font-size:12px;opacity:.6}
+  .go.ghost{background:rgba(255,255,255,.04)!important;color:#ffe2a8!important;border:1px solid rgba(255,214,150,.4)!important}
+  #lecture .go{font:inherit;font-size:13px;padding:7px 13px;border-radius:9px;cursor:pointer;background:#e9b35c;color:#2a1d0c;border:none}
+  #report .fb2{display:flex;gap:6px;flex:none}
+  #map li .lnk{background:none;border:none;color:#ffd27a;text-decoration:underline;cursor:pointer;font:inherit;font-size:12px;padding:0}

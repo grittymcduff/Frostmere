@@ -97,6 +97,6 @@ NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The 
   ]};
 
 /* exam-guide gap: statistical significance is not causation */
-NODES['m5-three'].puzzles.push({type:'mc',q:'Customers who use the loyalty app spend more, and the app dummy is highly significant (p < 0.001). Does the app <b>cause</b> the extra spending?',
+NODES['m5-three'].puzzles.push({type:'mc',q:'Customers who use the loyalty app spend more, and the app dummy is highly significant (p &lt; 0.001). Does the app <b>cause</b> the extra spending?',
   opts:['Not necessarily — heavy spenders may choose the app','Yes — p < 0.001 rules out other explanations','Yes, as long as the model’s R² is also high','No — significant coefficients are never causal'],a:0,
   why:'A tiny p-value measures evidence against β = 0, not why the association exists. Causal claims need a design — like random assignment — that rules out self-selection and confounders.'});

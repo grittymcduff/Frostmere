@@ -32,7 +32,7 @@ EXPLAIN(4,'Explain a residual plot',[
  {make:r=>({exhibit:residPlot(genResid(r,'spray'),'Store size'),
   q:'Explain what this residual plot tells you about the model and what it means for a manager reading its p-values.',
   model:'The residuals fan out as store size grows — the errors are much bigger for large stores. That is heteroskedasticity: the constant-variance assumption fails. The coefficients aren’t biased by this alone, but the usual standard errors are wrong, so the reported p-values and confidence intervals can’t be trusted as printed; robust standard errors (after checking the model’s form) are the usual response.',
-  points:['Spread grows with store size (a fan / spray)','Names it heteroskedasticity / non-constant variance','Coefficients still unbiased','Standard errors and p-values are unreliable']})},
+  points:['Spread grows with store size (a fan / spray)','Names it heteroskedasticity / non-constant variance','Coefficients still unbiased','Standard errors and p-values are unreliable'],why:'Spread problems hit the model’s reported precision, not the center of its estimates.'})},
 ]);
 EXPLAIN(5,'Explain a significance result',[
  {exhibit:Exhibit.table(['','Coefficient','Std. error','t','p-value'],[['Training hours','0.84','0.29','2.90','0.006'],['Bonus ($000)','0.02','0.01','2.10','0.042']]),
@@ -56,7 +56,7 @@ EXPLAIN(7,'Explain a log model',[
   why:'Interpret in percentages, report in dollars, and stay inside the data.'},
 ]);
 EXPLAIN(8,'Explain multicollinearity',[
- {exhibit:Exhibit.table(['','Coefficient','p-value','VIF'],[['TV ads','2.9','0.31','11.4'],['Online ads','2.1','0.38','11.4'],['Model: R² = 0.91, F-test p < 0.001','','','']]),
+ {exhibit:Exhibit.table(['','Coefficient','p-value','VIF'],[['TV ads','2.9','0.31','11.4'],['Online ads','2.1','0.38','11.4'],['Model: R² = 0.91, F-test p &lt; 0.001','','','']]),
   q:'A manager concludes that neither ad channel works because neither is significant. Explain why that’s the wrong conclusion and what you’d do.',
   model:'The overall F-test is highly significant and R² is high, so the two channels matter jointly. Their VIFs above 10 show severe multicollinearity: TV and online spend move together, so the model can’t separate their individual effects and their standard errors are inflated — that’s why the individual p-values look weak. The estimates aren’t biased, just imprecise. I wouldn’t drop a channel to “fix” it (that risks omitted-variable bias); I’d report their combined effect or get more varied data.',
   points:['Jointly significant: F-test and R² show the ads matter together','High VIFs = severe multicollinearity; the two move together','Weak t-tests come from inflated standard errors, not irrelevance','Don’t just drop one — risk of omitted-variable bias'],

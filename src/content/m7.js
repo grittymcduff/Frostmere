@@ -24,7 +24,7 @@ NODES['m7-form']={kicker:'Module 7 · Choosing the functional form',title:'The B
       solution:`${b} × ${xb} / ${yb} = ${round(e,3)}.`,why:`A 1% rise in income is associated with about a ${round(e,2)}% rise in food spending — at the means. In a linear model the elasticity changes along the line.`};}},
     ]},
    {title:'Curves, lags, and the edge of the data',
-    teach:`<p><b>Quadratic:</b> with Y = β₀ + β₁X + β₂X², the slope at a point is <b>β₁ + 2β₂X</b>. If β₁ > 0 and β₂ < 0 the curve rises then falls, peaking at <b>X* = −β₁ / (2β₂)</b>.</p>
+    teach:`<p><b>Quadratic:</b> with Y = β₀ + β₁X + β₂X², the slope at a point is <b>β₁ + 2β₂X</b>. If β₁ &gt; 0 and β₂ &lt; 0 the curve rises then falls, peaking at <b>X* = −β₁ / (2β₂)</b>.</p>
     <p><b>Lags:</b> when cause and effect don’t happen together — advertising this month, sales next month — model the delay: Salesₜ = β₀ + β₁Advertisingₜ₋₁ + εₜ. The lag should come from how the business works, not a search for significance.</p>
     <p><b>Extrapolation:</b> every form is only checked inside the range you observed. Outside it, a polynomial can swing wildly, a log model can flatten too soon, and a straight line can miss a turning point.</p>
     <div class="ex">Residuals that <b>curve</b> systematically around zero (negative → positive → negative) say the shape is wrong: add the missing curve and re-estimate before trusting anything else.</div>`,

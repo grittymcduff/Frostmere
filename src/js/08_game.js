@@ -51,12 +51,12 @@ function openNode(id){
   if(!n||n.sealed){showCard(`<div class="kicker">${esc(n?.kicker||'Sealed stone')}</div><h2>${esc(n?.title||'Sealed')}</h2><p class="say">${n?.sealedText||'This stone is still sealed. Its quests are added in a later build.'}</p>`);return;}
   const L=lessonsOf(id).length,ld=lessonsDone(id),prev=SAVE.done[id];
   if(nodeState(id)==='frozen'){
-    showCard(`<div class="kicker">${esc(n.kicker)} · frozen</div><h2>${esc(n.title)}</h2><p class="say">The stone rejected your answers and froze solid. To thaw it, finish its waypoints on the path behind you, in order — each is a short lesson with practice questions.</p>${lessonListHtml(id)}<p class="meta">${ld} of ${L} waypoints complete</p>`);return;}
+    showCard(`<div class="kicker">${esc(n.kicker)} · frozen</div><h2>${esc(n.title)}</h2><p class="say">The stone rejected your answers and froze solid. To thaw it, finish its waypoints on the path behind you, in order — each is a short lesson with practice questions.</p>${lessonListHtml(id)}<p class="meta">${ld} of ${L} waypoints complete</p><div class="acts"></div>`);addTeach(id);return;}
   const rule=L&&!prev?(ld<L?`<p class="rule">Restore it with <b>at most one miss</b>. Miss ${FREEZE_AT} or more and it freezes until you finish its ${L} waypoints (${ld} done so far). Feeling unsure? The waypoints are on the path just before this stone.</p>`
       :`<p class="rule">You've finished all ${L} waypoints. Restore it with at most one miss — it won't freeze again.</p>`):'';
   showCard(`<div class="kicker">${esc(n.kicker)}</div><h2>${esc(n.title)}</h2><p class="say">${n.intro}</p>${rule}
     <p class="meta">${n.puzzles.length} challenges${prev?` · best first-try score ${prev.best} / ${n.puzzles.length}`:''}${invText()?` · you carry ${invText()}`:''}</p><div class="acts"></div>`);
-  const b=btn(prev?'Study again':'Challenge the stone','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  const b=btn(prev?'Study again':'Challenge the stone','primary');card.querySelector('.acts').appendChild(b);b.focus();addTeach(id);
   b.onclick=()=>startSession(n.title,n.kicker,n.puzzles.map((_,idx)=>({node:id,idx})),items=>{
     const miss=items.filter(x=>x.missed).length,first=items.length-miss,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
     if(wasDone){SAVE.done[id].best=Math.max(first,SAVE.done[id].best);persist();toast(`Studied again · ${first} / ${items.length} on the first try`);return;}
@@ -78,7 +78,7 @@ function openLesson(id,j){
   if(st==='blocked'){showCard(`<div class="kicker">${esc(kick)}</div><h2>${esc(L.title)}</h2><p class="say">The pages are blank for now. Waypoints open in order — finish <b>${esc(Ls[j-1].title)}</b> first; it's back along the path.</p>`);return;}
   showCard(`<div class="kicker">${esc(kick)}</div><h2>${esc(L.title)}</h2><div class="teach">${L.teach}</div>
     <p class="meta">${L.practice.length} practice question${L.practice.length>1?'s':''}${SAVE.lessons[lid]?' · completed':''}</p><div class="acts"></div>`);
-  const b=btn(SAVE.lessons[lid]?'Practice again':'Practice','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  const b=btn(SAVE.lessons[lid]?'Practice again':'Practice','primary');card.querySelector('.acts').appendChild(b);b.focus();addTeach(id);
   b.onclick=()=>startSession(L.title,kick,L.practice.map((_,idx)=>({node:lid,idx})),()=>{
     const was=SAVE.lessons[lid];SAVE.lessons[lid]=true;
     const all=lessonsDone(id)===Ls.length;
@@ -220,13 +220,14 @@ function renderMap(){
 ;
   for(const r of R){const un=regionUnlocked(r.id),req=r.requires?regionById(r.requires).name:'';
     const items=r.nodes.map(id=>{const n=NODES[id],st=un?nodeState(id):'sealed',L=lessonsOf(id).length;
-      return `<li>${icon(st)}<span><b>${esc(n.title)}</b> — ${COURSE.about[id]||esc(n.kicker||'')}<em>${st==='done'?'restored':st==='frozen'?'frozen — finish its waypoints':un?`${L?`${lessonsDone(id)} of ${L} lessons done`:''}`:'locked'}${n.kicker?` · <span class="tag">${esc(n.kicker.split('·')[0].trim())}</span>`:''}</em></span></li>`;}).join('');
+      return `<li>${icon(st)}<span><b>${esc(n.title)}</b> — ${COURSE.about[id]||esc(n.kicker||'')}${TEACH[id]?` <button class="lnk" data-teach="${id}">🎓 teach me</button>`:''}<em>${st==='done'?'restored':st==='frozen'?'frozen — finish its waypoints':un?`${L?`${lessonsDone(id)} of ${L} lessons done`:''}`:'locked'}${n.kicker?` · <span class="tag">${esc(n.kicker.split('·')[0].trim())}</span>`:''}</em></span></li>`;}).join('');
     const tag=(r.sub.split('·')[0]||'').trim();
     h+=sec(r.id,r.name,tag,`<ul>${items}</ul>${un&&r.id!==here?`<div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="go" data-go="${r.id}">Travel to ${esc(r.name)}</button></div>`:''}`,!un,`Opens once every stone in ${esc(req)} is restored.`);}
   if(here!=='hub')h+=`<div class="acts" style="justify-content:flex-start"><button class="go" data-go="hub">Return to the village</button></div>`;
   const M=$('map');M.innerHTML=h;
   $('mapClose').onclick=()=>M.classList.add('hidden');
   M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{M.classList.add('hidden');const to=b.dataset.go;travel(to,to==='hub'?('from'+here[0].toUpperCase()+here.slice(1)):'fromHub');});
+  M.querySelectorAll('[data-teach]').forEach(b=>b.onclick=()=>Teach.open(b.dataset.teach));
   M.querySelectorAll('svg .rg').forEach(g=>g.onclick=()=>$('mr-'+g.dataset.r)?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
 function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');$('report').classList.add('hidden');$('notes').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
@@ -242,7 +243,7 @@ function tapPick(wx,wy){let best=null,bd=1e9;for(const it of INTER){const dx=wx-
 function tryRead(){if(nearI&&!uiOpen())nearI.act();}
 readBtn.onclick=tryRead;
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();if(k==='m'&&card.classList.contains('hidden'))toggleMap();if(k==='n'&&card.classList.contains('hidden'))toggleNotes();
-  if(k==='escape'){closeCard();['log','map','notes'].forEach(x=>$(x).classList.add('hidden'));}
+  if(k==='escape'){if(Teach.open_){Teach.close();return;}closeCard();['log','map','notes'].forEach(x=>$(x).classList.add('hidden'));}
   if(k==='enter'&&!uiOpen())tryRead();});
 function travel(to,spawnKey){
   fading=true;const f=$('fade');f.classList.add('on');

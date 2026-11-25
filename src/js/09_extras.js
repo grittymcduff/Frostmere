@@ -114,7 +114,9 @@ function openDesk(){
 }
 
 /* ---------- "what's new" greeting for returning players: closes itself after 15 s ---------- */
-const WHATS_NEW={v:2,items:[
+const WHATS_NEW={v:3,items:[
+  ['🎓','Teach me','Stuck on a stone? Tap “Teach me” for a one-minute refresher from Warden Quill — on every stone card, inside questions, on the map and in your progress report.'],
+  ['✓','Accuracy pass','Every question was checked against the course. A few numbers, labels and generated charts were tightened so the right answer is always clear.'],
   ['❄','Crystal Reach is open','Modules 7–10: functional form, multicollinearity, serial correlation and heteroskedasticity — four new stones.'],
   ['⏱','Practice final, with exam conditions','20 questions from all ten modules. Try it with one attempt per question and a countdown — then review every miss.'],
   ['📈','Progress report','Strength by area, what to focus on next, and one-tap practice for your weakest topics. Press P.'],

@@ -52,7 +52,7 @@ NODES['m8-multi']={kicker:'Module 8 · Multicollinearity',title:'The Twin Prisms
    {make:r=>{const rr_=round(rr(r,.80,.97),2),v=1/(1-rr_*rr_);return {type:'num',
     q:`A model has just two explanatory variables, and their correlation is <b>r = ${rr_}</b>. With only two Xs, the auxiliary R² is r². What is the VIF for each?`,a:v,tol:.05,
     hint:'Auxiliary R² = r²; then VIF = 1 / (1 − r²).',solution:`r² = ${round(rr_*rr_,4)}; VIF = 1 / (1 − ${round(rr_*rr_,4)}) = ${round(v,2)}.`,
-    why:`${v>10?'Serious':v>5?'A warning-level':'Mild'} multicollinearity. Note how fast VIF climbs as r approaches 1.`};}},
+    why:`${v>10?'Above 10: serious multicollinearity.':v>5?'Above 5: a warning sign.':'Just under the usual warning level of 5.'} Note how fast VIF climbs as r approaches 1.`};}},
    {type:'mc',q:'Which statement about the consequences of imperfect multicollinearity is correct?',
     opts:['Unbiased, but larger SEs and unstable estimates','Biased coefficients and a sharply lower R²','OLS can no longer be computed at all','Higher t-scores, so more looks significant'],a:0,
     why:'Not bias — less precision, larger p-values, unexpected signs more likely, and big swings when related variables are added or dropped.'},

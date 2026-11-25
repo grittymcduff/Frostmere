@@ -7,7 +7,11 @@
 const DWT={20:{1:[1.20,1.41],2:[1.10,1.54],3:[1.00,1.68]},25:{1:[1.29,1.45],2:[1.21,1.55],3:[1.12,1.65]},
            30:{1:[1.35,1.49],2:[1.28,1.57],3:[1.21,1.65]},40:{1:[1.44,1.54],2:[1.39,1.60],3:[1.34,1.66]}};
 const SC_KIND={pos:'Positive serial correlation — residuals stay on one side in long runs',none:'No serial correlation — residuals jump around with no pattern',neg:'Negative serial correlation — residuals tend to flip sign every period'};
-function genAR(r,rho,n=30){const e=[];let prev=0;for(let t=0;t<n;t++){prev=rho*prev+rngGauss(r)*(rho?Math.sqrt(1-rho*rho):1);e.push(prev);}
+function genAR(r,rho,n=30){
+  const lag1=e=>{let a=0,b=0;for(let i=0;i<e.length;i++){b+=e[i]*e[i];if(i)a+=e[i]*e[i-1];}return a/b;};
+  for(let k=0;k<40;k++){const e=genAR1(r,rho,n),c=lag1(e);if(rho>0?c>.45:rho<0?c<-.45:Math.abs(c)<.15)return e;}
+  return genAR1(r,rho,n);}
+function genAR1(r,rho,n){const e=[];let prev=0;for(let t=0;t<n;t++){prev=rho*prev+rngGauss(r)*(rho?Math.sqrt(1-rho*rho):1);e.push(prev);}
   const m=e.reduce((a,b)=>a+b,0)/n;return e.map(v=>round((v-m)*10,2));}
 const timePlot=e=>Exhibit.scatter(e.map((_,i)=>i+1),e,{xl:'Time period',yl:'Residual',hline:0,connect:true,title:'Residuals over time'});
 const dwOf=e=>{let num=0,den=0;e.forEach((v,i)=>{den+=v*v;if(i)num+=(v-e[i-1])**2;});return num/den;};

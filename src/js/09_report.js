@@ -71,7 +71,7 @@ function renderReport(){
   if(R.focus.length){
     h+=`<h3 class="rh">Focus next</h3><div class="focus">`;
     R.focus.forEach((a,i)=>{const why=a.mastery!==null?`${pct(a.mastery)} right on your recent tries${a.weakStone?` · weakest: ${esc(NODES[a.weakStone.id].title)}`:''}`:a.seen?`only ${a.seen} of ${a.total} questions tried so far`:'not started yet';
-      h+=`<div class="fc"><div><b>${i+1}. ${esc(a.name)}</b><span>${why}${a.pinned?` · ${a.pinned} on the review board`:''}</span></div><button class="go" data-pr="${a.m}">Practice now</button></div>`;});
+      h+=`<div class="fc"><div><b>${i+1}. ${esc(a.name)}</b><span>${why}${a.pinned?` · ${a.pinned} on the review board`:''}</span></div><span class="fb2">${a.weakStone&&TEACH[a.weakStone.id]?`<button class="go ghost" data-tc="${a.weakStone.id}">🎓 Teach me</button>`:''}<button class="go" data-pr="${a.m}">Practice now</button></span></div>`;});
     h+=`</div>`;
   }
   h+=`<h3 class="rh">All areas</h3><div class="areas">`;
@@ -84,6 +84,7 @@ function renderReport(){
   h+=`<p class="meta">Mastery uses each question’s last three attempts, so improvement shows up quickly. Areas are rated after 3 different questions. ${mins?`About ${mins} min of question time so far.`:''}</p>`;
   const P=$('report');P.innerHTML=h;$('repClose').onclick=()=>P.classList.add('hidden');
   P.querySelectorAll('[data-pr]').forEach(b=>b.onclick=()=>{P.classList.add('hidden');practiceArea(+b.dataset.pr);});
+  P.querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>Teach.open(b.dataset.tc));
   $('dailyGo')&&($('dailyGo').onclick=()=>{P.classList.add('hidden');openDaily();});
   $('swGo')&&($('swGo').onclick=()=>{P.classList.add('hidden');const ks=shuffle(Object.entries(SAVE.qs).filter(([k,q])=>q.sw&&NODES[k.split('|')[0]]).map(([k])=>k)).slice(0,8);
     startSession('Sure — but missed','Calibration practice',ks.map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};}),res=>{toast(`${res.filter(x=>!x.missed).length} / ${res.length} right this time`);},'focus');});

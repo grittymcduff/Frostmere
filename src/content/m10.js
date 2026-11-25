@@ -62,6 +62,6 @@ NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widenin
     items:[{t:'Profits of a mix of corner shops and national chains',c:0},{t:'Cost overruns across routine launches and first-of-a-kind missions',c:0},{t:'Daily output of identical machines in one plant',c:1},{t:'Household spending across incomes from $20k to $2M',c:0}],
     why:'Whenever the size of the observation changes dramatically, ask whether the size of the error changes too.'},
    {type:'mc',q:'Which statement is correct?',
-    opts:['Heteroskedasticity harms inference; wrong form harms the fit','Both problems bias the coefficients in the same direction','Robust standard errors repair a wrong functional form too','Heteroskedasticity only arises in time-series data'],a:0,
+    opts:['Heteroskedasticity harms inference; a wrong form biases the estimates','Both problems bias the coefficients in the same direction','Robust standard errors repair a wrong functional form too','Heteroskedasticity only arises in time-series data'],a:0,
     why:'Mean problem vs variance problem: fixing standard errors cannot repair an incorrectly specified equation.'},
   ]};
