@@ -33,7 +33,7 @@ function renderHud(){
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
-const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||!$('notes').classList.contains('hidden')||fading;
+const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||!$('notes').classList.contains('hidden')||!$('whatsnew').classList.contains('hidden')||fading;
 
 /* ---------- dialogs ---------- */
 function openDialog(npc,i=0){

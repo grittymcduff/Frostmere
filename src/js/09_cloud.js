@@ -108,7 +108,7 @@ function cloudInit(){
     const was=CLOUD.user;CLOUD.user=u;renderAcct();
     if(u&&!was){cloudPull(true);if(CLOUD.user)toast(`Signed in as <b>${esc(u.displayName||u.email||'player')}</b> — progress saves to your account.`);}
   })).catch(()=>{CLOUD.err='Cloud saves are unavailable right now — progress is saved on this device.';renderAcct();});
-  if(SAVE.seen.intro&&!SAVE.seen.cloudTip)setTimeout(showCloudTip,4000);
+  if(SAVE.seen.intro&&!SAVE.seen.cloudTip)setTimeout(()=>afterWhatsNew(()=>setTimeout(showCloudTip,700)),4000);
   addEventListener('visibilitychange',()=>{if(!CLOUD.user)return;if(document.hidden)cloudPush();else cloudPull(false);});
 }
 

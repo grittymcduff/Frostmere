@@ -158,7 +158,7 @@
   @keyframes narrIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   @media (max-width:600px){#narr{bottom:12px}#narr p{font-size:14px}}
   body{position:fixed;inset:0}
-  #card,#log,#calc,#map,#fx,#report{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+  #card,#log,#calc,#map,#fx,#report,#notes,#whatsnew{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
   .sc .cn{stroke:#2f7fb5;stroke-width:1.1;opacity:.45}
   .clock{float:right;margin-right:30px;font-variant-numeric:tabular-nums;color:#ffd27a}
   .exres td.mod{white-space:nowrap}.exres .ok{color:#8fe0a0}.exres .no{color:#ffb39a}
@@ -242,6 +242,17 @@
   #narr{width:min(620px,calc((100% - 24px)/var(--ts,1)))}
   #fx select{font:inherit;font-size:12.5px;background:rgba(0,0,0,.3);color:#f3ead8;border:1px solid rgba(255,214,150,.3);border-radius:6px;padding:2px 4px;margin-left:auto}
   .fb:empty{display:none}
+  #whatsnew{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc((100vw - 20px)/var(--ts,1)));max-height:calc((100dvh - 40px)/var(--ts,1));overflow:auto;box-sizing:border-box;padding:20px 22px 16px;z-index:12;zoom:var(--ts,1);transition:opacity .6s ease,transform .6s ease}
+  #whatsnew.out{opacity:0;transform:translate(-50%,-46%)}
+  #whatsnew h2{margin:2px 0 12px;font-size:22px;color:#ffe2a8;font-weight:normal}#whatsnew .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+  #whatsnew .close{position:absolute;right:10px;top:8px;background:none;border:none;color:#f3ead8;font-size:22px;cursor:pointer;opacity:.6;width:40px;height:40px}
+  #whatsnew .wn{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+  #whatsnew .wi{display:flex;gap:10px;align-items:flex-start}#whatsnew .wi i{font-style:normal;font-size:18px;width:26px;text-align:center;flex:none;margin-top:1px}
+  #whatsnew .wi b{display:block;font-weight:normal;color:#ffe2a8;font-size:14.5px}#whatsnew .wi span{font-size:12.8px;line-height:1.4;opacity:.85}
+  #whatsnew .wnf{display:flex;align-items:center;gap:14px;margin-top:16px}#whatsnew .wnbar{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
+  #whatsnew .wnbar i{display:block;height:100%;width:100%;background:#e9b35c;transition:width .1s linear}
+  #whatsnew .go{font:inherit;font-size:13.5px;padding:8px 16px;border-radius:9px;cursor:pointer;background:#e9b35c;color:#2a1d0c;border:none}
+  @media (max-width:600px){#whatsnew .wn{grid-template-columns:1fr}#whatsnew h2{font-size:19px}}
 </style>
 </head>
 <body>
@@ -271,6 +282,7 @@
 <div id="log" class="panel hidden" role="dialog" aria-label="Quest log"></div>
 <div id="map" class="panel hidden" role="dialog" aria-label="Map of Frostmere"></div>
 <div id="report" class="panel hidden" role="dialog" aria-label="Study report"></div>
+<div id="whatsnew" class="panel hidden" role="dialog" aria-label="What’s new"></div>
 <div id="notes" class="panel hidden" role="dialog" aria-label="Field notes"></div>
 <div id="hint" class="panel">WASD / arrows to move · Shift to jog · tap to walk · drag for joystick · E to interact</div>
 <button id="readBtn" class="panel hidden"><span></span> <kbd>E</kbd></button>
@@ -814,7 +826,7 @@ const endPtr=e=>{
 };
 // stop the browser treating joystick drags as page gestures (pull-to-refresh, swipe-to-close):
 // block touch scrolling everywhere except inside the scrollable panels
-const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx,#report,#notes');
+const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx,#report,#notes,#whatsnew');
 document.addEventListener('touchmove',e=>{if(!scrollable(e.target))e.preventDefault();},{passive:false});
 cv.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
@@ -3417,7 +3429,7 @@ function renderHud(){
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
-const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||!$('notes').classList.contains('hidden')||fading;
+const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||!$('notes').classList.contains('hidden')||!$('whatsnew').classList.contains('hidden')||fading;
 
 /* ---------- dialogs ---------- */
 function openDialog(npc,i=0){
@@ -3831,7 +3843,7 @@ function cloudInit(){
     const was=CLOUD.user;CLOUD.user=u;renderAcct();
     if(u&&!was){cloudPull(true);if(CLOUD.user)toast(`Signed in as <b>${esc(u.displayName||u.email||'player')}</b> — progress saves to your account.`);}
   })).catch(()=>{CLOUD.err='Cloud saves are unavailable right now — progress is saved on this device.';renderAcct();});
-  if(SAVE.seen.intro&&!SAVE.seen.cloudTip)setTimeout(showCloudTip,4000);
+  if(SAVE.seen.intro&&!SAVE.seen.cloudTip)setTimeout(()=>afterWhatsNew(()=>setTimeout(showCloudTip,700)),4000);
   addEventListener('visibilitychange',()=>{if(!CLOUD.user)return;if(document.hidden)cloudPush();else cloudPull(false);});
 }
 
@@ -3974,6 +3986,38 @@ function openDesk(){
   b.onclick=()=>startSession('Interpretation desk','Explain it',pickd.map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};}),res=>{
     toast(`Interpretation desk · ${res.filter(x=>!x.missed).length} / ${res.length} covered the key points`);quillOnce('barkDesk','Writing it out is harder than picking it — which is exactly why it works.');},'focus');
 }
+
+/* ---------- "what's new" greeting for returning players: closes itself after 15 s ---------- */
+const WHATS_NEW={v:2,items:[
+  ['❄','Crystal Reach is open','Modules 7–10: functional form, multicollinearity, serial correlation and heteroskedasticity — four new stones.'],
+  ['⏱','Practice final, with exam conditions','20 questions from all ten modules. Try it with one attempt per question and a countdown — then review every miss.'],
+  ['📈','Progress report','Strength by area, what to focus on next, and one-tap practice for your weakest topics. Press P.'],
+  ['↻','Spaced review','Questions you got right come back after 1, 3, 7, 16 and 35 days on the review board, so they stick.'],
+  ['✎','Interpretation desk','Explain a result in your own words, then compare with a model answer. Left of the south path.'],
+  ['📜','Field notes','Formulas and rules of thumb collect as you finish waypoints. Press N.'],
+  ['☀','Daily quest','Five questions a day from what’s due and what’s weak. Keep the streak for a free item.'],
+  ['☁','Play on any device','Sign in with Google to keep your progress everywhere. Plus a map (M), a “how sure?” check, chimes and text size.'],
+]};
+let wnQueue=[];
+const whatsNewOpen=()=>!$('whatsnew').classList.contains('hidden');
+function afterWhatsNew(fn){if(whatsNewOpen())wnQueue.push(fn);else fn();}
+function showWhatsNew(){
+  const W=$('whatsnew');SAVE.whatsNew=WHATS_NEW.v;persist();
+  W.innerHTML=`<button class="close" id="wnClose" aria-label="Close">×</button><div class="kicker">Welcome back</div><h2>What’s new in Frostmere</h2>
+    <div class="wn">${WHATS_NEW.items.map(([ic,t,d])=>`<div class="wi"><i>${ic}</i><div><b>${t}</b><span>${d}</span></div></div>`).join('')}</div>
+    <div class="wnf"><div class="wnbar"><i></i></div><button class="go" id="wnOk">Let’s go</button></div>`;
+  W.classList.remove('hidden','out');keys.clear();
+  let left=15000,last=Date.now(),hover=false,done=false;
+  const close=()=>{if(done)return;done=true;clearInterval(tm);W.classList.add('out');setTimeout(()=>{W.classList.add('hidden');W.classList.remove('out');const q=wnQueue;wnQueue=[];q.forEach(f=>f());},600);};
+  const bar=W.querySelector('.wnbar i');
+  const tm=setInterval(()=>{const now=Date.now();if(!hover)left-=now-last;last=now;bar.style.width=Math.max(0,left/150)+'%';if(left<=0)close();},100);
+  W.onmouseenter=()=>hover=true;W.onmouseleave=()=>hover=false;   // reading with the mouse over it pauses the countdown
+  $('wnClose').onclick=close;$('wnOk').onclick=close;
+  addEventListener('keydown',function k(e){if(e.key==='Escape'||e.key==='Enter'){close();removeEventListener('keydown',k);}});
+}
+// returning players see it on load; brand-new players get Quill's intro instead (and skip this release's list)
+if(!SAVE.seen.intro)SAVE.whatsNew=WHATS_NEW.v;
+else if((SAVE.whatsNew||0)<WHATS_NEW.v)setTimeout(showWhatsNew,1200);
 
 /* ==== js/09_narration.js ==== */
 /* ---------- Warden Quill's narrated intro ----------

@@ -112,3 +112,35 @@ function openDesk(){
   b.onclick=()=>startSession('Interpretation desk','Explain it',pickd.map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};}),res=>{
     toast(`Interpretation desk · ${res.filter(x=>!x.missed).length} / ${res.length} covered the key points`);quillOnce('barkDesk','Writing it out is harder than picking it — which is exactly why it works.');},'focus');
 }
+
+/* ---------- "what's new" greeting for returning players: closes itself after 15 s ---------- */
+const WHATS_NEW={v:2,items:[
+  ['❄','Crystal Reach is open','Modules 7–10: functional form, multicollinearity, serial correlation and heteroskedasticity — four new stones.'],
+  ['⏱','Practice final, with exam conditions','20 questions from all ten modules. Try it with one attempt per question and a countdown — then review every miss.'],
+  ['📈','Progress report','Strength by area, what to focus on next, and one-tap practice for your weakest topics. Press P.'],
+  ['↻','Spaced review','Questions you got right come back after 1, 3, 7, 16 and 35 days on the review board, so they stick.'],
+  ['✎','Interpretation desk','Explain a result in your own words, then compare with a model answer. Left of the south path.'],
+  ['📜','Field notes','Formulas and rules of thumb collect as you finish waypoints. Press N.'],
+  ['☀','Daily quest','Five questions a day from what’s due and what’s weak. Keep the streak for a free item.'],
+  ['☁','Play on any device','Sign in with Google to keep your progress everywhere. Plus a map (M), a “how sure?” check, chimes and text size.'],
+]};
+let wnQueue=[];
+const whatsNewOpen=()=>!$('whatsnew').classList.contains('hidden');
+function afterWhatsNew(fn){if(whatsNewOpen())wnQueue.push(fn);else fn();}
+function showWhatsNew(){
+  const W=$('whatsnew');SAVE.whatsNew=WHATS_NEW.v;persist();
+  W.innerHTML=`<button class="close" id="wnClose" aria-label="Close">×</button><div class="kicker">Welcome back</div><h2>What’s new in Frostmere</h2>
+    <div class="wn">${WHATS_NEW.items.map(([ic,t,d])=>`<div class="wi"><i>${ic}</i><div><b>${t}</b><span>${d}</span></div></div>`).join('')}</div>
+    <div class="wnf"><div class="wnbar"><i></i></div><button class="go" id="wnOk">Let’s go</button></div>`;
+  W.classList.remove('hidden','out');keys.clear();
+  let left=15000,last=Date.now(),hover=false,done=false;
+  const close=()=>{if(done)return;done=true;clearInterval(tm);W.classList.add('out');setTimeout(()=>{W.classList.add('hidden');W.classList.remove('out');const q=wnQueue;wnQueue=[];q.forEach(f=>f());},600);};
+  const bar=W.querySelector('.wnbar i');
+  const tm=setInterval(()=>{const now=Date.now();if(!hover)left-=now-last;last=now;bar.style.width=Math.max(0,left/150)+'%';if(left<=0)close();},100);
+  W.onmouseenter=()=>hover=true;W.onmouseleave=()=>hover=false;   // reading with the mouse over it pauses the countdown
+  $('wnClose').onclick=close;$('wnOk').onclick=close;
+  addEventListener('keydown',function k(e){if(e.key==='Escape'||e.key==='Enter'){close();removeEventListener('keydown',k);}});
+}
+// returning players see it on load; brand-new players get Quill's intro instead (and skip this release's list)
+if(!SAVE.seen.intro)SAVE.whatsNew=WHATS_NEW.v;
+else if((SAVE.whatsNew||0)<WHATS_NEW.v)setTimeout(showWhatsNew,1200);
