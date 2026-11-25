@@ -1,7 +1,7 @@
 
-  html,body{margin:0;height:100%;background:#070b16;overflow:hidden;touch-action:none;overscroll-behavior:none;-webkit-touch-callout:none;
+  html,body{margin:0;height:100%;background:#070b16;overflow:hidden;overscroll-behavior:none;-webkit-touch-callout:none;
     font-family:Georgia,'Times New Roman',serif;color:#f3ead8;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-  canvas{display:block;width:100vw;height:100vh;height:100dvh}
+  canvas{display:block;width:100vw;height:100vh;height:100dvh;touch-action:none}
   .panel{background:rgba(12,18,36,.78);border:1px solid rgba(255,214,150,.28);border-radius:12px;
     box-shadow:0 8px 30px rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
   #hud{position:fixed;left:12px;top:12px;padding:10px 14px;pointer-events:none}
@@ -152,7 +152,7 @@
   @keyframes narrIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   @media (max-width:600px){#narr{bottom:12px}#narr p{font-size:14px}}
   body{position:fixed;inset:0}
-  #card,#log,#calc{overscroll-behavior:contain;touch-action:pan-y}
+  #card,#log,#calc,#map,#fx{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
   .sc .cn{stroke:#2f7fb5;stroke-width:1.1;opacity:.45}
   .clock{float:right;margin-right:30px;font-variant-numeric:tabular-nums;color:#ffd27a}
   .exres td.mod{white-space:nowrap}.exres .ok{color:#8fe0a0}.exres .no{color:#ffb39a}
@@ -173,4 +173,15 @@
   #map .go{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:8px;cursor:pointer;background:rgba(255,200,110,.14);color:#ffe2a8;border:1px solid rgba(255,214,150,.4)}
   #map .here{color:#8fe0a0;font-size:12px;font-style:normal}
   #map .tag{font-size:11px;opacity:.55;letter-spacing:.04em}
-  @media (max-width:600px){.topbtns{gap:5px;right:8px;top:8px}.topbtns kbd{display:none}.topbtns button{padding:7px 9px}#hud{top:56px;left:8px}#log{top:56px}#map{top:56px;max-height:calc(100dvh - 66px)}}
+  #menuBtn{display:none}
+  @media (max-width:600px){
+    .topbtns{right:8px;top:8px;flex-direction:column;align-items:stretch;gap:6px;z-index:8}
+    .topbtns kbd{display:none}
+    #menuBtn{display:block;align-self:flex-end}
+    .topbtns>button:not(#menuBtn){display:none;text-align:left;min-width:170px;padding:10px 14px;font-size:14px}
+    .topbtns.open>button:not(#menuBtn){display:block}
+    #muteBtn::after{content:' Sound';}
+    #hud{left:8px;top:8px;max-width:calc(100vw - 130px)}
+    #log,#map{top:60px}#map{max-height:calc(100dvh - 70px)}#fx{top:60px;right:8px}
+  }
+

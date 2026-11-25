@@ -50,7 +50,7 @@ const endPtr=e=>{
 };
 // stop the browser treating joystick drags as page gestures (pull-to-refresh, swipe-to-close):
 // block touch scrolling everywhere except inside the scrollable panels
-const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc');
+const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx');
 document.addEventListener('touchmove',e=>{if(!scrollable(e.target))e.preventDefault();},{passive:false});
 cv.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);

@@ -191,7 +191,7 @@ function renderMap(){
   const pos={hub:[200,128],woods:[200,34],hollow:[56,128],reach:[344,128]};
   const stat=id=>{if(id==='hub')return '';const r=regionById(id),l=liveNodes(r);return `${l.filter(n=>SAVE.done[n]).length}/${l.length}`;};
   const col=id=>id==='hub'?'#ffd27a':regionDone(id)?'#8fe0a0':regionUnlocked(id)?'#ffd27a':'#7f8aa8';
-  let svg=`<svg viewBox="0 0 400 170" role="img" aria-label="Map: the village in the middle, Signpost Woods to the north, Lantern Hollow to the west, Crystal Reach to the east">`;
+  let svg=`<svg viewBox="0 0 400 182" role="img" aria-label="Map: the village in the middle, Signpost Woods to the north, Lantern Hollow to the west, Crystal Reach to the east">`;
   for(const id of ['woods','hollow','reach'])svg+=`<line x1="${pos.hub[0]}" y1="${pos.hub[1]}" x2="${pos[id][0]}" y2="${pos[id][1]}" stroke="${regionUnlocked(id)?'rgba(255,214,150,.55)':'rgba(140,150,180,.35)'}" stroke-width="2.5" stroke-dasharray="${regionUnlocked(id)?'':'5 5'}"/>`;
   for(const id of ['hub','woods','hollow','reach']){const [x,y]=pos[id],name=id==='hub'?'Frostmere Village':regionById(id).name,lk=id!=='hub'&&!regionUnlocked(id);
     svg+=`<g class="rg" data-r="${id}"><circle cx="${x}" cy="${y}" r="${id==='hub'?17:15}" fill="rgba(10,16,34,.85)" stroke="${col(id)}" stroke-width="2.5"/>
@@ -261,6 +261,11 @@ function updateWorldLogic(dt){
 /* ---------- effects panel ---------- */
 const fxPanel=$('fx');
 $('fxBtn').onclick=()=>fxPanel.classList.toggle('hidden');
+// phone menu: one button that drops down the others; picking an item closes it
+{const tb=$('topbtns'),mb=$('menuBtn'),set=o=>{tb.classList.toggle('open',o);mb.setAttribute('aria-expanded',o);mb.textContent=o?'✕ Close':'☰ Menu';};
+ mb.onclick=e=>{e.stopPropagation();set(!tb.classList.contains('open'));};
+ tb.querySelectorAll('button:not(#menuBtn)').forEach(b=>b.addEventListener('click',()=>set(false)));
+ addEventListener('pointerdown',e=>{if(tb.classList.contains('open')&&!tb.contains(e.target))set(false);});}
 fxPanel.querySelectorAll('input[data-fx]').forEach(i=>i.onchange=()=>{FX[i.dataset.fx]=i.checked;if(i.dataset.fx==='particles')parts.length=0;});
 function syncTodButtons(){document.querySelectorAll('#tod button').forEach(x=>x.classList.toggle('on',x.dataset.t===todKey));}
 document.querySelectorAll('#tod button').forEach(b=>b.onclick=()=>{todKey=b.dataset.t;syncTodButtons();persist();});
