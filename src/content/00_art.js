@@ -37,6 +37,7 @@ const ART={
     owl:       {files:['owl.png'], w:60,  h:100, ox:30, oy:92},                // Warden Quill on a perch
     lectern:   {files:['lectern.png'], w:56,  h:72,  ox:28, oy:64},                // waypoint
     ice:       {files:['ice_shell.png'], w:84,  h:120, ox:42, oy:104},               // frozen-stone overlay (semi-transparent)
+    iceCracks: {files:['ice_crack_1.png','ice_crack_2.png'], multi:true, w:84, h:120, ox:42, oy:104}, // cracking stages as waypoints are done
     cache:     {files:['cache_closed.png'], w:56,  h:52,  ox:28, oy:42},                // closed supply cache
     cacheOpen: {files:['cache_open.png'], w:56,  h:52,  ox:28, oy:42},
     fgPine:    {files:['fg_pine.png'], w:320, h:520, ox:160,oy:515},               // dark foreground silhouette

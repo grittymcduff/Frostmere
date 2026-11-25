@@ -11,6 +11,7 @@
   <label><input type="checkbox" data-fx="grade" checked> Color grade</label>
   <div class="sub">Sound</div>
   <label><input type="checkbox" id="musOn" checked> Music</label>
+  <label><input type="checkbox" id="voiceOn" checked> Narration</label>
   <label class="vol">Volume <input type="range" id="musVol" min="0" max="100" value="50" aria-label="Music volume"></label>
   <div class="sub">Time of day</div>
   <div class="row" id="tod"><button data-t="day">Day</button><button data-t="dusk" class="on">Dusk</button><button data-t="night">Night</button></div>
@@ -24,3 +25,4 @@
 <div id="banner"><b></b><span></span></div>
 <div id="fade"></div>
 <div id="calc" class="panel hidden" role="dialog" aria-label="Calculator"></div>
+<div id="narr" class="panel hidden" role="status" aria-live="polite"><div class="nh"><b>Warden Quill</b><span><button id="narrMute" aria-label="Narrator voice on or off">🔊</button><button id="narrSkip">Skip intro</button></span></div><p></p></div>

@@ -1,6 +1,6 @@
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5},tod:'dusk',stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5},tod:'dusk',voice:true,stats:{answered:0,first:0}});
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
@@ -39,7 +39,9 @@ const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contain
 function openDialog(npc,i=0){
   const lines=typeof npc.lines==='function'?npc.lines():npc.lines;
   showCard(`<div class="kicker">${esc(npc.role||'')}</div><h2>${esc(npc.name)}</h2><p class="say">${lines[i]}</p><div class="acts"><span class="pg">${i+1} / ${lines.length}</span></div>`);
-  const acts=card.querySelector('.acts'),b=btn(i<lines.length-1?'Next':'Close','primary');acts.appendChild(b);b.focus();
+  const acts=card.querySelector('.acts'),b=btn(i<lines.length-1?'Next':'Close','primary');
+  if(npc.id==='welcome'&&i===0){const h=btn('▶ Hear Quill’s welcome','sol');h.onclick=()=>{closeCard();Narr.play();};acts.appendChild(h);}
+  acts.appendChild(b);b.focus();
   b.onclick=()=>{if(i<lines.length-1)openDialog(npc,i+1);else{SAVE.seen[npc.id]=true;persist();closeCard();}};
 }
 function openWelcome(){openDialog(COURSE.welcome);}
@@ -80,7 +82,7 @@ function openLesson(id,j){
     const was=SAVE.lessons[lid];SAVE.lessons[lid]=true;
     const all=lessonsDone(id)===Ls.length;
     if(all&&SAVE.locked[id]){delete SAVE.locked[id];persist();thawFx(id);toast(`<b>${esc(n.title)}</b> thaws — challenge it again.`,3600);return;}
-    persist();if(!was)toast(all?`All waypoints for <b>${esc(n.title)}</b> complete.`:`Waypoint complete · next one is further along the path.`);
+    persist();if(!was&&SAVE.locked[id])crackFx(id);if(!was)toast(all?`All waypoints for <b>${esc(n.title)}</b> complete.`:`Waypoint complete · next one is further along the path.`);
   });
 }
 const ITEM={lens:{n:'Lens',d:'strikes out one wrong answer on a multiple-choice question'},feather:{n:'Feather',d:'reveals the first step on a calculation question'},charm:{n:'Warding Charm',d:'arm it before answering — your next miss on that question won’t count'}};
@@ -97,9 +99,28 @@ function openCache(id){
 }
 function stoneObj(id){return objects.find(o=>o.kind==='stone'&&o.node===id);}
 let shake=0;
-function freezeFx(id){const o=stoneObj(id);shake=.45;if(!o||!FX.particles)return;
+/* ice shell on frozen stones: grows on freeze, cracks as waypoints are finished, shatters on thaw */
+const ICEFX={};const nowS=()=>performance.now()/1000;
+function iceFrame(id){const L=lessonsOf(id).length,f=L?lessonsDone(id)/L:0,C=SPR.iceCracks;
+  if(f<=0||!C)return SPR.ice;return f<.6||!C[1]?C[0]:C[1];}
+function drawIce(g,o){
+  const id=o.node,fx=ICEFX[id];
+  if(fx){const e=nowS()-fx.t0;
+    if(fx.k==='freeze'&&e<.7){const p=1-(1-e/.7)**3,S=SPR.ice,top=o.y+2-S.oy,h=S.h*p;
+      g.save();g.beginPath();g.rect(o.x-S.ox-10,top+S.h-h,S.w+20,h+6);g.clip();const a=g.globalAlpha;g.globalAlpha=a*(.4+.6*p);
+      drawSpr(g,S,o.x,o.y+2,.94+.06*p);g.globalAlpha=a;g.restore();return;}
+    if(fx.k==='thaw'&&e<1.2){const C=SPR.iceCracks,S=C?C[C.length-1]:SPR.ice;
+      if(e<.45){const j=e*6;drawSpr(g,S,o.x+rand(-j,j),o.y+2);return;}
+      const k=(e-.45)/.75,a=g.globalAlpha;g.globalAlpha=a*(1-k)**1.5;drawSpr(g,S,o.x,o.y+2+k*6,1+k*.18);g.globalAlpha=a;return;}
+    if(fx.k==='crack'&&e<.5&&SAVE.locked[id]){drawSpr(g,iceFrame(id),o.x+rand(-2,2)*(1-e*2),o.y+2);return;}
+    delete ICEFX[id];}
+  if(SAVE.locked[id])drawSpr(g,iceFrame(id),o.x,o.y+2);
+}
+function iceBurst(o,n){for(let i=0;i<n;i++){const a=rand(0,TAU),v=rand(30,160);emit({t:'spark',x:o.x+rand(-14,14),y:o.y-rand(10,70),vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6,l:0,m:rand(.6,1.4),sz:rand(3,7)});}}
+function crackFx(id){const o=stoneObj(id);ICEFX[id]={k:'crack',t0:nowS()};shake=.18;if(o&&FX.particles)iceBurst(o,18);}
+function freezeFx(id){const o=stoneObj(id);ICEFX[id]={k:'freeze',t0:nowS()};shake=.45;if(!o||!FX.particles)return;
   for(let i=0;i<70;i++){const a=rand(0,TAU),v=rand(30,160);emit({t:'spark',x:o.x+rand(-14,14),y:o.y-rand(10,70),vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6,l:0,m:rand(.6,1.4),sz:rand(3,7)});}}
-function thawFx(id){const o=stoneObj(id);if(!o||!FX.particles)return;
+function thawFx(id){const o=stoneObj(id);ICEFX[id]={k:'thaw',t0:nowS()};if(!o||!FX.particles)return;setTimeout(()=>iceBurst(o,60),450);shake=.25;
   for(let i=0;i<50;i++){emit({t:'mote',warm:1,x:o.x+rand(-20,20),y:o.y-rand(0,80),vx:rand(-20,20),vy:rand(-60,-20),l:0,m:rand(1,2),sz:rand(2,5),ph:rand(0,9)});}}
 function openReview(){
   if(!SAVE.missed.length){showCard(`<div class="kicker">Review board</div><h2>Nothing to review</h2><p class="say">Questions you miss anywhere in the world are pinned here, so you can retry them with fresh numbers. The board is empty — nice work.</p>`);return;}
@@ -224,6 +245,6 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });

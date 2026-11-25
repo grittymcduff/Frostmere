@@ -251,7 +251,7 @@ function render(t){
       const sk=windAt(t,o.phase)*.045*o.sway;
       g.save();g.translate(o.x,o.y);g.transform(1,0,sk,1,0,0);g.scale(o.s,o.s);g.drawImage(o.spr.cv,-o.spr.ox,-o.spr.oy,o.spr.w,o.spr.h);g.restore();
     }else drawSpr(g,o.spr,o.x,o.y,o.s);
-    if(o.kind==='stone'&&SAVE.locked[o.node])drawSpr(g,SPR.ice,o.x,o.y+2);
+    if(o.kind==='stone')drawIce(g,o);
     g.globalAlpha=1;
     if(o.marker)drawMarker(g,o.marker,t);
   }
