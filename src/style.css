@@ -1,5 +1,5 @@
 
-  html,body{margin:0;height:100%;background:#070b16;overflow:hidden;touch-action:none;
+  html,body{margin:0;height:100%;background:#070b16;overflow:hidden;touch-action:none;overscroll-behavior:none;-webkit-touch-callout:none;
     font-family:Georgia,'Times New Roman',serif;color:#f3ead8;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
   canvas{display:block;width:100vw;height:100vh;height:100dvh}
   .panel{background:rgba(12,18,36,.78);border:1px solid rgba(255,214,150,.28);border-radius:12px;
@@ -151,3 +151,5 @@
   #narr.fadeIn p{animation:narrIn .5s ease}
   @keyframes narrIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   @media (max-width:600px){#narr{bottom:12px}#narr p{font-size:14px}}
+  body{position:fixed;inset:0}
+  #card,#log,#calc{overscroll-behavior:contain;touch-action:pan-y}
