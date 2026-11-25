@@ -43,8 +43,8 @@ function renderNotes(){
       h+=ok?`<div class="note"><b>${t}</b><div>${body}</div></div>`:`<div class="note locked"><b>${t}</b><div>Locked — finish a waypoint at <i>${esc(NODES[id]?.title||'')}</i>.</div></div>`;}
     h+=`</section>`;}
   const found=TOTEMS.filter(T=>SAVE.totems[T.id]).length;
-  h+=`<section class="nsec"><h3>Learning totems — ${found} of ${TOTEMS.length} found</h3><p class="meta">Carved totems hide off the paths, out past the stones. Each holds a story behind the ideas. Tap one you’ve found to hear it again.</p>`;
-  for(let m=1;m<=10;m++){const ts=TOTEMS.filter(T=>T.m===m);h+=`<div class="tot"><b>${esc(AREAS[m])}</b>`+ts.map(T=>SAVE.totems[T.id]?`<button class="lnk" data-tot="${T.id}">᛭ ${esc(T.t)}</button>`:`<span class="tlock">᛭ Undiscovered — ${esc(totemRegion(T)?.name||'')}, near ${esc(NODES[T.at]?.title||'')}</span>`).join('')+`</div>`;}
+  h+=`<section class="nsec"><h3>Learning totems — ${found} of ${TOTEMS.length} found</h3><p class="meta">Carved totems hide off the paths, scattered across every corner of each region. Each holds a story behind the ideas. Tap one you’ve found to hear it again.</p>`;
+  for(let m=1;m<=10;m++){const ts=TOTEMS.filter(T=>T.m===m);h+=`<div class="tot"><b>${esc(AREAS[m])}</b>`+ts.map(T=>SAVE.totems[T.id]?`<button class="lnk" data-tot="${T.id}">᛭ ${esc(T.t)}</button>`:`<span class="tlock">᛭ Undiscovered — somewhere in ${esc(totemRegion(T)?.name||'')}</span>`).join('')+`</div>`;}
   h+=`</section>`;
   const P=$('notes');P.innerHTML=h;P.querySelectorAll('[data-tot]').forEach(b=>b.onclick=()=>Teach.open(b.dataset.tot));$('notesClose').onclick=()=>P.classList.add('hidden');$('notesBasics').onclick=()=>Teach.open('basics');$('notesAll').onclick=()=>{notesAll=!notesAll;renderNotes();};
 }

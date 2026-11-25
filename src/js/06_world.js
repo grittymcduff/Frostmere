@@ -240,13 +240,8 @@ function buildWild(reg){
       const side=(j%2?1:-1)*44;addLesson(x-Math.sin(a)*side,y+Math.cos(a)*side,id,j);
     }
   });
-  // supply caches: hidden off the path, out beyond each stone, among the trees
-  pts.forEach(([sx,sy],k)=>{const id=nodes[k];if(!NODES[id]?.cache)return;
-    const base=Math.atan2(sy-cy,sx-cx);
-    for(let t=0;t<220;t++){const a=base+rand(-.9,.9),d=rand(150,330),x=sx+Math.cos(a)*d,y=sy+Math.sin(a)*d*.85;
-      if(x<70||y<110||x>W-70||y>H-140)continue;if(nearPath(x,y,70)||!free(x,y,24))continue;addCache(x,y,id);return;}
-    for(let t=0;t<400;t++){const x=rand(80,W-80),y=rand(120,H-160);if(nearPath(x,y,60)||!free(x,y,24))continue;addCache(x,y,id);return;}
-  });
+  // hidden things — supply caches and learning totems — spread over the whole region, not just beside the stones
+  scatterHidden(reg,pts,nodes,cx,cy);
   for(let i=24;i<ringS.length-12;i+=Math.floor(ringS.length/(th.lamps||8))){
     const [x,y]=ringS[i],[x2,y2]=ringS[Math.min(ringS.length-1,i+1)],a=Math.atan2(y2-y,x2-x);
     const lx=x+Math.sin(a)*52,ly=y-Math.cos(a)*52;if(free(lx,ly,16)){addLamp(lx,ly);ringLamps.push([lx,ly]);}
@@ -264,7 +259,6 @@ function buildWild(reg){
     addObj({kind:'birch',x,y,spr:pick(SPR.birch),s:rand(.85,1.15),sway:.6,phase:rand(0,9)});colliders.push({t:'c',x,y,r:8});claim(x,y,22);b++;}
   scatterForest(th.trees||170,.03,{x:cx,y:cy,rx:RX*1.3,ry:RY*1.4},th.treeSet);
   scatterSmall(30,th.bushes??30,th.flowers??16);
-  placeTotems(reg,pts,nodes,cx,cy);
   const sp={x:cx,y:H-170};
   return {start:sp,fromHub:sp,fromPrev:sp};
 }
@@ -309,15 +303,22 @@ function addCache(x,y,id){
   addObj({kind:'cache',cache:id,x,y,spr:SAVE.caches[id+'#C']?SPR.cacheOpen:SPR.cache});colliders.push({t:'c',x,y:y-4,r:13});claim(x,y,30);
   INTER.push({x,y,r:48,label:()=>SAVE.caches[id+'#C']?'Empty cache':'Open the supply cache',act:()=>openCache(id)});
 }
-/* learning totems: out past each stone, away from the path, so you have to go looking */
-function placeTotems(reg,pts,nodes,cx,cy){
-  const R2=mulberry(hashStr(reg.id)+911),rnd=(a,b)=>a+(b-a)*R2(),byStone={};
-  TOTEMS.filter(T=>reg.nodes.includes(T.at)).forEach(T=>(byStone[T.at]=byStone[T.at]||[]).push(T));
-  for(const sid in byStone){const k=nodes.indexOf(sid);if(k<0)continue;const [sx,sy]=pts[k],base=Math.atan2(sy-cy,sx-cx),list=byStone[sid];
-    list.forEach((T,j)=>{const aim=base+(j-(list.length-1)/2)*1.1;let ok=false;
-      for(let t=0;t<300&&!ok;t++){const a=aim+rnd(-.45,.45),d=rnd(190,420),x=sx+Math.cos(a)*d,y=sy+Math.sin(a)*d*.85;
-        if(x<80||y<120||x>W-80||y>H-150||nearPath(x,y,60)||!free(x,y,30))continue;addTotem(x,y,T);ok=true;}
-      for(let t=0;t<600&&!ok;t++){const x=rnd(90,W-90),y=rnd(130,H-170);if(nearPath(x,y,50)||!free(x,y,30))continue;addTotem(x,y,T);ok=true;}});}
+/* Best-candidate sampling: each item goes to the open spot (off the path, clear of the trees still to come)
+   that is farthest from everything already placed — stones, gates, the camp and the other hidden items.
+   The result covers the whole region evenly, corners and middle alike, and is the same on every visit. */
+function scatterHidden(reg,pts,nodes,cx,cy){
+  const R2=mulberry(hashStr(reg.id)+911),rnd=(a,b)=>a+(b-a)*R2();
+  const items=[];nodes.forEach(id=>{if(NODES[id]?.cache)items.push({k:'cache',id});});
+  TOTEMS.filter(T=>reg.nodes.includes(T.at)).forEach(T=>items.push({k:'totem',T}));
+  // interleave so caches and totems don't bunch by type
+  items.sort((a,b)=>hashStr(reg.id+(a.id||a.T.id))%97-hashStr(reg.id+(b.id||b.T.id))%97);
+  const taken=[...pts.map(([x,y])=>[x,y]),[cx,H-40],[cx,70],[PLAZA.x,PLAZA.y],[cx,H-170]];
+  const open=(x,y)=>x>=90&&y>=130&&x<=W-90&&y<=H-160&&!nearPath(x,y,70)&&free(x,y,34);
+  for(const it of items){let best=null,bs=-1;
+    for(let c=0,tries=0;c<60&&tries<3000;tries++){const x=rnd(90,W-90),y=rnd(130,H-160);if(!open(x,y))continue;c++;
+      let m=1e9;for(const [tx,ty] of taken)m=Math.min(m,Math.hypot(tx-x,(ty-y)*1.15));if(m>bs){bs=m;best=[x,y];}}
+    if(!best)continue;const [x,y]=best;taken.push(best);
+    if(it.k==='cache')addCache(x,y,it.id);else addTotem(x,y,it.T);}
 }
 function addTotem(x,y,T){
   addObj({kind:'totem',totem:T.id,x,y,spr:SAVE.totems?.[T.id]?SPR.totemRead:SPR.totem});colliders.push({t:'c',x,y:y-3,r:10});claim(x,y,34);
