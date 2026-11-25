@@ -108,5 +108,30 @@ function cloudInit(){
     const was=CLOUD.user;CLOUD.user=u;renderAcct();
     if(u&&!was){cloudPull(true);if(CLOUD.user)toast(`Signed in as <b>${esc(u.displayName||u.email||'player')}</b> — progress saves to your account.`);}
   })).catch(()=>{CLOUD.err='Cloud saves are unavailable right now — progress is saved on this device.';renderAcct();});
+  if(SAVE.seen.intro&&!SAVE.seen.cloudTip)setTimeout(showCloudTip,4000);
   addEventListener('visibilitychange',()=>{if(!CLOUD.user)return;if(document.hidden)cloudPush();else cloudPull(false);});
+}
+
+/* ---- one-time walkthrough: signing in to keep progress across devices ----
+   Shown right after Quill's intro (and once for players who saw the intro before this existed). */
+function showCloudTip(){
+  if(SAVE.seen.cloudTip||CLOUD.user||!card.classList.contains('hidden'))return;
+  SAVE.seen.cloudTip=true;persist();
+  const phone=matchMedia('(max-width:600px)').matches,where=phone?'Open <b>☰ Menu</b> (top right) and tap <b>Sign in</b>':'Click <b>Sign in</b> in the top bar';
+  if(!CLOUD_OK){showCard(`<div class="kicker">Saving your progress</div><h2>Play on more than one device?</h2>
+    <p class="say">This copy of the game saves progress in this browser only. To keep progress in your Google account and pick it up on any phone or computer, play on the main site:</p>
+    <p class="say"><a href="${PLAY_URL}" target="_blank" rel="noopener">${PLAY_URL.replace('https://','')}</a></p>
+    <p class="meta">You can also move progress by hand: <b>Quests → Save &amp; transfer</b> gives you a code to paste on another device.</p><div class="acts"></div>`);
+    const b=btn('Got it','primary');card.querySelector('.acts').appendChild(b);b.onclick=closeCard;b.focus();return;}
+  showCard(`<div class="kicker">Saving your progress</div><h2>Keep your progress on every device</h2>
+    <p class="say">Right now your progress lives only in this browser. Sign in once with Google and it follows you to any phone or computer.</p>
+    <ol class="steps">
+      <li><b>Sign in here.</b> ${where}, then choose your Google account. Everything you’ve done so far moves into your account.</li>
+      <li><b>Open the game on your other device</b> at <b>${PLAY_URL.replace('https://','').replace(/\/$/,'')}</b> and sign in with the <b>same</b> Google account.</li>
+      <li><b>That’s it.</b> Progress saves to your account as you play, and each device picks up the latest when you open it. Stones and lessons finished on either device are kept.</li>
+    </ol>
+    <p class="meta">No Google account? <b>Quests → Save &amp; transfer</b> gives you a code you can paste on another device instead. You can sign in or out anytime from <b>Quests → Account &amp; cloud save</b>.</p>
+    <div class="acts"></div>`);
+  const a=card.querySelector('.acts'),later=btn('Maybe later','sol'),go=btn('Sign in with Google','primary');a.append(later,go);go.focus();
+  later.onclick=closeCard;go.onclick=()=>{closeCard();cloudSignIn();};
 }

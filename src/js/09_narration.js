@@ -35,7 +35,7 @@ const Narr=(()=>{
   }
   function stop(finished){
     playing=false;clearTimeout(timer);if(au){au.onended=null;au.pause();}au=null;i=-1;
-    bar.classList.add('hidden');Music.duck(false);SAVE.seen.intro=true;settleMusic();persist();
+    bar.classList.add('hidden');Music.duck(false);SAVE.seen.intro=true;settleMusic();persist();setTimeout(showCloudTip,900);
   }
   function syncMute(){muteB.textContent=voiceOn()?'🔊':'🔇';muteB.title=voiceOn()?'Turn the narrator voice off (subtitles continue)':'Turn the narrator voice on';
     const v=$('voiceOn');if(v)v.checked=voiceOn();}
