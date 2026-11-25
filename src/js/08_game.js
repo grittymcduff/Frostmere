@@ -33,7 +33,7 @@ function renderHud(){
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
-const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||fading;
+const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||fading;
 
 /* ---------- dialogs ---------- */
 function openDialog(npc,i=0){
@@ -140,7 +140,7 @@ setInterval(()=>{const c=document.getElementById('exClock');if(c&&run?.mode==='e
 function examResult(items,mods){
   const n=items.length,score=items.filter(x=>!x.missed).length;
   const by=m=>items.filter(x=>+/^m(\d+)/.exec(x.node)[1]===m);
-  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};persist();
+  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};SAVE.examHist=[...(SAVE.examHist||[]),{s:score,n,t:examTime,ts:Date.now()}].slice(-12);persist();
   const weak=mods.filter(m=>by(m).some(x=>x.missed));
   const rows=mods.map(m=>{const its=by(m),ok=its.filter(x=>!x.missed).length;return `<tr><td class="mod">Module ${m}</td><td class="n ${ok===its.length?'ok':'no'}">${ok} / ${its.length}</td><td>${[...new Set(its.filter(x=>x.missed).map(x=>esc(NODES[x.node].title)))].join(', ')||'—'}</td></tr>`;}).join('');
   setTimeout(()=>{showCard(`<div class="kicker">Village exam hall · results</div><h2>${score} / ${n} on the first try</h2>
@@ -217,9 +217,9 @@ function renderMap(){
   M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{M.classList.add('hidden');const to=b.dataset.go;travel(to,to==='hub'?('from'+here[0].toUpperCase()+here.slice(1)):'fromHub');});
   M.querySelectorAll('svg .rg').forEach(g=>g.onclick=()=>$('mr-'+g.dataset.r)?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
-function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
+function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');$('report').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
 $('mapBtn').onclick=toggleMap;
-function toggleLog(){$('map').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
+function toggleLog(){$('map').classList.add('hidden');$('report').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
 $('logBtn').onclick=toggleLog;
 
 /* ---------- interaction + travel ---------- */
@@ -320,6 +320,6 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,toggleMap,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,toggleMap,toggleReport:()=>toggleReport(),practiceArea:m=>practiceArea(m),inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });

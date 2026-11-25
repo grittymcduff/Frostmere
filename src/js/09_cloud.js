@@ -47,6 +47,9 @@ function mergeSaves(a,b){
   m.locked={...(m.locked||{})};for(const id in m.done)delete m.locked[id];
   // items from caches only the older save opened
   for(const cid in o.caches||{})if(!(n.caches||{})[cid]){const it=NODES[cid.slice(0,-2)]?.cache?.item;if(it)m.inv[it]=(m.inv[it]||0)+1;}
+  m.qs={...(o.qs||{})};for(const [k,v] of Object.entries(n.qs||{}))if(!m.qs[k]||v.n>=m.qs[k].n)m.qs[k]=v;
+  m.days={...(o.days||{})};for(const [k,v] of Object.entries(n.days||{}))m.days[k]=Math.max(v,m.days[k]||0);
+  if((o.examHist||[]).length>(n.examHist||[]).length)m.examHist=o.examHist;
   m.stats={answered:Math.max(n.stats?.answered||0,o.stats?.answered||0),first:Math.max(n.stats?.first||0,o.stats?.first||0)};
   return m;
 }

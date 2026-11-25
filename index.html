@@ -158,7 +158,7 @@
   @keyframes narrIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   @media (max-width:600px){#narr{bottom:12px}#narr p{font-size:14px}}
   body{position:fixed;inset:0}
-  #card,#log,#calc,#map,#fx{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+  #card,#log,#calc,#map,#fx,#report{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
   .sc .cn{stroke:#2f7fb5;stroke-width:1.1;opacity:.45}
   .clock{float:right;margin-right:30px;font-variant-numeric:tabular-nums;color:#ffd27a}
   .exres td.mod{white-space:nowrap}.exres .ok{color:#8fe0a0}.exres .no{color:#ffb39a}
@@ -188,15 +188,39 @@
     .topbtns.open>button:not(#menuBtn){display:block}
     #muteBtn::after{content:' Sound';}
     #hud{left:8px;top:8px;max-width:calc(100vw - 130px)}
-    #log,#map{top:60px}#map{max-height:calc(100dvh - 70px)}#fx{top:60px;right:8px}
+    #log,#map,#report{top:60px}#map,#report{max-height:calc(100dvh - 70px)}#fx{top:60px;right:8px}
   }
 
+  #report{position:fixed;left:50%;top:62px;transform:translateX(-50%);width:min(720px,calc(100vw - 20px));max-height:calc(100dvh - 76px);overflow:auto;box-sizing:border-box;padding:18px 20px 16px;z-index:6}
+  #report h2{margin:2px 0 10px;font-size:21px;color:#ffe2a8;font-weight:normal}
+  #report .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+  #report .close{position:absolute;right:10px;top:8px;background:none;border:none;color:#f3ead8;font-size:22px;cursor:pointer;opacity:.6;width:40px;height:40px}
+  #report .rh{font-weight:normal;color:#ffe2a8;font-size:16px;margin:16px 0 8px;border-top:1px solid rgba(255,214,150,.18);padding-top:12px}
+  #report .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  #report .kpis div{background:rgba(255,255,255,.04);border:1px solid rgba(255,214,150,.15);border-radius:10px;padding:9px 10px}
+  #report .kpis b{display:block;font-size:20px;font-weight:normal;color:#ffe2a8;font-variant-numeric:tabular-nums}
+  #report .kpis span{font-size:12px;opacity:.75;line-height:1.3;display:block}
+  #report .focus .fc{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.08)}
+  #report .fc b{font-weight:normal;color:#f3ead8;display:block;font-size:14px}#report .fc span{font-size:12.5px;opacity:.75}#report .fc em{font-size:12px;opacity:.6;white-space:nowrap}
+  #report .go{flex:none;font:inherit;font-size:12.5px;padding:6px 11px;border-radius:8px;cursor:pointer;background:rgba(255,200,110,.14);color:#ffe2a8;border:1px solid rgba(255,214,150,.4)}
+  #report .ar{padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.07)}
+  #report .at{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}#report .at em{font-style:normal;font-size:12px;white-space:nowrap}
+  #report .bar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin:5px 0 4px;overflow:hidden}#report .bar i{display:block;height:100%;border-radius:3px}
+  #report .strong .bar i{background:#6fcf8a}#report .strong em{color:#8fe0a0}
+  #report .building .bar i{background:#e9b35c}#report .building em{color:#ffd27a}
+  #report .focus .bar i,#report .ar.focus .bar i{background:#e07a5f}#report .ar.focus em{color:#ffb39a}
+  #report .started em,#report .new em{opacity:.6}
+  #report .am{font-size:12px;opacity:.7}#report .lnk{background:none;border:none;color:#ffd27a;text-decoration:underline;cursor:pointer;font:inherit;font-size:12px;padding:0}
+  #report .spark{display:flex;align-items:flex-end;gap:6px;height:70px;padding:4px 0}
+  #report .spark i{flex:1;max-width:34px;background:rgba(233,179,92,.55);border-radius:4px 4px 0 0;position:relative}
+  #report .spark span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:11px;font-style:normal;opacity:.8}
+  @media (max-width:600px){#report .kpis{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <canvas id="game" aria-label="Frostmere Village game world"></canvas>
 <div id="hud" class="panel"><span class="t1" id="hName"></span><span class="t2" id="hSub"></span><div class="line" id="hLine"></div><div class="line inv hidden" id="hInv"></div></div>
-<div class="topbtns" id="topbtns"><button id="menuBtn" class="panel" aria-expanded="false" aria-controls="topbtns">☰ Menu</button><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="mapBtn" class="panel">Map <kbd>M</kbd></button><button id="muteBtn" class="panel" aria-label="Mute music and ambience" aria-pressed="false">🔊</button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
+<div class="topbtns" id="topbtns"><button id="menuBtn" class="panel" aria-expanded="false" aria-controls="topbtns">☰ Menu</button><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="mapBtn" class="panel">Map <kbd>M</kbd></button><button id="repBtn" class="panel">Progress <kbd>P</kbd></button><button id="muteBtn" class="panel" aria-label="Mute music and ambience" aria-pressed="false">🔊</button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
 <div id="fx" class="panel hidden">
   <div class="sub">Layers (code only)</div>
   <label><input type="checkbox" data-fx="light" checked> Lighting &amp; glow</label>
@@ -217,6 +241,7 @@
 </div>
 <div id="log" class="panel hidden" role="dialog" aria-label="Quest log"></div>
 <div id="map" class="panel hidden" role="dialog" aria-label="Map of Frostmere"></div>
+<div id="report" class="panel hidden" role="dialog" aria-label="Study report"></div>
 <div id="hint" class="panel">WASD / arrows to move · Shift to jog · tap to walk · drag for joystick · E to interact</div>
 <button id="readBtn" class="panel hidden"><span></span> <kbd>E</kbd></button>
 <div id="card" class="panel hidden" role="dialog" aria-modal="true"></div>
@@ -759,7 +784,7 @@ const endPtr=e=>{
 };
 // stop the browser treating joystick drags as page gestures (pull-to-refresh, swipe-to-close):
 // block touch scrolling everywhere except inside the scrollable panels
-const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx');
+const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx,#report');
 document.addEventListener('touchmove',e=>{if(!scrollable(e.target))e.preventDefault();},{passive:false});
 cv.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
@@ -1796,7 +1821,7 @@ function header(){const n=run.items.length,i=run.i;
   return `<div class="kicker">${esc(run.kicker)}${run.mode==='exam'?` · question ${i+1} of ${n} <span class="clock" id="exClock">${fmtClock(Date.now()-run.t0)}</span>`:''}</div><h2>${esc(run.title)}</h2>
   <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
 function renderPuzzle(){
-  const it=run.items[run.i],p=it.p;
+  const it=run.items[run.i],p=it.p;it.t0=it.t0||Date.now();
   let body=`${header()}${p.exhibit||''}<div class="ptools" id="ptools"></div><p class="q">${p.q}</p><div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
   showCard(body);
   const pz=card.querySelector('#pz'),acts=card.querySelector('#acts');
@@ -1821,7 +1846,7 @@ function renderPuzzle(){
       if(k==='charm'){it.charm=true;feedback('', '<b>Warding Charm armed:</b> your next miss on this question won’t count.');}
       drawTools();});
   };
-  const pass=()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1);};
+  const pass=()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1,it);};
   if(p.type==='mc'){
     const order=shuffle(p.opts.map((o,k)=>k));
     order.forEach(k=>{const b=btn(p.opts[k],'opt');b.dataset.k=k;pz.appendChild(b);b.onclick=()=>{if(b.disabled)return;
@@ -1834,7 +1859,7 @@ function renderPuzzle(){
     const go=()=>{const v=parseFloat(inp.value.replace(/[,$\s]/g,'').replace('−','-'));if(!isFinite(v)){feedback('no','Enter a number.');return;}
       if(Math.abs(v-p.a)<=(p.tol??.01)){inp.disabled=true;pass();}
       else{tries++;fail((p.hint||'Not quite — check your units and arithmetic.')+(tries>=2?'':''));if(tries>=2&&!acts.querySelector('.sol')){const s=btn('Show solution','sol');acts.appendChild(s);
-        s.onclick=()=>{inp.value=p.fmt?p.fmt(p.a):round(p.a,2);inp.disabled=true;feedback('ok',`<b>Solution:</b> ${p.solution||''} ${p.why||''}`);acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;stat(0);};}}};
+        s.onclick=()=>{inp.value=p.fmt?p.fmt(p.a):round(p.a,2);inp.disabled=true;feedback('ok',`<b>Solution:</b> ${p.solution||''} ${p.why||''}`);acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;stat(0,it);};}}};
     chk.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();e.stopPropagation();});setTimeout(()=>inp.focus(),50);
   }else if(p.type==='sort'){
     const items=shuffle(p.items.map((x,k)=>({...x,k}))),pick={};
@@ -1856,8 +1881,15 @@ function renderPuzzle(){
   drawTools();
 }
 function btn(label,cls){const b=document.createElement('button');b.className=cls;b.innerHTML=label;return b;}
-function stat(correctFirst){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;}
-function noteMiss(it){if(run.mode!=='stone'&&run.mode!=='exam')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function stat(correctFirst,it){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;if(it)recordQ(it,correctFirst);}
+/* per-question history for the study report: attempts, first-try hits, last 3 outcomes, time, calc vs concept */
+function recordQ(it,c){
+  const k=it.node+'|'+it.idx,Q=SAVE.qs||(SAVE.qs={}),q=Q[k]||(Q[k]={n:0,ok:0,h:'',ms:0});
+  q.n++;q.ok+=c;q.h=(q.h+c).slice(-3);q.ts=Date.now();q.ms+=Math.min(600000,Date.now()-(it.t0||Date.now()));q.c=it.p.type==='num'?1:0;
+  const d=new Date().toLocaleDateString('en-CA'),D=SAVE.days||(SAVE.days={});D[d]=(D[d]||0)+1;
+  const ks=Object.keys(D).sort();while(ks.length>60)delete D[ks.shift()];
+}
+function noteMiss(it){if(!['stone','exam','focus'].includes(run.mode))return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
   const r=run;if(r.mode==='exam')examTime=Date.now()-r.t0;closeCard();r.onDone&&r.onDone(r.items);persist();
@@ -3242,7 +3274,7 @@ function renderHud(){
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
-const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||fading;
+const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||fading;
 
 /* ---------- dialogs ---------- */
 function openDialog(npc,i=0){
@@ -3349,7 +3381,7 @@ setInterval(()=>{const c=document.getElementById('exClock');if(c&&run?.mode==='e
 function examResult(items,mods){
   const n=items.length,score=items.filter(x=>!x.missed).length;
   const by=m=>items.filter(x=>+/^m(\d+)/.exec(x.node)[1]===m);
-  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};persist();
+  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};SAVE.examHist=[...(SAVE.examHist||[]),{s:score,n,t:examTime,ts:Date.now()}].slice(-12);persist();
   const weak=mods.filter(m=>by(m).some(x=>x.missed));
   const rows=mods.map(m=>{const its=by(m),ok=its.filter(x=>!x.missed).length;return `<tr><td class="mod">Module ${m}</td><td class="n ${ok===its.length?'ok':'no'}">${ok} / ${its.length}</td><td>${[...new Set(its.filter(x=>x.missed).map(x=>esc(NODES[x.node].title)))].join(', ')||'—'}</td></tr>`;}).join('');
   setTimeout(()=>{showCard(`<div class="kicker">Village exam hall · results</div><h2>${score} / ${n} on the first try</h2>
@@ -3426,9 +3458,9 @@ function renderMap(){
   M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{M.classList.add('hidden');const to=b.dataset.go;travel(to,to==='hub'?('from'+here[0].toUpperCase()+here.slice(1)):'fromHub');});
   M.querySelectorAll('svg .rg').forEach(g=>g.onclick=()=>$('mr-'+g.dataset.r)?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
-function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
+function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');$('report').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
 $('mapBtn').onclick=toggleMap;
-function toggleLog(){$('map').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
+function toggleLog(){$('map').classList.add('hidden');$('report').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
 $('logBtn').onclick=toggleLog;
 
 /* ---------- interaction + travel ---------- */
@@ -3529,7 +3561,7 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,toggleMap,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,toggleMap,toggleReport:()=>toggleReport(),practiceArea:m=>practiceArea(m),inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });
 
@@ -3583,6 +3615,9 @@ function mergeSaves(a,b){
   m.locked={...(m.locked||{})};for(const id in m.done)delete m.locked[id];
   // items from caches only the older save opened
   for(const cid in o.caches||{})if(!(n.caches||{})[cid]){const it=NODES[cid.slice(0,-2)]?.cache?.item;if(it)m.inv[it]=(m.inv[it]||0)+1;}
+  m.qs={...(o.qs||{})};for(const [k,v] of Object.entries(n.qs||{}))if(!m.qs[k]||v.n>=m.qs[k].n)m.qs[k]=v;
+  m.days={...(o.days||{})};for(const [k,v] of Object.entries(n.days||{}))m.days[k]=Math.max(v,m.days[k]||0);
+  if((o.examHist||[]).length>(n.examHist||[]).length)m.examHist=o.examHist;
   m.stats={answered:Math.max(n.stats?.answered||0,o.stats?.answered||0),first:Math.max(n.stats?.first||0,o.stats?.first||0)};
   return m;
 }
@@ -3706,6 +3741,102 @@ $('voiceOn').onchange=e=>Narr.setVoice(e.target.checked);
 // (music now starts at 8%, so there is nothing to settle; kept for saves that still carry settled:false)
 function settleMusic(now){if(SAVE.music.settled)return;SAVE.music.settled=true;SAVE.music.vol=Math.min(SAVE.music.vol,.08);
   musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on&&!SAVE.muted,SAVE.music.vol,now?.1:4);}
+
+/* ==== js/09_report.js ==== */
+/* ---------- study report: where you're strong, where to focus, and one-tap targeted practice ----------
+   Built from SAVE.qs (every answered question: attempts, first-try hits, last three outcomes).
+   "Mastery" for an area = average of each answered question's last three outcomes, so recent
+   work counts and old mistakes fade. Areas need 3+ answered questions before they're rated. */
+const AREAS={
+  1:'Regression basics — signs, cause vs. coincidence, reading a coefficient',
+  2:'How the best-fit line works, holding factors constant, and R²',
+  3:'Building a model step by step, odd data points, and categories (dummies)',
+  4:'The ground rules behind regression, and reading residual plots',
+  5:'Testing whether an effect is real: t-tests, p-values, confidence ranges, F-tests',
+  6:'Cause and effect from experiments, and choosing which variables belong',
+  7:'Choosing the right shape: curves, logs, and time delays',
+  8:'Overlapping factors the model can’t tell apart (multicollinearity)',
+  9:'Errors that carry over from one period to the next (serial correlation)',
+  10:'Errors that grow with size (heteroskedasticity) and the tests for it',
+};
+const modOf=node=>+(/^m(\d+)/.exec(node)||[])[1];
+const stoneOf=node=>node.split('#')[0];
+function areaQuestions(m){  // every question that belongs to an area: stone challenges, waypoint practice, caches
+  const out=[];for(const [id,n] of Object.entries(NODES)){if(modOf(id)!==m||!n.puzzles)continue;n.puzzles.forEach((_,i)=>out.push(id+'|'+i));}
+  return out;}
+function computeReport(){
+  const Q=SAVE.qs||{},areas=[];let calc={n:0,ok:0},con={n:0,ok:0},ms=0;
+  for(const [k,q] of Object.entries(Q)){const t=q.c?calc:con;t.n+=q.n;t.ok+=q.ok;ms+=q.ms||0;}
+  for(let m=1;m<=10;m++){
+    const keys=areaQuestions(m),seen=keys.filter(k=>Q[k]);
+    const recent=seen.map(k=>{const h=Q[k].h;return [...h].reduce((s,c)=>s+ +c,0)/h.length;});
+    const att=seen.reduce((s,k)=>s+Q[k].n,0),first=seen.reduce((s,k)=>s+Q[k].ok,0);
+    const mastery=seen.length>=3?recent.reduce((a,b)=>a+b,0)/recent.length:null;
+    const stones=[...new Set(keys.map(k=>stoneOf(k.split('|')[0])))].filter(id=>NODES[id]&&!id.includes('#'));
+    const stoneM=stones.map(id=>{const ks=seen.filter(k=>stoneOf(k.split('|')[0])===id);if(ks.length<2)return null;
+      return {id,m:ks.reduce((s,k)=>{const h=Q[k].h;return s+[...h].reduce((a,c)=>a+ +c,0)/h.length;},0)/ks.length};}).filter(Boolean).sort((a,b)=>a.m-b.m);
+    const region=COURSE.regions.find(r=>r.nodes.some(id=>modOf(id)===m));
+    const pinned=(SAVE.missed||[]).filter(x=>modOf(x.node)===m).length;
+    areas.push({m,name:AREAS[m],total:keys.length,seen:seen.length,att,first,mastery,weakStone:stoneM[0],region,open:region?regionUnlocked(region.id):true,pinned});
+  }
+  // what to study next: weakest rated areas first, then open areas you haven't really started
+  const rated=areas.filter(a=>a.mastery!==null&&a.mastery<.8).sort((a,b)=>a.mastery-b.mastery);
+  const fresh=areas.filter(a=>a.mastery===null).sort((a,b)=>a.m-b.m);
+  const focus=[...rated,...fresh].slice(0,3);
+  const days=SAVE.days||{},today=new Date();let week=0,streak=0;
+  for(let i=0;i<7;i++){const d=new Date(today-i*864e5).toLocaleDateString('en-CA');if(days[d])week++;}
+  for(let i=0;i<365;i++){const d=new Date(today-i*864e5).toLocaleDateString('en-CA');if(days[d])streak++;else if(i>0)break;}
+  return {areas,focus,calc,con,ms,week,streak,total:SAVE.stats.answered,first:SAVE.stats.first};
+}
+const pct=v=>Math.round(v*100)+'%';
+const lvl=a=>a.mastery===null?(a.seen?'started':'new'):a.mastery>=.8?'strong':a.mastery>=.6?'building':'focus';
+const LVL={strong:'Strong',building:'Building',focus:'Focus here',started:'Just started',new:'Not started'};
+function renderReport(){
+  const R=computeReport(),acc=R.total?R.first/R.total:0,H=SAVE.examHist||[];
+  const mins=Math.round(R.ms/60000);
+  let h=`<button class="close" id="repClose" aria-label="Close">×</button><div class="kicker">Study report</div><h2>Where you stand, and what to study next</h2>`;
+  if(!R.total){h+=`<p class="say">Nothing to report yet. Answer a few questions — at a waypoint, a stone, or the practice final — and this page will show which areas are strong and which need work.</p>`;}
+  else{
+    h+=`<div class="kpis">
+      <div><b>${R.total}</b><span>questions answered</span></div>
+      <div><b>${pct(acc)}</b><span>right on the first try</span></div>
+      <div><b>${R.calc.n?pct(R.calc.ok/R.calc.n):'—'}</b><span>on calculations</span></div>
+      <div><b>${R.con.n?pct(R.con.ok/R.con.n):'—'}</b><span>on concept questions</span></div>
+      <div><b>${R.week}/7</b><span>days studied this week${R.streak>1?` · ${R.streak}-day streak`:''}</span></div>
+      <div><b>${H.length?`${H[H.length-1].s}/${H[H.length-1].n}`:'—'}</b><span>last practice final${H.length>1?` (was ${H[H.length-2].s})`:''}</span></div></div>`;
+    if(R.calc.n>=5&&R.con.n>=5&&Math.abs(R.calc.ok/R.calc.n-R.con.ok/R.con.n)>=.12)
+      h+=`<p class="meta">You do noticeably better on ${R.calc.ok/R.calc.n<R.con.ok/R.con.n?'concept questions than calculations — slow down on the arithmetic and use the calculator':'calculations than concept questions — read the lessons’ “why” explanations closely'}.</p>`;
+  }
+  if(R.focus.length){
+    h+=`<h3 class="rh">Focus next</h3><div class="focus">`;
+    R.focus.forEach((a,i)=>{const why=a.mastery!==null?`${pct(a.mastery)} right on your recent tries${a.weakStone?` · weakest: ${esc(NODES[a.weakStone.id].title)}`:''}`:a.seen?`only ${a.seen} of ${a.total} questions tried so far`:'not started yet';
+      h+=`<div class="fc"><div><b>${i+1}. ${esc(a.name)}</b><span>${why}${a.pinned?` · ${a.pinned} on the review board`:''}</span></div><button class="go" data-pr="${a.m}">Practice now</button></div>`;});
+    h+=`</div>`;
+  }
+  h+=`<h3 class="rh">All areas</h3><div class="areas">`;
+  for(const a of R.areas){const L=lvl(a),w=a.mastery!==null?a.mastery:0;
+    h+=`<div class="ar ${L}"><div class="at"><span>${esc(a.name)}</span><em>${LVL[L]}${a.mastery!==null?` · ${pct(a.mastery)}${a.seen<6?' (early read)':''}`:''}</em></div>
+      <div class="bar"><i style="width:${Math.round(w*100)}%"></i></div>
+      <div class="am">${a.seen} of ${a.total} questions tried${a.att?` · ${a.first} of ${a.att} right first time`:''}${!a.open?' · region not reached yet':''} · <button class="lnk" data-pr="${a.m}">practice</button></div></div>`;}
+  h+=`</div>`;
+  if(H.length>1){const mx=Math.max(...H.map(x=>x.n));h+=`<h3 class="rh">Practice final history</h3><div class="spark">${H.map(x=>`<i title="${x.s}/${x.n}" style="height:${Math.max(6,x.s/mx*100)}%"><span>${x.s}</span></i>`).join('')}</div>`;}
+  h+=`<p class="meta">Mastery uses each question’s last three attempts, so improvement shows up quickly. Areas are rated after 3 different questions. ${mins?`About ${mins} min of question time so far.`:''}</p>`;
+  const P=$('report');P.innerHTML=h;$('repClose').onclick=()=>P.classList.add('hidden');
+  P.querySelectorAll('[data-pr]').forEach(b=>b.onclick=()=>{P.classList.add('hidden');practiceArea(+b.dataset.pr);});
+}
+/* six questions from one area: missed and least-practised first, a few fresh ones mixed in */
+function practiceArea(m){
+  const Q=SAVE.qs||{},keys=areaQuestions(m);  // every area is open for practice, even before its region is reached
+  const score=k=>{const q=Q[k];if(!q)return .55+Math.random()*.2;const h=q.h;return [...h].reduce((s,c)=>s+ +c,0)/h.length+Math.random()*.25;};
+  const pickd=keys.map(k=>[k,score(k)]).sort((a,b)=>a[1]-b[1]).slice(0,6).map(x=>x[0]);
+  if(!pickd.length){toast('Nothing to practice in that area yet.');return;}
+  const items=shuffle(pickd).map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};});
+  startSession(`Focused practice`,AREAS[m],items,res=>{const ok=res.filter(x=>!x.missed).length;
+    toast(`Focused practice · ${ok} / ${res.length} on the first try`,3200);setTimeout(()=>{renderReport();$('report').classList.remove('hidden');},400);},'focus');
+}
+function toggleReport(){const P=$('report');if(P.classList.contains('hidden')){$('log').classList.add('hidden');$('map').classList.add('hidden');renderReport();P.classList.remove('hidden');keys.clear();}else P.classList.add('hidden');}
+$('repBtn').onclick=toggleReport;
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='p'&&card.classList.contains('hidden')&&!(e.target instanceof HTMLInputElement))toggleReport();if(e.key==='Escape')$('report').classList.add('hidden');});
 
 /* ==== js/09_sfx.js ==== */
 /* ---------- ambient sound + footsteps (Web Audio, from recorded clips) ----------

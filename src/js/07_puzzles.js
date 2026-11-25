@@ -100,7 +100,7 @@ function header(){const n=run.items.length,i=run.i;
   return `<div class="kicker">${esc(run.kicker)}${run.mode==='exam'?` · question ${i+1} of ${n} <span class="clock" id="exClock">${fmtClock(Date.now()-run.t0)}</span>`:''}</div><h2>${esc(run.title)}</h2>
   <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
 function renderPuzzle(){
-  const it=run.items[run.i],p=it.p;
+  const it=run.items[run.i],p=it.p;it.t0=it.t0||Date.now();
   let body=`${header()}${p.exhibit||''}<div class="ptools" id="ptools"></div><p class="q">${p.q}</p><div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
   showCard(body);
   const pz=card.querySelector('#pz'),acts=card.querySelector('#acts');
@@ -125,7 +125,7 @@ function renderPuzzle(){
       if(k==='charm'){it.charm=true;feedback('', '<b>Warding Charm armed:</b> your next miss on this question won’t count.');}
       drawTools();});
   };
-  const pass=()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1);};
+  const pass=()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1,it);};
   if(p.type==='mc'){
     const order=shuffle(p.opts.map((o,k)=>k));
     order.forEach(k=>{const b=btn(p.opts[k],'opt');b.dataset.k=k;pz.appendChild(b);b.onclick=()=>{if(b.disabled)return;
@@ -138,7 +138,7 @@ function renderPuzzle(){
     const go=()=>{const v=parseFloat(inp.value.replace(/[,$\s]/g,'').replace('−','-'));if(!isFinite(v)){feedback('no','Enter a number.');return;}
       if(Math.abs(v-p.a)<=(p.tol??.01)){inp.disabled=true;pass();}
       else{tries++;fail((p.hint||'Not quite — check your units and arithmetic.')+(tries>=2?'':''));if(tries>=2&&!acts.querySelector('.sol')){const s=btn('Show solution','sol');acts.appendChild(s);
-        s.onclick=()=>{inp.value=p.fmt?p.fmt(p.a):round(p.a,2);inp.disabled=true;feedback('ok',`<b>Solution:</b> ${p.solution||''} ${p.why||''}`);acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;stat(0);};}}};
+        s.onclick=()=>{inp.value=p.fmt?p.fmt(p.a):round(p.a,2);inp.disabled=true;feedback('ok',`<b>Solution:</b> ${p.solution||''} ${p.why||''}`);acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;stat(0,it);};}}};
     chk.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();e.stopPropagation();});setTimeout(()=>inp.focus(),50);
   }else if(p.type==='sort'){
     const items=shuffle(p.items.map((x,k)=>({...x,k}))),pick={};
@@ -160,8 +160,15 @@ function renderPuzzle(){
   drawTools();
 }
 function btn(label,cls){const b=document.createElement('button');b.className=cls;b.innerHTML=label;return b;}
-function stat(correctFirst){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;}
-function noteMiss(it){if(run.mode!=='stone'&&run.mode!=='exam')return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function stat(correctFirst,it){SAVE.stats.answered++;SAVE.stats.first+=correctFirst;if(it)recordQ(it,correctFirst);}
+/* per-question history for the study report: attempts, first-try hits, last 3 outcomes, time, calc vs concept */
+function recordQ(it,c){
+  const k=it.node+'|'+it.idx,Q=SAVE.qs||(SAVE.qs={}),q=Q[k]||(Q[k]={n:0,ok:0,h:'',ms:0});
+  q.n++;q.ok+=c;q.h=(q.h+c).slice(-3);q.ts=Date.now();q.ms+=Math.min(600000,Date.now()-(it.t0||Date.now()));q.c=it.p.type==='num'?1:0;
+  const d=new Date().toLocaleDateString('en-CA'),D=SAVE.days||(SAVE.days={});D[d]=(D[d]||0)+1;
+  const ks=Object.keys(D).sort();while(ks.length>60)delete D[ks.shift()];
+}
+function noteMiss(it){if(!['stone','exam','focus'].includes(run.mode))return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
   const r=run;if(r.mode==='exam')examTime=Date.now()-r.t0;closeCard();r.onDone&&r.onDone(r.items);persist();
