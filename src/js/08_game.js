@@ -1,6 +1,6 @@
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.08,settled:true},sfx:{on:true,vol:.1},muted:false,audioV:2,tod:'dusk',voice:true,stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},totems:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.08,settled:true},sfx:{on:true,vol:.1},muted:false,audioV:2,tod:'dusk',voice:true,stats:{answered:0,first:0}});
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})},audioV:s.audioV};}catch(e){}}
@@ -31,6 +31,12 @@ function renderHud(){
   const iv=invText();$('hInv').textContent=iv?`Carrying: ${iv}`:'';$('hInv').classList.toggle('hidden',!iv);
 }
 let toastT=0;
+function openTotem(id){
+  const first=!SAVE.totems[id];SAVE.totems[id]=true;persist();
+  if(first){chime('cache');const o=objects.find(o=>o.totem===id);if(o)o.spr=SPR.totemRead;
+    const n=Object.keys(SAVE.totems).filter(k=>TEACH[k]).length;setTimeout(()=>toast(`Learning totem found — <b>${n} of ${TOTEMS.length}</b>. Replay any of them from Notes.`,4200),400);}
+  Teach.open(id);
+}
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
 const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||!$('notes').classList.contains('hidden')||!$('whatsnew').classList.contains('hidden')||fading;
@@ -181,6 +187,7 @@ function renderLog(){
     h+=`<section class="reg ${un?'':'locked'}"><div class="rh"><b>${esc(r.name)}</b><span>${dn?'Restored':un?'Open':'Sealed — restore '+esc(regionById(r.requires).name)+' first'}</span></div><div class="rs">${esc(r.sub)}</div><ul>`;
     for(const id of r.nodes){const n=NODES[id],st=nodeState(id),L=lessonsOf(id).length;h+=`<li>${icon(st)}<span>${esc(n?.title||id)}${L?`<small> · waypoints ${lessonsDone(id)}/${L}</small>`:''}</span><em>${st==='done'?`${SAVE.done[id].best} / ${n.puzzles.length}`:st==='sealed'?'later build':st==='frozen'?'frozen':''}</em></li>`;}
     const cs=r.nodes.filter(id=>NODES[id]?.cache);if(cs.length)h+=`<li class="cl"><i class="ic cache"></i><span>Supply caches found</span><em>${cs.filter(id=>SAVE.caches[id+'#C']).length} / ${cs.length}</em></li>`;
+    const ts=TOTEMS.filter(T=>r.nodes.includes(T.at));if(ts.length)h+=`<li class="cl"><i class="ic todo">᛭</i><span>Learning totems found</span><em>${ts.filter(T=>SAVE.totems[T.id]).length} / ${ts.length}</em></li>`;
     h+=`</ul></section>`;
   }
   const acc=SAVE.stats.answered?Math.round(100*SAVE.stats.first/SAVE.stats.answered):0;
@@ -263,6 +270,7 @@ function updateWorldLogic(dt){
     }}
   // stone lights follow quest state
   for(const L of lights)if(L.node){const s=nodeState(L.node);L.col=s==='done'?[120,230,150]:s==='sealed'?[110,125,190]:s==='frozen'?[140,205,255]:[255,205,120];L.i=s==='sealed'?.45:.85;}
+  for(const o of objects)if(o.totem&&!SAVE.totems[o.totem]&&FX.particles&&Math.hypot(player.x-o.x,player.y-o.y)<420&&R()<dt*3)emit({t:'spark',x:o.x+rand(-10,10),y:o.y-rand(80,104),vx:rand(-5,5),vy:rand(-20,-6),l:0,m:rand(.6,1.2),sz:rand(2,3.5)});
   for(const o of objects)if(o.cache&&!SAVE.caches[o.cache+'#C']&&FX.particles&&Math.hypot(player.x-o.x,player.y-o.y)<380&&R()<dt*5)emit({t:'spark',x:o.x+rand(-12,12),y:o.y-rand(4,22),vx:rand(-6,6),vy:rand(-22,-8),l:0,m:rand(.6,1.2),sz:rand(2,4)});
   // tapped an object from afar: use it once we're close enough
   if(tapTarget?.it&&Math.hypot(player.x-tapTarget.it.x,player.y-tapTarget.it.y)<tapTarget.it.r){const it=tapTarget.it;tapTarget=null;if(!uiOpen())it.act();}
@@ -334,6 +342,6 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openReview,openExam,toggleMap,openDaily:()=>openDaily(),openDesk:()=>openDesk(),toggleNotes:()=>toggleNotes(),quillSay:t=>quillSay(t),dueKeys:()=>dueKeys(),toggleReport:()=>toggleReport(),practiceArea:m=>practiceArea(m),inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,openTotem,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openReview,openExam,toggleMap,openDaily:()=>openDaily(),openDesk:()=>openDesk(),toggleNotes:()=>toggleNotes(),quillSay:t=>quillSay(t),dueKeys:()=>dueKeys(),toggleReport:()=>toggleReport(),practiceArea:m=>practiceArea(m),inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });

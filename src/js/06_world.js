@@ -88,7 +88,7 @@ function initSprites(){
   SPR.lamp=makeLamp();SPR.crate=makeCrate();SPR.barrel=makeBarrel();SPR.snowman=makeSnowman();
   SPR.crystals=[0,1,2].map(()=>makeCrystals());SPR.sign=makeSign();SPR.flowers=[0,1,2].map(()=>makeFlowers());
   SPR.firepit=makeFirePit();SPR.fgPine=makeFgPine();
-  SPR.gate=makeGate();SPR.stone=makeStone();SPR.owl=makeOwl();SPR.lectern=makeLectern();SPR.ice=makeIce();SPR.cache=makeCacheSpr(false);SPR.cacheOpen=makeCacheSpr(true);
+  SPR.gate=makeGate();SPR.stone=makeStone();SPR.owl=makeOwl();SPR.lectern=makeLectern();SPR.ice=makeIce();SPR.cache=makeCacheSpr(false);SPR.cacheOpen=makeCacheSpr(true);SPR.totem=makeTotem(false);SPR.totemRead=makeTotem(true);
   SPR.cabins=[196,176,170,156,150].map(w=>makeCabin(w));
 }
 
@@ -264,6 +264,7 @@ function buildWild(reg){
     addObj({kind:'birch',x,y,spr:pick(SPR.birch),s:rand(.85,1.15),sway:.6,phase:rand(0,9)});colliders.push({t:'c',x,y,r:8});claim(x,y,22);b++;}
   scatterForest(th.trees||170,.03,{x:cx,y:cy,rx:RX*1.3,ry:RY*1.4},th.treeSet);
   scatterSmall(30,th.bushes??30,th.flowers??16);
+  placeTotems(reg,pts,nodes,cx,cy);
   const sp={x:cx,y:H-170};
   return {start:sp,fromHub:sp,fromPrev:sp};
 }
@@ -307,6 +308,41 @@ function makeCacheSpr(open){
 function addCache(x,y,id){
   addObj({kind:'cache',cache:id,x,y,spr:SAVE.caches[id+'#C']?SPR.cacheOpen:SPR.cache});colliders.push({t:'c',x,y:y-4,r:13});claim(x,y,30);
   INTER.push({x,y,r:48,label:()=>SAVE.caches[id+'#C']?'Empty cache':'Open the supply cache',act:()=>openCache(id)});
+}
+/* learning totems: out past each stone, away from the path, so you have to go looking */
+function placeTotems(reg,pts,nodes,cx,cy){
+  const R2=mulberry(hashStr(reg.id)+911),rnd=(a,b)=>a+(b-a)*R2(),byStone={};
+  TOTEMS.filter(T=>reg.nodes.includes(T.at)).forEach(T=>(byStone[T.at]=byStone[T.at]||[]).push(T));
+  for(const sid in byStone){const k=nodes.indexOf(sid);if(k<0)continue;const [sx,sy]=pts[k],base=Math.atan2(sy-cy,sx-cx),list=byStone[sid];
+    list.forEach((T,j)=>{const aim=base+(j-(list.length-1)/2)*1.1;let ok=false;
+      for(let t=0;t<300&&!ok;t++){const a=aim+rnd(-.45,.45),d=rnd(190,420),x=sx+Math.cos(a)*d,y=sy+Math.sin(a)*d*.85;
+        if(x<80||y<120||x>W-80||y>H-150||nearPath(x,y,60)||!free(x,y,30))continue;addTotem(x,y,T);ok=true;}
+      for(let t=0;t<600&&!ok;t++){const x=rnd(90,W-90),y=rnd(130,H-170);if(nearPath(x,y,50)||!free(x,y,30))continue;addTotem(x,y,T);ok=true;}});}
+}
+function addTotem(x,y,T){
+  addObj({kind:'totem',totem:T.id,x,y,spr:SAVE.totems?.[T.id]?SPR.totemRead:SPR.totem});colliders.push({t:'c',x,y:y-3,r:10});claim(x,y,34);
+  addLight(x,y-58,90,[140,210,255],.6,.1);
+  INTER.push({x,y,r:50,label:()=>SAVE.totems?.[T.id]?'Read the totem again':'Read the learning totem',act:()=>openTotem(T.id)});
+}
+function makeTotem(read){
+  return makeSprite(60,110,30,100,g=>{
+    g.fillStyle='rgba(40,55,95,.3)';ell(g,4,0,18,5);
+    const wood=g.createLinearGradient(-12,0,12,0);wood.addColorStop(0,'#4a3122');wood.addColorStop(.5,'#7a5236');wood.addColorStop(1,'#4a3122');
+    g.fillStyle=wood;g.beginPath();g.roundRect(-11,-84,22,84,4);g.fill();
+    // carved faces
+    for(const [y,c] of [[-18,'#d9a441'],[-44,'#5fa9d9'],[-70,'#c9553f']]){
+      g.fillStyle='rgba(30,18,10,.55)';g.fillRect(-11,y+9,22,2);
+      g.fillStyle=c;g.beginPath();g.roundRect(-8,y-7,16,13,3);g.fill();
+      g.fillStyle='#2a1a10';g.fillRect(-5,y-3,3,3);g.fillRect(2,y-3,3,3);g.fillRect(-3,y+2,6,1.6);}
+    // wings at the top
+    g.fillStyle='#8a5a36';g.beginPath();g.moveTo(-11,-78);g.lineTo(-26,-86);g.lineTo(-11,-70);g.closePath();g.fill();
+    g.beginPath();g.moveTo(11,-78);g.lineTo(26,-86);g.lineTo(11,-70);g.closePath();g.fill();
+    // glowing rune
+    g.fillStyle=read?'rgba(140,170,200,.55)':'#bfe8ff';g.beginPath();g.arc(0,-94,6,0,TAU);g.fill();
+    if(!read){g.fillStyle='rgba(160,220,255,.35)';g.beginPath();g.arc(0,-94,11,0,TAU);g.fill();}
+    g.fillStyle='rgba(250,252,255,.95)';ell(g,0,-85,13,3.5);ell(g,-20,-85,5,1.5);ell(g,20,-85,5,1.5);
+    g.fillStyle='rgba(250,252,255,.9)';ell(g,-8,-1,9,2.5);ell(g,10,0,7,2);
+  });
 }
 function addLesson(x,y,nodeId,j){
   const lid=lessonId(nodeId,j);

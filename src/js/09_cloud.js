@@ -41,7 +41,7 @@ function mergeSaves(a,b){
   if((a.reset||0)!==(b.reset||0))return (a.reset||0)>(b.reset||0)?a:b;
   const [n,o]=(a.t||0)>=(b.t||0)?[a,b]:[b,a];
   const m=JSON.parse(JSON.stringify(n));
-  for(const k of ['lessons','caches','seen'])m[k]={...(o[k]||{}),...(n[k]||{})};
+  for(const k of ['lessons','caches','seen','totems'])m[k]={...(o[k]||{}),...(n[k]||{})};
   m.done={...(o.done||{})};
   for(const [id,v] of Object.entries(n.done||{}))m.done[id]=m.done[id]?{best:Math.max(m.done[id].best,v.best),ts:Math.min(m.done[id].ts||v.ts,v.ts||m.done[id].ts)}:v;
   m.locked={...(m.locked||{})};for(const id in m.done)delete m.locked[id];

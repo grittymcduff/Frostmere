@@ -257,3 +257,8 @@
   #lecture .go{font:inherit;font-size:13px;padding:7px 13px;border-radius:9px;cursor:pointer;background:#e9b35c;color:#2a1d0c;border:none}
   #report .fb2{display:flex;gap:6px;flex:none}
   #map li .lnk{background:none;border:none;color:#ffd27a;text-decoration:underline;cursor:pointer;font:inherit;font-size:12px;padding:0}
+
+#notes .tot{display:flex;flex-direction:column;gap:4px;margin:8px 0 12px}
+#notes .tot>b{font-size:.92em;opacity:.85}
+#notes .tot .lnk{text-align:left}
+#notes .tot .tlock{opacity:.5;font-style:italic;font-size:.92em}

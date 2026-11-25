@@ -42,7 +42,11 @@ function renderNotes(){
     for(const [id,t,body] of ns){const ok=notesAll||noteOpen(id);
       h+=ok?`<div class="note"><b>${t}</b><div>${body}</div></div>`:`<div class="note locked"><b>${t}</b><div>Locked — finish a waypoint at <i>${esc(NODES[id]?.title||'')}</i>.</div></div>`;}
     h+=`</section>`;}
-  const P=$('notes');P.innerHTML=h;$('notesClose').onclick=()=>P.classList.add('hidden');$('notesBasics').onclick=()=>Teach.open('basics');$('notesAll').onclick=()=>{notesAll=!notesAll;renderNotes();};
+  const found=TOTEMS.filter(T=>SAVE.totems[T.id]).length;
+  h+=`<section class="nsec"><h3>Learning totems — ${found} of ${TOTEMS.length} found</h3><p class="meta">Carved totems hide off the paths, out past the stones. Each holds a story behind the ideas. Tap one you’ve found to hear it again.</p>`;
+  for(let m=1;m<=10;m++){const ts=TOTEMS.filter(T=>T.m===m);h+=`<div class="tot"><b>${esc(AREAS[m])}</b>`+ts.map(T=>SAVE.totems[T.id]?`<button class="lnk" data-tot="${T.id}">᛭ ${esc(T.t)}</button>`:`<span class="tlock">᛭ Undiscovered — ${esc(totemRegion(T)?.name||'')}, near ${esc(NODES[T.at]?.title||'')}</span>`).join('')+`</div>`;}
+  h+=`</section>`;
+  const P=$('notes');P.innerHTML=h;P.querySelectorAll('[data-tot]').forEach(b=>b.onclick=()=>Teach.open(b.dataset.tot));$('notesClose').onclick=()=>P.classList.add('hidden');$('notesBasics').onclick=()=>Teach.open('basics');$('notesAll').onclick=()=>{notesAll=!notesAll;renderNotes();};
 }
 function toggleNotes(){const P=$('notes');if(P.classList.contains('hidden')){['log','map','report'].forEach(x=>$(x).classList.add('hidden'));renderNotes();P.classList.remove('hidden');keys.clear();}else P.classList.add('hidden');}
 $('notesBtn').onclick=toggleNotes;
@@ -114,7 +118,8 @@ function openDesk(){
 }
 
 /* ---------- "what's new" greeting for returning players: closes itself after 15 s ---------- */
-const WHATS_NEW={v:3,items:[
+const WHATS_NEW={v:4,items:[
+  ['᛭','Learning totems','Thirty carved totems now hide off the paths — three for every module. Each tells the story behind an idea: where it came from, where it shows up in business, and the mistakes people make with it. Your Notes keep the ones you’ve found.'],
   ['🎓','Teach me','Stuck on a stone? Tap “Teach me” for a one-minute refresher from Warden Quill — on every stone card, inside questions, on the map and in your progress report. New to the course? Start with “Key terms” on the map or in Notes.'],
   ['✓','Accuracy pass','Every question was checked against the course. A few numbers, labels and generated charts were tightened so the right answer is always clear.'],
   ['❄','Crystal Reach is open','Modules 7–10: functional form, multicollinearity, serial correlation and heteroskedasticity — four new stones.'],
