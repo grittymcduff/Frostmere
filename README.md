@@ -1,8 +1,8 @@
-# Free Market Quest
+# Frostmere — Study Quest
 
 A single-player, storybook-style browser game for studying **Applied Business Research Tools**: walk a snowy world, restore study stones, and answer trivia and data puzzles from the course.
 
-**Play:** https://grittymcduff.github.io/Free-Market-Quest/
+**Play:** https://grittymcduff.github.io/Frostmere/
 
 ## How it's built
 - `src/` holds the source. Edit there, never `index.html` directly.

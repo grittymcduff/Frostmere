@@ -1,4 +1,4 @@
-# Free Market Quest — Art Guide
+# Frostmere — Art Guide
 
 Every object in the world is currently drawn in code. Any of them can be replaced with painted art (e.g. from Gemini / Nano Banana) **one piece at a time**. The engine keeps doing the lighting, glow, snow, wind sway, depth sorting, and frozen-stone effects on top of whatever art you drop in.
 
