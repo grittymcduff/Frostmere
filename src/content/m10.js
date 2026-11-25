@@ -32,15 +32,15 @@ NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widenin
      {make:r=>{const n=pick([24,30,40,50]),R=round(rr(r,.05,.35),3),lm=n*R;return {type:'num',q:`A Breusch–Pagan auxiliary regression on <b>n = ${n}</b> observations has R² = <b>${R}</b>. What is the LM statistic?`,a:lm,tol:.02,
       hint:'LM = n × R² of the auxiliary regression',solution:`${n} × ${R} = ${round(lm,3)}.`,why:'Compare LM with the χ² critical value for the test’s degrees of freedom.'};}},
      {type:'mc',q:'Breusch–Pagan says “no heteroskedasticity” (p = .34); White says “yes” (p = .025) on the same data. Why?',
-      opts:['White also searches squared and interaction patterns that Breusch–Pagan’s linear search can miss','One of the tests was run incorrectly','White is always right and Breusch–Pagan is obsolete','They test different null hypotheses about the coefficients'],a:0,
+      opts:['White also searches squared and interaction patterns','One of the two tests must have been run incorrectly','White is always right; Breusch–Pagan is obsolete','They test different hypotheses about the coefficients'],a:0,
       why:'Narrow search found nothing; wider search found a pattern. That’s not a contradiction.'},
     ]},
   ],
   puzzles:[
    {make:r=>{const k=pick(['curve','spray']),d=genResid(r,k);return {type:'mc',exhibit:residPlot(d,'Fitted value'),
     q:'What is the first problem to address in this residual plot?',
-    opts:k==='curve'?['The functional form — residuals curve around zero, so the mean equation is missing a shape','Heteroskedasticity — switch to robust standard errors','Serial correlation — run Durbin–Watson','Nothing — the residuals average zero']
-                    :['Heteroskedasticity — the spread widens as the fitted value grows','The functional form — the residuals curve','Multicollinearity','Nothing — the residuals average zero'],a:0,
+    opts:k==='curve'?['The functional form — the residuals curve around zero','Heteroskedasticity — switch to robust standard errors','Serial correlation — run a Durbin–Watson test','Nothing — the residuals still average zero']
+                    :['Heteroskedasticity — the spread widens with the fit','The functional form — the residuals bend around zero','Multicollinearity between the explanatory variables','Nothing — the residuals still average zero'],a:0,
     why:k==='curve'?'A systematic curve is a mean problem. Fix the equation before testing the variance — robust SEs can’t repair the wrong shape.':'A widening spread with no curve is the classic heteroskedasticity signature: the uncertainty grows with scale.'};}},
    {make:r=>{const test=pick(['BP','White']),df=test==='BP'?2:5,n=pick([24,30,40]),R=round(rr(r,.05,.45),3),lm=n*R,crit=CHI5[df];
     return {type:'mc',exhibit:Exhibit.table(['Test','n','Auxiliary R²','df','χ² critical (5%)'],[[test==='BP'?'Breusch–Pagan':'White',n,R,df,crit]]),
@@ -50,10 +50,10 @@ NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widenin
            `LM = ${round(R/n,4)} → do not reject H₀`,`LM = ${round(n*(1-R),2)} → reject H₀`],a:0,
      why:`${n} × ${R} = ${round(lm,2)}, which is ${lm>crit?'above':'below'} the χ²(${df}) critical value of ${crit}.`};}},
    {type:'mc',q:'Why might White detect heteroskedasticity that Breusch–Pagan misses?',
-    opts:['White adds squared and interaction terms, so it can catch curved or combined patterns in the error size','White uses the original Y instead of residuals','Breusch–Pagan only works with time-series data','White always has fewer degrees of freedom'],a:0,
+    opts:['White also tests squared and cross-product terms','White uses the original Y instead of squared residuals','Breusch–Pagan only works with time-series data','White has fewer degrees of freedom, so it’s stricter'],a:0,
     why:'Two flashlights: Breusch–Pagan a narrow beam, White a wider one.'},
    {type:'mc',q:'Payload mass looks highly significant (p = 0.001), but residual spread widens sharply for heavier missions. What should the program manager conclude?',
-    opts:['The coefficient’s direction may be fine, but its reported precision is suspect — don’t size risk reserves on that p-value alone','The coefficient is biased, so payload mass doesn’t matter','Heteroskedasticity makes the coefficient more reliable','Nothing — significance settles it'],a:0,
+    opts:['Its direction may be fine; its precision is suspect','The coefficient is biased, so payload may not matter','The wider spread makes the estimate more reliable','Nothing changes — p = 0.001 settles the question'],a:0,
     why:'The danger is false confidence: understated uncertainty exactly where the stakes are largest.'},
    {type:'order',q:'Put the response to a suspicious residual plot in order.',
     items:['Plot the residuals against fitted values or key Xs','If they curve, fix the mean equation (add the justified nonlinear term) and re-estimate','Re-check the new residuals and run Breusch–Pagan / White','If the variance still changes, use robust standard errors'],
@@ -62,6 +62,6 @@ NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widenin
     items:[{t:'Profits of a mix of corner shops and national chains',c:0},{t:'Cost overruns across routine launches and first-of-a-kind missions',c:0},{t:'Daily output of identical machines in one plant',c:1},{t:'Household spending across incomes from $20k to $2M',c:0}],
     why:'Whenever the size of the observation changes dramatically, ask whether the size of the error changes too.'},
    {type:'mc',q:'Which statement is correct?',
-    opts:['Heteroskedasticity mainly harms inference (SEs, p-values), while a wrong functional form harms the average relationship itself','Both problems bias the coefficients in the same way','Robust standard errors fix a wrong functional form','Heteroskedasticity only occurs in time-series data'],a:0,
+    opts:['Heteroskedasticity harms inference; wrong form harms the fit','Both problems bias the coefficients in the same direction','Robust standard errors repair a wrong functional form too','Heteroskedasticity only arises in time-series data'],a:0,
     why:'Mean problem vs variance problem: fixing standard errors cannot repair an incorrectly specified equation.'},
   ]};

@@ -36,7 +36,7 @@ NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loo
     practice:[
      {make:r=>{const d=genTiny(r);return {type:'num',exhibit:Exhibit.table(['x','y','ŷ = '+d.b0+' + '+d.b1+'x','e = y − ŷ'],d.x.map((x,i)=>[x,d.y[i],d.b0+d.b1*x,d.e[i]])),
        q:'Square each residual and add them up. What is Σe²?',a:d.sse,tol:.01,hint:'Square each value in the last column, then sum.',solution:`${d.e.map(v=>`(${v})²`).join(' + ')} = ${d.sse}.`,why:'This is exactly the quantity OLS makes as small as possible.'};}},
-     {type:'mc',q:'Why does OLS square the residuals instead of just adding them?',opts:['So positive and negative misses don’t cancel, and big misses count more','To make the numbers larger','Because Excel cannot add negative numbers','So R² is always positive'],a:0,why:'Raw residuals from OLS sum to zero, so their plain sum can’t measure fit.'},
+     {type:'mc',q:'Why does OLS square the residuals instead of just adding them?',opts:['So misses don’t cancel, and big misses count more','To make the residuals larger and easier to compare','Because spreadsheets can’t sum negative numbers reliably','So the intercept is always estimated correctly'],a:0,why:'Raw residuals from OLS sum to zero, so their plain sum can’t measure fit.'},
     ]},
    {title:'Explained and unexplained variation',
     teach:`<p>Total variation in Y splits into what the model explains and what it leaves behind:</p>
@@ -54,13 +54,13 @@ NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loo
    {make:r=>{const d=genTiny(r);return {type:'num',exhibit:Exhibit.table(['x','y'],d.x.map((x,i)=>[x,d.y[i]]))+Exhibit.eq(`Candidate line: ŷ = ${d.b0} + ${d.b1}x`),
     q:'Compute the sum of squared residuals for this candidate line.',a:d.sse,tol:.01,hint:'For each row: e = y − ŷ, then square and add.',solution:`Residuals ${d.e.join(', ')} → Σe² = ${d.sse}.`,
     why:'OLS would search over every possible line and keep the one with the smallest Σe².'};}},
-   {type:'mc',q:'You run OLS with an intercept and add up all the residuals. You get…',opts:['Zero (up to rounding)','The Residual SS','The Standard Error','R²'],a:0,
+   {type:'mc',q:'You run OLS with an intercept and add up all the residuals. You get…',opts:['Zero (up to rounding)','The residual sum of squares','The standard error of the regression','R², the share of variation explained'],a:0,
     why:'Σeᵢ = 0 is a built-in property of OLS with an intercept: no systematic over- or underprediction within the sample.'},
    {make:r=>{const n=ri(r,20,40),X=[],Y=[];for(let i=0;i<n;i++){const x=rr(r,5,50);X.push(x);Y.push(30+3*x+rngGauss(r)*18);}const m=Stats.ols(X,Y,['Traffic']);
     return {type:'num',exhibit:Exhibit.excel(m,'Daily sales ($)').replace(/<tr><td>R Square<\/td>.*?<\/tr>/,'<tr><td>R Square</td><td class="n">?</td></tr>').replace(/<tr><td>Multiple R<\/td>.*?<\/tr>/,'<tr><td>Multiple R</td><td class="n">?</td></tr>').replace(/<tr><td>Adjusted R Square<\/td>.*?<\/tr>/,'<tr><td>Adjusted R Square</td><td class="n">?</td></tr>'),
      q:'The R² cells are hidden. Use the ANOVA table to compute <b>R²</b>.',a:m.R2,tol:.002,hint:'R² = Regression SS / Total SS (or 1 − Residual SS / Total SS).',
      solution:`${Exhibit.xl(m.SSR)} / ${Exhibit.xl(m.SST)} = ${Exhibit.xl(m.R2)}.`,why:'R² is the share of total variation the model explains: ESS / TSS.'};}},
-   {type:'mc',q:'A colleague says, “OLS is an estimate and b₁ = 2.4 is the estimator.” What’s the correction?',opts:['Swap them: OLS is the estimator (the recipe); b₁ = 2.4 is the estimate (the result)','Both are estimators','Both are estimates','b₁ is the population parameter β₁'],a:0,
+   {type:'mc',q:'A colleague says, “OLS is an estimate and b₁ = 2.4 is the estimator.” What’s the correction?',opts:['Swap them: OLS is the estimator; 2.4 is the estimate','Nothing — the two words mean the same thing here','b₁ = 2.4 is the population parameter, not an estimate','Both are estimators; “estimate” is only for forecasts'],a:0,
     why:'An estimator is the procedure applied to sample data; an estimate is the number it produces. Lowercase b’s are the same as beta-hats.'},
   ]};
 
@@ -72,9 +72,9 @@ NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s B
     <div class="ex">SALARY ($000) = 3.17 + 1.40·EXPERIENCE + 0.25·SCORE<br>Holding score constant, one more year of experience ↔ about <b>$1,404</b> more salary.<br>Holding experience constant, one more test point ↔ about <b>$251</b> more.</div>
     <p>Don’t compare coefficient sizes across variables measured in different units.</p>`,
     practice:[
-     {type:'mc',q:'In SALARY ($000) = 3.17 + 1.40·EXPERIENCE + 0.25·SCORE, what does 0.25 mean?',opts:['Holding experience constant, one more aptitude point is associated with about $250 more salary','One more point causes $0.25 more salary','Score matters less than experience because 0.25 < 1.40','Each point adds 25% to salary'],a:0,
+     {type:'mc',q:'In SALARY ($000) = 3.17 + 1.40·EXPERIENCE + 0.25·SCORE, what does 0.25 mean?',opts:['With experience fixed, one more point ≈ $250 more salary','One more point causes exactly $0.25 more salary','Score matters less than experience, since 0.25 < 1.40','Each extra point adds about 25% to salary'],a:0,
       why:'Salary is in thousands, so 0.25 → $250, and the comparison holds experience fixed. Different units mean the sizes aren’t directly comparable.'},
-     {type:'mc',q:'Why might a single-variable model of sales on advertising mislead?',opts:['It can mix advertising’s effect with other drivers, like price, that move with it','Single-variable models always have low R²','Excel can’t run them','Advertising can’t be measured'],a:0,
+     {type:'mc',q:'Why might a single-variable model of sales on advertising mislead?',opts:['It can mix in drivers, like price, that move with ads','Single-variable models always have too low an R²','Advertising effects are too small to detect alone','One variable can’t produce a significant F-test'],a:0,
       why:'Multiple regression asks whether a driver still matters after accounting for the others.'},
     ]},
    {title:'From coefficient to a pricing move',
@@ -90,7 +90,7 @@ NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s B
   ],
   puzzles:[
    {make:r=>{const d=genAndy(r),b=round(d.b1,3);return {type:'mc',exhibit:andyEx(d),q:'How should Big Andy read the PRICE coefficient?',
-    opts:[`Holding advertising constant, a $1 price increase is associated with about ${money(Math.abs(b)*1000,0)} ${b<0?'less':'more'} monthly sales revenue`,`A $1 price increase causes sales to fall by ${Math.abs(b)} dollars`,`Holding advertising constant, a $1,000 price increase is associated with ${Math.abs(b)} less revenue`,`Price explains ${Math.round(Math.abs(b)*10)}% of sales`],a:0,
+    opts:[`A $1 price rise goes with about ${money(Math.abs(b)*1000,0)} ${b<0?'less':'more'} monthly revenue, ads fixed`,`A $1 price rise causes revenue to fall by ${Math.abs(b)} dollars, ads fixed`,`A $1,000 price rise goes with ${Math.abs(b)} dollars less revenue, ads fixed`,`Price explains about ${Math.round(Math.abs(b)*10)}% of the variation in revenue`],a:0,
     why:'SALES is in $1,000s, PRICE in dollars, and the reading is conditional on ADVERT. It’s an estimated association, not proof of a causal effect.'};}},
    {make:r=>{const d=genAndy(r),c=pick([.10,.20,.25]),a=-d.b1*c*1000;return {type:'num',exhibit:andyEx(d),q:`Andy cuts price by <b>$${c.toFixed(2)}</b> and keeps advertising unchanged. By how much does predicted monthly revenue change, in dollars?`,a,tol:2,pre:'$',
     hint:'PRICE coefficient × (−change) × 1,000.',solution:`${Exhibit.xl(d.b1)} × (−${c.toFixed(2)}) × 1,000 ≈ ${money(a,0)}.`,why:'Holding advertising constant is what lets you read the price coefficient alone.'};}},
@@ -102,7 +102,7 @@ NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s B
     hint:`Convert ADVERT to $1,000s (${ad/1000}), plug both into the equation, then multiply the result by 1,000.`,solution:`(${Exhibit.xl(d.b0)} + ${Exhibit.xl(d.b1)} × ${p} + ${Exhibit.xl(d.b2)} × ${ad/1000}) × 1,000 ≈ ${money(pred,0)}.`,
     why:'A prediction is a planning baseline. Competition, local events, service, and weather can all move the actual result.'};}},
    {type:'mc',q:'Option A (cut price $0.10) leaves ~$791 before other costs; Option B (+$500 ads) leaves ~$432 after the ad spend. What should Andy conclude?',
-    opts:['A looks better on direct costs, but neither number is profit — subtract food, labor, and operating costs and weigh capacity and competitor response','Choose A — the model proves it earns $791 more profit','Choose B — advertising always pays back','The regression has made the decision; no further analysis is needed'],a:0,
+    opts:['A looks better, but neither figure is profit yet','Choose A — the model shows it earns $791 more profit','Choose B — ads build long-run sales the model can’t see','Either — the regression has already settled it'],a:0,
     why:'Regression compares expected outcomes; managers decide whether the expected gain justifies the cost and the risk.'},
   ]};
 
@@ -115,7 +115,7 @@ NODES['m2-fit']={kicker:'Module 2 · Fit and model selection',title:'The Mirror 
     <p>Fit describes the sample. It doesn’t guarantee a useful decision rule.</p>`,
     practice:[
      {make:r=>{const tss=round(rr(r,500,1500),0),rss=round(tss*rr(r,.15,.7),0),a=1-rss/tss;return {type:'num',q:`TSS = <b>${tss}</b>, RSS = <b>${rss}</b>. What is R²?`,a,tol:.002,hint:'1 − RSS/TSS',solution:`1 − ${rss}/${tss} = ${round(a,3)}.`,why:'R² is the explained share of total variation.'};}},
-     {type:'mc',q:'A model of sales on store traffic has R² = 0.96. What can you say?',opts:['Traffic and sales move closely together in this sample','More traffic definitely causes more sales','The model will forecast next year perfectly','No other variable could matter'],a:0,why:'Strong fit describes the sample; it doesn’t validate a causal story or guarantee forecasts.'},
+     {type:'mc',q:'A model of sales on store traffic has R² = 0.96. What can you say?',opts:['Traffic and sales move closely together in this sample','More traffic definitely causes more sales in these stores','The model will forecast next year almost perfectly','No other variable could add much to the model'],a:0,why:'Strong fit describes the sample; it doesn’t validate a causal story or guarantee forecasts.'},
     ]},
    {title:'Adjusted R² and the price of complexity',
     teach:`<p>Adding any variable — even pure noise — can’t lower R², because TSS stays fixed and RSS can only fall or stay the same. That rewards <b>overfitting</b>.</p>
@@ -124,21 +124,21 @@ NODES['m2-fit']={kicker:'Module 2 · Fit and model selection',title:'The Mirror 
     <div class="ex">Mozzarella = f(Income): adj R² 0.88 → add “boat drownings”: 0.97. Better fit — no credible mechanism. It doesn’t belong.</div>`,
     practice:[
      {type:'mc',q:'You add a variable of random numbers to a model. R² will…',opts:['Stay the same or rise','Definitely fall','Become negative','Stay exactly the same'],a:0,why:'RSS can only decrease or stay the same when you add a regressor, so R² can’t fall.'},
-     {type:'mc',q:'Which comparison is valid with adjusted R²?',opts:['Two models of monthly sales ($), one with an extra driver','A model of sales vs a model of profit','A model of sales in $ vs sales in units','A model for apples vs one for oranges'],a:0,why:'Same dependent variable, same units — otherwise it’s apples and oranges.'},
+     {type:'mc',q:'Which comparison is valid with adjusted R²?',opts:['Two monthly-sales models, one with an extra driver','A model of monthly sales vs. a model of monthly profit','A model of sales in dollars vs. one of sales in units','A sales model for one product vs. one for another'],a:0,why:'Same dependent variable, same units — otherwise it’s apples and oranges.'},
     ]},
   ],
   puzzles:[
-   {type:'mc',q:'What does R² measure?',opts:['The share of variation in Y, within the sample, that the model explains','Whether the coefficients are causal','How likely the model is to be correct','The average prediction error in dollars'],a:0,
+   {type:'mc',q:'What does R² measure?',opts:['The share of Y’s sample variation the model explains','Whether the coefficients can be read as causal effects','The probability that the model is correctly specified','The average size of the prediction error, in Y’s units'],a:0,
     why:'R² = 1 − RSS/TSS describes in-sample fit — not causality or decision value.'},
    {make:r=>{const {n,A,B}=genFitPair(r),x=Exhibit.xl;return {type:'mc',
     exhibit:Exhibit.table(['Model','Variables','R²','Adjusted R²'],[['A','Price',x(A.R2),x(A.adjR2)],['B','Price + Noise',x(B.R2),x(B.adjR2)]])+`<p class="meta">Same ${n} stores, same dependent variable (weekly sales).</p>`,
-    q:'Model B adds a variable. What do these results suggest?',opts:['R² rose but adjusted R² fell — the new variable isn’t earning its place','Model B is better because its R² is higher','Model A is wrong because its R² is lower','Adjusted R² can’t be used here'],a:0,
+    q:'Model B adds a variable. What do these results suggest?',opts:['The new variable isn’t earning its place','Model B is better, because its R² is higher','Model A is wrong, because its R² is lower','Adjusted R² can’t compare models with different sizes'],a:0,
     why:'R² can’t fall when a variable is added. Adjusted R² penalizes the extra coefficient and dropped, so the variable adds noise rather than information.'};}},
    {type:'mc',q:'Adding “U.S. deaths from falling off fishing boats” raises a mozzarella-consumption model’s adjusted R² from 0.88 to 0.97. Should it stay?',
-    opts:['No — there’s no credible economic mechanism; a better statistic doesn’t mean a better model','Yes — adjusted R² penalizes useless variables, so it must be real','Yes — any variable that raises fit belongs','Only if its p-value is below 0.05'],a:0,
+    opts:['No — there’s no credible mechanism behind it','Yes — adjusted R² already penalizes useless variables','Yes — any variable that raises adjusted R² belongs','Only if its p-value is also below 0.05'],a:0,
     why:'Statistics are a filter; economic logic and judgment make the final call. A variable doesn’t belong just because it raises adjusted R².'},
    {type:'mc',q:'Model 1 explains <b>sales revenue ($)</b> with adjusted R² = 0.62. Model 2 explains <b>profit margin (%)</b> with adjusted R² = 0.81. What can you conclude?',
-    opts:['Nothing about which is better — they explain different dependent variables','Model 2 is the better model','Model 1 is overfit','Profit is easier to predict than revenue'],a:0,
+    opts:['Nothing — they explain different dependent variables','Model 2 is better, since its adjusted R² is higher','Model 1 is overfit, since its adjusted R² is lower','Profit is generally easier to predict than revenue'],a:0,
     why:'Compare adjusted R² only across models with the same dependent variable in the same units.'},
    {make:r=>{const n=ri(r,25,60),k=ri(r,2,5),R2=round(rr(r,.45,.85),3),a=1-(1-R2)*(n-1)/(n-k-1);return {type:'num',
     q:`A model has R² = <b>${R2}</b> with <b>n = ${n}</b> observations and <b>k = ${k}</b> predictors. Compute adjusted R².`,a,tol:.002,

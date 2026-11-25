@@ -17,8 +17,8 @@ NODES['m6-trial']={kicker:'Module 6 · From association to causation',title:'The
     <p><b>Random assignment</b> makes treatment and control similar in size, location, customers, and management — so the main systematic difference is the treatment itself.</p>
     <div class="ex">Regression estimates the size; the design supplies the causal interpretation.</div>`,
     practice:[
-     {type:'mc',q:'Why randomize which stores get extra advertising?',opts:['So the groups are similar in everything except the advertising','So the sample is larger','So R² goes up','So Excel can run the model'],a:0,why:'Randomization balances observed and unobserved factors on average.'},
-     {type:'mc',q:'A manager lets regional directors choose which stores get the new loyalty program. Why is a causal claim weaker?',opts:['Directors may pick stores that would have done well anyway','The sample is too small','The program can’t be measured','Regression can’t use 0/1 variables'],a:0,why:'Self-selected treatment means the groups may differ systematically — the coefficient could reflect that, not the program.'},
+     {type:'mc',q:'Why randomize which stores get extra advertising?',opts:['So the groups are alike except for the advertising','So the sample is larger and estimates tighter','So R² goes up and the model fits better','So the best stores get the extra budget'],a:0,why:'Randomization balances observed and unobserved factors on average.'},
+     {type:'mc',q:'A manager lets regional directors choose which stores get the new loyalty program. Why is a causal claim weaker?',opts:['Directors may pick stores that would do well anyway','The sample of stores will be too small to analyze','The program’s effect can’t be captured by a dummy','Regression can’t handle 0/1 treatment variables'],a:0,why:'Self-selected treatment means the groups may differ systematically — the coefficient could reflect that, not the program.'},
     ]},
    {title:'Treatment dummies measure the difference',
     teach:`<p>After the experiment, regress the outcome on a 0/1 treatment indicator:</p>
@@ -35,14 +35,14 @@ NODES['m6-trial']={kicker:'Module 6 · From association to causation',title:'The
     q:'Stores were randomly assigned to extra advertising (Treatment = 1). Estimate β₁ in SALES = β₀ + β₁·TREATMENT.',a:d.diff,tol:2,pre:'$',
     hint:'β₁ equals the treatment-group average minus the control-group average.',solution:`${money(d.mT,0)} − ${money(d.mC,0)} ≈ ${money(d.diff,0)}.`,
     why:'Because treatment was randomly assigned, β₁ has a much stronger causal interpretation than the same number from observational data.'};}},
-   {type:'mc',q:'What gives a regression coefficient a causal interpretation?',opts:['A research design — like random assignment — that creates a credible counterfactual','A p-value below 0.01','An R² above 0.9','Including many control variables'],a:0,
+   {type:'mc',q:'What gives a regression coefficient a causal interpretation?',opts:['A research design, such as random assignment','A p-value below 0.01 on the coefficient','An R² above 0.9 for the whole model','Adding many control variables to the model'],a:0,
     why:'Regression is not what makes the conclusion causal; the design is.'},
    {type:'sort',q:'Which designs support a causal reading of the coefficient?',cats:['Stronger causal design','Association only'],
     items:[{t:'Coin-flip assignment of a price discount across comparable stores',c:0},{t:'Comparing stores whose managers chose to adopt a new system',c:1},{t:'Random assignment of a training program to half the call-center agents',c:0},{t:'Regressing sales on advertising across all stores last year',c:1}],
     why:'Random assignment balances other factors; self-selection and ordinary observational data leave confounders in play.'},
-   {type:'mc',q:'Why can’t you just compare a store’s sales with and without extra advertising?',opts:['You can’t observe the same store both ways at the same time — you need a comparison group','Because sales are measured in dollars','Because advertising has no effect','You can, if you run the regression twice'],a:0,
+   {type:'mc',q:'Why can’t you just compare a store’s sales with and without extra advertising?',opts:['One store can’t be observed both ways at once','Sales are too noisy to compare within one store','Advertising effects take too long to show up','You can — just run the regression twice'],a:0,
     why:'The counterfactual for the same unit is unobservable, so a control group stands in for it.'},
-   {type:'mc',q:'A 10-store experiment finds β₁ = $16,600. What’s the honest caveat?',opts:['With so few stores, the estimate is noisy — check its standard error before acting','Nothing; randomization makes it exact','The effect must be negative','Random assignment guarantees significance'],a:0,
+   {type:'mc',q:'A 10-store experiment finds β₁ = $16,600. What’s the honest caveat?',opts:['So few stores make it noisy — check the SE','Nothing — randomization makes the estimate exact','The true effect is probably negative','Random assignment guarantees it’s significant'],a:0,
     why:'Randomization supports a causal interpretation; sample size still governs precision.'},
   ]};
 
@@ -56,7 +56,7 @@ NODES['m6-omit']={kicker:'Module 6 · Choosing independent variables',title:'The
     practice:[
      {make:r=>{const b2=round(rr(r,.2,1.5),2)*(r()<.3?-1:1),a1=round(rr(r,-.8,.8),2)||.4,bias=b2*a1;return {type:'num',q:`Omitted variable effect β₂ = <b>${b2}</b>; its relationship with the included X, α₁ = <b>${a1}</b>. What is the bias in β₁*?`,a:bias,tol:.006,
       hint:'Bias = β₂ × α₁',solution:`${b2} × ${a1} = ${round(bias,4)}.`,why:`${bias>0?'Positive bias: the estimate overstates β₁.':'Negative bias: the estimate understates β₁.'}`};}},
-     {type:'mc',q:'Coffee and sleep both affect productivity, and heavy coffee drinkers sleep less. You omit sleep. The coffee coefficient…',opts:['Absorbs part of sleep’s effect and is biased','Stays unbiased','Becomes exactly zero','Only gets a larger standard error'],a:0,
+     {type:'mc',q:'Coffee and sleep both affect productivity, and heavy coffee drinkers sleep less. You omit sleep. The coffee coefficient…',opts:['Absorbs part of sleep’s effect and is biased','Stays unbiased, but becomes less precise','Shrinks toward zero and loses significance','Only gets a larger standard error than before'],a:0,
       why:'Sleep affects productivity (β₂ ≠ 0) and moves with coffee (α₁ ≠ 0), so both bias conditions hold.'},
     ]},
    {title:'Irrelevant variables and the four criteria',
@@ -78,10 +78,10 @@ NODES['m6-omit']={kicker:'Module 6 · Choosing independent variables',title:'The
     q:`True model: Y = β₀ + <b>${b1}</b>X₁ + <b>${b2}</b>X₂. You leave out X₂, and X₂ = α₀ + <b>${a1}</b>X₁ + v. What coefficient on X₁ should you expect to estimate?`,a:est,tol:.006,
     hint:'β₁* = β₁ + β₂·α₁',solution:`${b1} + ${b2} × ${a1} = ${round(est,4)}.`,why:'The included variable gets credit for part of the omitted variable’s effect.'};}},
    {type:'mc',q:'Dropping population from Woody’s model moves the competition coefficient from −10,605 (t = −5.07) to −1,684 (t = −0.81). What’s the likely explanation?',
-    opts:['Omitted-variable bias — population affects sales and is correlated with competition','Population was irrelevant all along','Competition never mattered','A data-entry error in competition'],a:0,
+    opts:['Omitted-variable bias from leaving out population','Population was irrelevant, so the shift is just noise','Competition never really mattered for sales','A data-entry error in the competition variable'],a:0,
     why:'Large coefficient changes across defensible specifications deserve investigation — here, the classic omitted-variable story.'},
    {type:'mc',q:'In a Brazilian-coffee demand model, its own price has a positive, insignificant coefficient. What’s the theory-first move?',
-    opts:['Keep price and look for a missing substitute price, like Colombian coffee','Drop price — it isn’t significant','Conclude demand ignores price','Flip the sign by hand'],a:0,
+    opts:['Keep price; look for a missing substitute price','Drop price — it isn’t significant in this sample','Conclude this demand doesn’t respond to price','Report it as is — theory can’t override data'],a:0,
     why:'Adding the substitute price restored the negative own-price coefficient. Don’t drop a variable theory says belongs just because one sample gives it a weak t.'},
    {type:'sort',q:'Sensitivity analysis or data mining?',cats:['Sensitivity analysis','Data mining'],
     items:[{t:'Start from theory, then check whether the key result survives reasonable alternatives',c:0},{t:'Add and drop variables until p-values look good',c:1},{t:'Report the model with and without SAT to test robustness',c:0},{t:'Search 40 variables and keep whichever three are significant',c:1}],

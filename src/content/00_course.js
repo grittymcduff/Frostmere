@@ -40,3 +40,33 @@ const COURSE={
      npc:{id:'owl-reach',name:'Warden Quill',role:'Modules 7–10 guide',lines:['Crystal Reach is where broken models come to be diagnosed: wrong shapes, tangled drivers, echoing errors, and fanning residuals. Four stones, one for each module.','The Bending Crystal asks whether your equation has the right <b>shape</b>. The Twin Prisms ask whether two drivers overlap so much the model can’t credit either. The Echoing Ice asks whether errors repeat over time. The Widening Fan asks whether the errors grow with scale.','A theme for this place: most of these problems leave the coefficients standing but make the model <b>overconfident</b>. Diagnose first, fix the specification before patching standard errors, and let theory — not p-values — decide what stays. Same rules as before: waypoints, at most one miss, and stones that freeze if you rush.']}},
   ],
 };
+
+/* plain-language map text: what each place and stone is about */
+COURSE.plain={
+  hub:'Home base. Talk to Warden Quill, retry missed questions at the review board, and take the practice final.',
+  woods:'The basics: what a regression says, how to read its output, and how to build one sensibly.',
+  hollow:'Can you trust it? The ground rules behind a regression, testing whether an effect is real, and cause versus coincidence.',
+  reach:'Fixing problem models: the wrong shape, factors that overlap, and errors that follow a pattern.',
+};
+COURSE.about={
+  'm1-signs':'Predicting which way each factor should push the result — before touching any data',
+  'm1-cross':'Telling cause from coincidence: hidden third factors, reverse cause, and experiments',
+  'm1-magic':'Turning an equation into predictions, and what a miss (a residual) means',
+  'm1-units':'Reading an effect in real-world units, and when the starting value (intercept) means anything',
+  'm1-ledger':'Reading Excel’s regression output in a sensible order',
+  'm2-ols':'How the “line of best fit” is chosen, and how much of the story it explains',
+  'm2-andy':'Reading one factor’s effect while holding the others steady, to compare business options',
+  'm2-fit':'What R² and adjusted R² can — and can’t — tell you about a model',
+  'm3-design':'The six steps of building a model, and what to do with odd data points',
+  'm3-dummy':'Putting yes/no and category information into a model without the dummy trap',
+  'm4-seven':'The seven ground rules a regression relies on, and what breaks when one fails',
+  'm4-plots':'Reading leftover-error (residual) plots and spotting data points worth a second look',
+  'm5-tests':'Setting up a test of whether an effect is real, and the two ways a test can be wrong',
+  'm5-three':'p-values, confidence ranges, and the overall F-test — and “significant” versus “important”',
+  'm6-trial':'Why randomized experiments can prove cause and effect when ordinary data can’t',
+  'm6-omit':'What goes wrong when an important factor is left out — or a useless one is added',
+  'm7-form':'Choosing the right shape: a straight line, a curve, percentages (logs), or a time delay',
+  'm8-multi':'When two factors move together so closely the model can’t tell which one matters',
+  'm9-serial':'When this period’s error spills into the next — a time-series problem',
+  'm10-hetero':'When errors grow with the size of the company or project — and the model gets overconfident',
+};

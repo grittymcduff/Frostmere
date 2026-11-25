@@ -6,7 +6,7 @@
 const SEVEN=['Linearity in the coefficients and correct specification, with an additive error','Zero mean error','No endogeneity: X uncorrelated with the error','No serial correlation','Homoskedasticity: constant error variance','No perfect multicollinearity','Normally distributed errors (optional)'];
 
 const RES_PATTERNS={
-  random:{d:'Random scatter with roughly constant spread — consistent with homoskedasticity',sd:x=>9},
+  random:{d:'Random scatter, even spread — homoskedasticity',sd:x=>9},
   spray:{d:'A spray: spread grows as X rises — heteroskedasticity',sd:x=>1+x*.75},
   funnel:{d:'A funnel: spread shrinks as X rises — heteroskedasticity',sd:x=>1+(31-x)*.75},
   bowtie:{d:'A bow-tie: spread shrinks, then grows — heteroskedasticity',sd:x=>1.5+Math.abs(x-15.5)*1.3},
@@ -37,9 +37,9 @@ NODES['m4-seven']={kicker:'Module 4 · The classical assumptions',title:'The Sev
     <div class="ex"><b>Zero mean:</b> with an intercept, OLS residuals average zero automatically, so that proves nothing.<br><b>Endogeneity:</b> OLS residuals are uncorrelated with the included X’s by construction — a residual plot can’t reveal it.</div>
     <p>Instead, ask about omitted drivers, reverse causality, measurement error, and how the data were generated. Look for <b>systematic</b> misses: one customer group, big markets, certain periods.</p>`,
     practice:[
-     {type:'mc',q:'Your residuals average exactly 0. What does that show about Assumption 2?',opts:['Nothing — OLS with an intercept forces that','It proves the error has mean zero','It proves there’s no endogeneity','It proves errors are normal'],a:0,
+     {type:'mc',q:'Your residuals average exactly 0. What does that show about Assumption 2?',opts:['Nothing — OLS with an intercept forces that','It confirms the true error has mean zero','It confirms there’s no endogeneity','It confirms the errors are normally distributed'],a:0,
       why:'Σeᵢ = 0 is automatic. Look for systematic patterns instead.'},
-     {type:'mc',q:'A price coefficient might be soaking up the effect of an omitted product-quality variable. Which assumption is at risk?',opts:['No endogeneity (Cov(X, ε) = 0)','Homoskedasticity','No serial correlation','Normality'],a:0,
+     {type:'mc',q:'A price coefficient might be soaking up the effect of an omitted product-quality variable. Which assumption is at risk?',opts:['No endogeneity (X uncorrelated with ε)','Homoskedasticity (constant error variance)','No serial correlation among the errors','Normally distributed errors'],a:0,
       why:'If quality sits in ε and moves with price, price is correlated with the error — endogeneity, and a biased coefficient.'},
     ]},
   ],
@@ -49,11 +49,11 @@ NODES['m4-seven']={kicker:'Module 4 · The classical assumptions',title:'The Sev
     why:'Endogeneity: X correlated with ε. Serial correlation: errors linked across observations. Heteroskedasticity: non-constant error variance. Perfect multicollinearity: one X is an exact linear combination of others.'},
    {type:'mc',q:'Which equation <b>violates</b> Assumption 1 (linear in the coefficients)?',opts:['Sales = β₀ + e^(β₁·Ads)','Sales = β₀ + β₁·Ads²','Sales = β₀ + β₁·ln(Ads)','ln(Sales) = β₀ + β₁·ln(Ads)'],a:0,
     why:'A β inside an exponent isn’t linear in the parameters. Transforming the variables — squares, logs — is fine.'},
-   {type:'mc',q:'Under Assumptions 1–6, the Gauss–Markov theorem says OLS is…',opts:['BLUE — the minimum-variance estimator among linear unbiased estimators','Always unbiased, even with omitted variables','Normally distributed in every sample','The only estimator that gives R² above 0.5'],a:0,
+   {type:'mc',q:'Under Assumptions 1–6, the Gauss–Markov theorem says OLS is…',opts:['BLUE: lowest variance among linear unbiased estimators','Unbiased even when relevant variables are omitted','Normally distributed in every sample, of any size','Free of bias from measurement error in X'],a:0,
     why:'Best (smallest variance), Linear, Unbiased Estimator. Gauss–Markov does not require normal errors.'},
-   {type:'mc',q:'Serial correlation and heteroskedasticity usually leave coefficients unbiased. So why should a manager care?',opts:['Standard errors, t-tests, and confidence intervals become unreliable — confidence can be overstated','They always flip coefficient signs','They make R² negative','They stop Excel from running'],a:0,
+   {type:'mc',q:'Serial correlation and heteroskedasticity usually leave coefficients unbiased. So why should a manager care?',opts:['Standard errors and tests become unreliable','They flip coefficient signs in most samples','They push R² below zero in small samples','They bias the intercept, though not the slopes'],a:0,
     why:'The estimates may be centered right, but the reported precision is wrong — that’s decision risk.'},
-   {type:'mc',q:'Your colleague says, “The residual plot looks clean, so there’s no endogeneity.” What’s wrong?',opts:['OLS residuals are uncorrelated with included X’s by construction, so a plot can’t reveal endogeneity','Nothing — clean plots rule it out','Endogeneity only shows up in R²','Residual plots only check normality'],a:0,
+   {type:'mc',q:'Your colleague says, “The residual plot looks clean, so there’s no endogeneity.” What’s wrong?',opts:['Residuals are uncorrelated with X by construction','Nothing — a clean plot rules endogeneity out','Endogeneity would show up as a low R² instead','Residual plots can only check normality'],a:0,
     why:'No endogeneity is a defensibility claim built from theory and design: omitted drivers, reverse causality, measurement error.'},
   ]};
 
@@ -67,7 +67,7 @@ NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:
     practice:[
      {make:r=>{const k=pick(['random','spray','funnel']),d=genResid(r,k);const keys=['random','spray','funnel'];return {type:'mc',exhibit:residPlot(d,'Income'),q:'What does this residual plot suggest?',
       opts:keys.map(x=>RES_PATTERNS[x].d),a:keys.indexOf(k),why:'Spread that changes systematically with X signals heteroskedasticity; an even band is what you hope to see.'};}},
-     {type:'mc',q:'Residuals are positive for almost every large-market store and negative for small ones. Best interpretation?',opts:['The model is systematically wrong by market size — a missing driver or wrong form','Normal random noise','Proof of heteroskedasticity only','The intercept is wrong, nothing else'],a:0,
+     {type:'mc',q:'Residuals are positive for almost every large-market store and negative for small ones. Best interpretation?',opts:['A missing driver or wrong form tied to size','Ordinary random noise that will average out','Heteroskedasticity, and nothing more','A wrong intercept, which is easy to adjust'],a:0,
       why:'Ask whether the model is systematically wrong for particular groups — that points to specification problems.'},
     ]},
    {title:'Standardized residuals and precision',
@@ -88,7 +88,7 @@ NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:
    {make:r=>{const z=Array.from({length:12},()=>round(rngGauss(r)*1.3,2));z[ri(r,0,11)]=round((r()<.5?-1:1)*rr(r,2.2,3.4),2);const a=z.filter(v=>Math.abs(v)>2).length;
     return {type:'num',exhibit:Exhibit.table(['Store','Standardized residual'],z.map((v,i)=>[i+1,fmtNum(v,2)])),q:'Using the ±2 rule, how many stores get flagged for investigation?',a,tol:0,
      hint:'Flag any |standardized residual| > 2.',solution:`${a} store${a===1?'':'s'} beyond ±2.`,why:'A flagged store might be an error, a different population, or a rare but valid outcome. Investigate before deciding.'};}},
-   {type:'mc',q:'A store is flagged with a standardized residual of 3.1. What should you do first?',opts:['Investigate it — check records for errors, a different population, or a real shock','Delete it','Ignore the flag','Rerun the model until the flag disappears'],a:0,
+   {type:'mc',q:'A store is flagged with a standardized residual of 3.1. What should you do first?',opts:['Investigate it — check the records first','Delete it — it’s beyond the ±2 cutoff','Ignore it — one store won’t move the estimates','Re-run the model until the flag disappears'],a:0,
     why:'Large residuals are risk signals, not mistakes to erase. Exclude only with a documented, defensible reason.'},
    {make:r=>{const se=round(rr(r,1,6),2),n0=pick([25,50,100]),m=4;return {type:'num',q:`With n = ${n0}, a coefficient’s SE is <b>${se}</b>. Roughly what SE would n = <b>${n0*m}</b> produce, other things equal?`,a:se/2,tol:.011,
     hint:'Quadrupling n divides the SE by √4.',solution:`${se} / 2 = ${round(se/2,3)}.`,why:'Standard errors shrink roughly with 1/√n — precision improves, but bias from a bad specification does not go away with more data.'};}},

@@ -26,7 +26,7 @@ NODES['m3-design']={kicker:'Module 3 · Designing a regression',title:'The Archi
     <p>Step 1 is the anchor: explain <b>why</b> the outcome should respond to each driver before you open the spreadsheet. Data can’t supply missing business logic. Pick variables because the mechanism supports them, not because they’re available — and write down the expected signs <b>before</b> you see results.</p>
     <p><b>Step 6, documenting</b>, means reporting enough for another manager to reproduce and challenge the model: coefficients with units, standard errors or confidence intervals, t-statistics and p-values, R² and adjusted R², sample size N, any data changes or exclusions, and the assumptions and limitations — inconvenient results included.</p>`,
     practice:[
-     {type:'mc',q:'A manager wants to start by pulling every column in the data warehouse into a regression to “see what sticks.” Which step did they skip?',opts:['Anchoring the question in an economic mechanism','Documenting the model','Estimating in Excel','Inspecting the residuals'],a:0,
+     {type:'mc',q:'A manager wants to start by pulling every column in the data warehouse into a regression to “see what sticks.” Which step did they skip?',opts:['Anchoring the question in an economic mechanism','Documenting the model and its limitations','Estimating the equation in Excel','Inspecting the residuals for problems'],a:0,
       why:'Choose drivers because the business mechanism supports them — not because they’re available. Mining until something “works” is the opposite of step 1.'},
      {type:'mc',q:'When should you record the expected sign of each coefficient?',opts:['Before you estimate the model','After you see which ones are significant','Only if a result surprises you','Never — the data decide the sign'],a:0,
       why:'Expected signs turn reasoning into testable predictions. Writing them afterwards just rationalizes the output.'},
@@ -54,10 +54,10 @@ NODES['m3-design']={kicker:'Module 3 · Designing a regression',title:'The Archi
     hint:'The population coefficient is dollars per resident.',solution:`${c} × ${k.toLocaleString()} = ${money(a,0)}.`,
     why:'A per-resident coefficient looks tiny until you scale it to a managerially meaningful change.'};}},
    {type:'mc',q:'One store in the data reports annual sales ten times larger than any other. What’s the disciplined response?',
-    opts:['Flag it and check operating records — it could be an error, a different kind of store, or a real outlier','Delete it so the model fits better','Keep it but don’t mention it','Duplicate it so the model learns from it'],a:0,
+    opts:['Flag it and check the records before deciding','Delete it so the model fits the other stores better','Keep it quietly and leave it out of the report','Cap it at the next-largest value to limit its pull'],a:0,
     why:'Inspect and justify — never clean automatically. Dropping an observation changes the estimates, the standard errors, the fit, and the degrees of freedom.'},
    {type:'mc',q:'Which of these belongs in Step 6, documenting the model?',
-    opts:['Coefficients with units, standard errors, R² and adjusted R², N, data exclusions, and limitations','Only the coefficients that came out significant','Only R², since it summarizes everything','Nothing — a good model speaks for itself'],a:0,
+    opts:['Coefficients with units, SEs, R², N, exclusions, limitations','Only the coefficients that came out statistically significant','R² alone, since it summarizes how good the model is','The final equation; the process needn’t be recorded'],a:0,
     why:'Documentation makes the analysis reproducible, challengeable, and defensible — including inconvenient results.'},
   ]};
 
@@ -70,9 +70,9 @@ NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categ
     <p>b₃ is the predicted salary <b>difference from the baseline</b> (Degree = 0), holding experience and score constant. A dummy <b>shifts the intercept</b>; the slopes stay the same.</p>`,
     practice:[
      {make:r=>{const b=round(rr(r,1.5,4),2);return {type:'mc',q:`In a salary model (salary in $000), the Degree coefficient is <b>${b}</b>. What does it mean?`,
-      opts:[`Holding experience and score constant, degree holders are predicted to earn about $${Math.round(b*1000).toLocaleString()} more than those without`,`A degree raises salary by ${b}%`,`Everyone in the sample earns $${Math.round(b*1000).toLocaleString()} more`,`Degree holders earn ${b} times as much`],a:0,
+      opts:[`Others fixed, degree holders earn about $${Math.round(b*1000).toLocaleString()} more`,`Others fixed, a degree raises salary by about ${b}%`,`Everyone in the sample earns $${Math.round(b*1000).toLocaleString()} more than the average`,`Others fixed, degree holders earn ${b} times as much`],a:0,
       why:'A dummy coefficient is an adjusted difference from the 0 (baseline) category, in Y’s units.'};}},
-     {type:'mc',q:'On a chart of salary against experience, adding a Degree dummy does what to the fitted lines?',opts:['Shifts the line up or down — same slope, different intercept','Changes the slope only','Rotates the line around the origin','Nothing visible'],a:0,why:'A dummy changes the intercept while the slopes are held constant.'},
+     {type:'mc',q:'On a chart of salary against experience, adding a Degree dummy does what to the fitted lines?',opts:['Shifts the line up or down, keeping the slope','Changes the slope, keeping the intercept','Rotates the line around the origin','Nothing visible — dummies only change R²'],a:0,why:'A dummy changes the intercept while the slopes are held constant.'},
     ]},
    {title:'k − 1 dummies and the trap',
     teach:`<p>A category with <b>k</b> groups needs <b>k − 1</b> dummies. The omitted group is the <b>baseline</b>.</p>
@@ -80,13 +80,13 @@ NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categ
     <p>Include all three dummies with an intercept and they always sum to 1 — exactly the intercept’s column. That’s <b>perfect multicollinearity</b>, the <b>dummy-variable trap</b>. Never code categories 1, 2, 3 either — that implies a ranking and equal spacing.</p>`,
     practice:[
      {make:r=>{const k=ri(r,3,6);return {type:'num',q:`A variable has <b>${k}</b> categories. How many dummy variables go into a model with an intercept?`,a:k-1,tol:0,hint:'k − 1',solution:`${k} − 1 = ${k-1}.`,why:'The omitted category is the baseline every coefficient is compared against.'};}},
-     {type:'mc',q:'Why not code customer type as Government = 1, Commercial = 2, Defense = 3 in one variable?',opts:['It implies a ranking and equal distances between types that don’t exist','Excel can’t read numbers above 2','It would make R² too high','It is the same as using dummies'],a:0,why:'Categories have no numeric order; dummies let each group have its own shift from the baseline.'},
+     {type:'mc',q:'Why not code customer type as Government = 1, Commercial = 2, Defense = 3 in one variable?',opts:['It implies an order and spacing that don’t exist','Excel can’t read category codes above 2','It would push R² unrealistically high','It is equivalent to using separate dummies'],a:0,why:'Categories have no numeric order; dummies let each group have its own shift from the baseline.'},
     ]},
   ],
   puzzles:[
    {make:r=>{const d=genSalary(r),b=d.m.b[3];return {type:'mc',exhibit:Exhibit.excel(d.m,'Salary ($000) · Degree = 1 with graduate degree'),
     q:'How should you read the Degree coefficient?',
-    opts:[`Holding experience and score constant, degree holders are predicted to earn about ${money(Math.abs(b)*1000,0)} ${b>=0?'more':'less'} than non-holders`,`A degree causes a ${round(Math.abs(b),2)}% raise`,`Degree holders earn ${round(Math.abs(b),2)} thousand dollars in total`,`The Degree coefficient is the baseline salary`],a:0,
+    opts:[`Others fixed, degree holders earn about ${money(Math.abs(b)*1000,0)} ${b>=0?'more':'less'}`,`Others fixed, a degree causes a ${round(Math.abs(b),2)}% raise`,`Degree holders earn ${round(Math.abs(b),2)} thousand dollars in total`,`It is the baseline salary for the non-degree group`],a:0,
     why:'The dummy coefficient is an adjusted difference from the Degree = 0 baseline. Check its p-value too: a difference can be economically sizable yet estimated imprecisely.'};}},
    {make:r=>{const d=genSalary(r),e=ri(r,1,10),s=ri(r,72,98),deg=r()<.5?1:0,a=d.m.predict([e,s,deg]);return {type:'num',exhibit:Exhibit.excel(d.m,'Salary ($000)'),
     q:`Predict the salary (in $000) of a programmer with <b>${e}</b> years of experience, an aptitude score of <b>${s}</b>, and <b>${deg?'a':'no'}</b> graduate degree.`,a,tol:.05,unit:'thousand',
@@ -98,7 +98,7 @@ NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categ
     solution:pickT==='Government'?`Intercept = ${fmtNum(a,2)}%.`:`${Exhibit.xl(d.m.b[0])} + ${Exhibit.xl(pickT==='Commercial'?d.m.b[1]:d.m.b[2])} = ${fmtNum(a,2)}%.`,
     why:'The intercept is the baseline group’s level; each dummy coefficient is that group’s difference from the baseline.'};}},
    {type:'mc',q:'An analyst includes Government, Commercial, and Defense dummies <b>and</b> an intercept. Excel balks. Why?',
-    opts:['The three dummies always sum to 1 — the same as the intercept column — creating perfect multicollinearity (the dummy-variable trap)','There are too few observations','Dummy variables can’t be used with an intercept','Excel can only handle two dummies'],a:0,
+    opts:['The dummies sum to 1, duplicating the intercept','There are too few observations for three dummies','Dummy variables can’t be combined with an intercept','Excel can only estimate two dummies at a time'],a:0,
     why:'Drop one category to serve as the baseline: k categories → k − 1 dummies.'},
    {make:r=>{const k=ri(r,3,7);return {type:'num',q:`A bank models loan losses across <b>${k}</b> regions and includes an intercept. How many region dummies should it use?`,a:k-1,tol:0,
     hint:'Categories minus one.',solution:`${k} − 1 = ${k-1}; the omitted region is the baseline.`,why:'Each coefficient then reads as that region’s difference from the baseline region.'};}},

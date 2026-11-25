@@ -33,7 +33,7 @@ function renderHud(){
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
-const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||fading;
+const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||fading;
 
 /* ---------- dialogs ---------- */
 function openDialog(npc,i=0){
@@ -185,7 +185,41 @@ function renderLog(){
     const b=$('importBtn');b.textContent='Load';b.onclick=()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));if(s.v!==1)throw 0;SAVE={...blankSave(),...s,reset:Date.now()};persist();travel(SAVE.scene,'start');L.classList.add('hidden');toast('Progress loaded.');}catch(e){$('toolMsg').textContent='That code could not be read.';}};};
   $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.arm){SAVE={...blankSave(),reset:Date.now()};persist();travel('hub','start');L.classList.add('hidden');toast('Progress reset.');}else{b.dataset.arm=1;b.textContent='Tap again to erase everything';}};
 }
-function toggleLog(){const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
+/* ---------- map: the three regions and what each stone covers, in plain language ---------- */
+function renderMap(){
+  const R=COURSE.regions,here=curScene||'hub',icon=s=>({done:'<i class="ic done">✓</i>',todo:'<i class="ic todo">!</i>',sealed:'<i class="ic sealed"></i>',frozen:'<i class="ic frozen">❄</i>'}[s]);
+  const pos={hub:[200,128],woods:[200,34],hollow:[56,128],reach:[344,128]};
+  const stat=id=>{if(id==='hub')return '';const r=regionById(id),l=liveNodes(r);return `${l.filter(n=>SAVE.done[n]).length}/${l.length}`;};
+  const col=id=>id==='hub'?'#ffd27a':regionDone(id)?'#8fe0a0':regionUnlocked(id)?'#ffd27a':'#7f8aa8';
+  let svg=`<svg viewBox="0 0 400 170" role="img" aria-label="Map: the village in the middle, Signpost Woods to the north, Lantern Hollow to the west, Crystal Reach to the east">`;
+  for(const id of ['woods','hollow','reach'])svg+=`<line x1="${pos.hub[0]}" y1="${pos.hub[1]}" x2="${pos[id][0]}" y2="${pos[id][1]}" stroke="${regionUnlocked(id)?'rgba(255,214,150,.55)':'rgba(140,150,180,.35)'}" stroke-width="2.5" stroke-dasharray="${regionUnlocked(id)?'':'5 5'}"/>`;
+  for(const id of ['hub','woods','hollow','reach']){const [x,y]=pos[id],name=id==='hub'?'Frostmere Village':regionById(id).name,lk=id!=='hub'&&!regionUnlocked(id);
+    svg+=`<g class="rg" data-r="${id}"><circle cx="${x}" cy="${y}" r="${id==='hub'?17:15}" fill="rgba(10,16,34,.85)" stroke="${col(id)}" stroke-width="2.5"/>
+      <text x="${x}" y="${y+4.5}" text-anchor="middle" font-size="12" fill="${col(id)}">${id==='hub'?'⌂':lk?'🔒':stat(id)}</text>
+      <text x="${x}" y="${y+(id==='woods'?-22:31)+(id==='woods'?0:0)}" text-anchor="middle" font-size="12.5">${esc(name)}</text>
+      ${id===here?`<text x="${x}" y="${y+(id==='woods'?34:45)}" text-anchor="middle" font-size="10.5" fill="#8fe0a0">● you are here</text>`:''}</g>`;}
+  svg+=`</svg>`;
+  const sec=(id,name,tag,body,lk,lockMsg)=>`<section class="mreg${lk?' locked':''}" id="mr-${id}"><h3><span>${esc(name)} ${id===here?'<em class="here">· you are here</em>':''}</span><small>${tag}</small></h3><p class="pl">${COURSE.plain[id]}${lk?` <i>${lockMsg}</i>`:''}</p>${body}</section>`;
+  let h=`<button class="close" id="mapClose" aria-label="Close">×</button><div class="kicker">Map of Frostmere</div><h2>Where to go, and what you’ll learn there</h2>${svg}`;
+  h+=sec('hub','Frostmere Village','home base',`<ul>
+    <li><i class="ic todo">?</i><span><b>Warden Quill</b> — your guide; replay his welcome at the sign</span></li>
+    <li><i class="ic ${SAVE.missed.length?'todo':'done'}">${SAVE.missed.length?'!':'✓'}</i><span><b>Review board</b> — retry questions you missed, with fresh numbers<em>${SAVE.missed.length} waiting</em></span></li>
+    <li><i class="ic ${SAVE.exam?'done':'todo'}">${SAVE.exam?'✓':'!'}</i><span><b>Practice final</b> — 20 mixed questions from every area, with a clock<em>${SAVE.exam?`best ${SAVE.exam.best} / ${SAVE.exam.n}`:'not taken yet'}</em></span></li></ul>`,false)
+;
+  for(const r of R){const un=regionUnlocked(r.id),req=r.requires?regionById(r.requires).name:'';
+    const items=r.nodes.map(id=>{const n=NODES[id],st=un?nodeState(id):'sealed',L=lessonsOf(id).length;
+      return `<li>${icon(st)}<span><b>${esc(n.title)}</b> — ${COURSE.about[id]||esc(n.kicker||'')}<em>${st==='done'?'restored':st==='frozen'?'frozen — finish its waypoints':un?`${L?`${lessonsDone(id)} of ${L} lessons done`:''}`:'locked'}${n.kicker?` · <span class="tag">${esc(n.kicker.split('·')[0].trim())}</span>`:''}</em></span></li>`;}).join('');
+    const tag=(r.sub.split('·')[0]||'').trim();
+    h+=sec(r.id,r.name,tag,`<ul>${items}</ul>${un&&r.id!==here?`<div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="go" data-go="${r.id}">Travel to ${esc(r.name)}</button></div>`:''}`,!un,`Opens once every stone in ${esc(req)} is restored.`);}
+  if(here!=='hub')h+=`<div class="acts" style="justify-content:flex-start"><button class="go" data-go="hub">Return to the village</button></div>`;
+  const M=$('map');M.innerHTML=h;
+  $('mapClose').onclick=()=>M.classList.add('hidden');
+  M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{M.classList.add('hidden');const to=b.dataset.go;travel(to,to==='hub'?('from'+here[0].toUpperCase()+here.slice(1)):'fromHub');});
+  M.querySelectorAll('svg .rg').forEach(g=>g.onclick=()=>$('mr-'+g.dataset.r)?.scrollIntoView({behavior:'smooth',block:'start'}));
+}
+function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
+$('mapBtn').onclick=toggleMap;
+function toggleLog(){$('map').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
 $('logBtn').onclick=toggleLog;
 
 /* ---------- interaction + travel ---------- */
@@ -195,8 +229,8 @@ const readBtn=$('readBtn');
 function tapPick(wx,wy){let best=null,bd=1e9;for(const it of INTER){const dx=wx-it.x,dy=wy-(it.y-34);const d=Math.hypot(dx,dy*.7);if(d<48&&d<bd){bd=d;best=it;}}return best;}
 function tryRead(){if(nearI&&!uiOpen())nearI.act();}
 readBtn.onclick=tryRead;
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();
-  if(k==='escape'){closeCard();$('log').classList.add('hidden');}
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();if(k==='m'&&card.classList.contains('hidden'))toggleMap();
+  if(k==='escape'){closeCard();$('log').classList.add('hidden');$('map').classList.add('hidden');}
   if(k==='enter'&&!uiOpen())tryRead();});
 function travel(to,spawnKey){
   fading=true;const f=$('fade');f.classList.add('on');
@@ -281,6 +315,6 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,toggleMap,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });

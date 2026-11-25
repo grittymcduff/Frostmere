@@ -162,12 +162,30 @@
   .sc .cn{stroke:#2f7fb5;stroke-width:1.1;opacity:.45}
   .clock{float:right;margin-right:30px;font-variant-numeric:tabular-nums;color:#ffd27a}
   .exres td.mod{white-space:nowrap}.exres .ok{color:#8fe0a0}.exres .no{color:#ffb39a}
+  #map{position:fixed;left:50%;top:62px;transform:translateX(-50%);width:min(720px,calc(100vw - 20px));max-height:calc(100dvh - 76px);overflow:auto;box-sizing:border-box;padding:18px 20px 16px;z-index:6}
+  #map h2{margin:2px 0 4px;font-size:21px;color:#ffe2a8;font-weight:normal}
+  #map .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+  #map .close{position:absolute;right:10px;top:8px;background:none;border:none;color:#f3ead8;font-size:22px;cursor:pointer;opacity:.6;width:40px;height:40px}
+  #map svg{width:100%;max-width:440px;height:auto;display:block;margin:6px auto 10px}
+  #map svg .rg{cursor:pointer}#map svg text{font-family:Georgia,serif;fill:#f3ead8}
+  #map .mreg{border-top:1px solid rgba(255,214,150,.18);padding:12px 0 6px}
+  #map .mreg h3{margin:0;font-size:17px;font-weight:normal;color:#ffe2a8;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  #map .mreg h3 small{font-size:12px;color:#cdbfa6;font-style:italic}
+  #map .mreg .pl{margin:4px 0 8px;font-size:14px;line-height:1.45}
+  #map .mreg.locked{opacity:.62}
+  #map ul{list-style:none;margin:0;padding:0}#map li{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.07)}
+  #map li .ic{flex:none;margin-top:2px}#map li b{font-weight:normal;color:#ffe2a8}#map li span{font-size:13.5px;line-height:1.4}
+  #map li em{display:block;font-style:normal;font-size:12px;opacity:.65;margin-top:1px}
+  #map .go{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:8px;cursor:pointer;background:rgba(255,200,110,.14);color:#ffe2a8;border:1px solid rgba(255,214,150,.4)}
+  #map .here{color:#8fe0a0;font-size:12px;font-style:normal}
+  #map .tag{font-size:11px;opacity:.55;letter-spacing:.04em}
+  @media (max-width:600px){.topbtns{gap:5px;right:8px;top:8px}.topbtns kbd{display:none}.topbtns button{padding:7px 9px}#hud{top:56px;left:8px}#log{top:56px}#map{top:56px;max-height:calc(100dvh - 66px)}}
 </style>
 </head>
 <body>
 <canvas id="game" aria-label="Frostmere Village game world"></canvas>
 <div id="hud" class="panel"><span class="t1" id="hName"></span><span class="t2" id="hSub"></span><div class="line" id="hLine"></div><div class="line inv hidden" id="hInv"></div></div>
-<div class="topbtns"><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="muteBtn" class="panel" aria-label="Mute music and ambience" aria-pressed="false">🔊</button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
+<div class="topbtns"><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="mapBtn" class="panel">Map <kbd>M</kbd></button><button id="muteBtn" class="panel" aria-label="Mute music and ambience" aria-pressed="false">🔊</button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
 <div id="fx" class="panel hidden">
   <div class="sub">Layers (code only)</div>
   <label><input type="checkbox" data-fx="light" checked> Lighting &amp; glow</label>
@@ -187,6 +205,7 @@
   <div class="fps" id="fps"></div>
 </div>
 <div id="log" class="panel hidden" role="dialog" aria-label="Quest log"></div>
+<div id="map" class="panel hidden" role="dialog" aria-label="Map of Frostmere"></div>
 <div id="hint" class="panel">WASD / arrows to move · Shift to jog · tap to walk · drag for joystick · E to interact</div>
 <button id="readBtn" class="panel hidden"><span></span> <kbd>E</kbd></button>
 <div id="card" class="panel hidden" role="dialog" aria-modal="true"></div>
@@ -1931,6 +1950,36 @@ const COURSE={
   ],
 };
 
+/* plain-language map text: what each place and stone is about */
+COURSE.plain={
+  hub:'Home base. Talk to Warden Quill, retry missed questions at the review board, and take the practice final.',
+  woods:'The basics: what a regression says, how to read its output, and how to build one sensibly.',
+  hollow:'Can you trust it? The ground rules behind a regression, testing whether an effect is real, and cause versus coincidence.',
+  reach:'Fixing problem models: the wrong shape, factors that overlap, and errors that follow a pattern.',
+};
+COURSE.about={
+  'm1-signs':'Predicting which way each factor should push the result — before touching any data',
+  'm1-cross':'Telling cause from coincidence: hidden third factors, reverse cause, and experiments',
+  'm1-magic':'Turning an equation into predictions, and what a miss (a residual) means',
+  'm1-units':'Reading an effect in real-world units, and when the starting value (intercept) means anything',
+  'm1-ledger':'Reading Excel’s regression output in a sensible order',
+  'm2-ols':'How the “line of best fit” is chosen, and how much of the story it explains',
+  'm2-andy':'Reading one factor’s effect while holding the others steady, to compare business options',
+  'm2-fit':'What R² and adjusted R² can — and can’t — tell you about a model',
+  'm3-design':'The six steps of building a model, and what to do with odd data points',
+  'm3-dummy':'Putting yes/no and category information into a model without the dummy trap',
+  'm4-seven':'The seven ground rules a regression relies on, and what breaks when one fails',
+  'm4-plots':'Reading leftover-error (residual) plots and spotting data points worth a second look',
+  'm5-tests':'Setting up a test of whether an effect is real, and the two ways a test can be wrong',
+  'm5-three':'p-values, confidence ranges, and the overall F-test — and “significant” versus “important”',
+  'm6-trial':'Why randomized experiments can prove cause and effect when ordinary data can’t',
+  'm6-omit':'What goes wrong when an important factor is left out — or a useless one is added',
+  'm7-form':'Choosing the right shape: a straight line, a curve, percentages (logs), or a time delay',
+  'm8-multi':'When two factors move together so closely the model can’t tell which one matters',
+  'm9-serial':'When this period’s error spills into the next — a time-series problem',
+  'm10-hetero':'When errors grow with the size of the company or project — and the model gets overconfident',
+};
+
 /* ==== content/m1.js ==== */
 /* ==========================================================================
    MODULE 1 — Econometrics for managerial decisions under uncertainty
@@ -1953,10 +2002,10 @@ NODES['m1-signs']={kicker:'Module 1 · Theory and evidence',title:'Stone of Sign
    opts:['A proof-generating machine that decides for you','A disciplined way to structure assumptions','A method for comparing evidence with claims','An input into a decision under uncertainty'],a:0,
    why:'The model can keep you from a blind bet, but it cannot decide for you. Models reduce analytical risk; leaders still own business risk.'},
   {make:r=>{const b=round(rr(r,.12,.48),2);return {type:'mc',q:`Your demand model estimates an income coefficient of <b>${b}</b>. What is the correct managerial reading?`,
-   opts:[`Expected demand rises by ${b} units for a one-unit rise in income, holding the included factors constant`,`A one-unit rise in income causes demand to rise by ${Math.round(b*100)}%`,`Demand rises by ${b} units whenever income rises, no matter what else changes`,`${Math.round(b*100)}% of the variation in demand is explained by income`],a:0,
+   opts:[`About ${b} more units demanded per one-unit rise in income, others fixed`,`A one-unit rise in income causes demand to rise by ${Math.round(b*100)}%, others held fixed`,`Demand rises by ${b} units whenever income rises, whatever else changes`,`Income explains ${Math.round(b*100)}% of the variation in demand, others held fixed`],a:0,
    why:'A coefficient is a marginal relationship in the units of the problem, conditional on the other included factors. It is evidence about a relationship — not proof of a causal mechanism, and not a share of variance explained.'};}},
   {type:'mc',q:'Your price coefficient has the sign theory predicted. What should a manager ask next?',
-   opts:['Is the effect large enough — and precise enough — to change the decision?','Nothing; the expected sign settles the question','Whether R² is above 0.9','Whether the intercept is positive'],a:0,
+   opts:['Is the effect big and precise enough to change the decision?','Nothing more — the expected sign confirms the model','Whether R² is above 0.9, so the model can be trusted','Whether the intercept is positive, as a sanity check'],a:0,
    why:'Sign ≠ decision. Ask whether the estimate is economically material, precise enough for the stakes, sensible given market structure, and likely to survive changes in competitors, technology, or policy.'},
 ]};
 
@@ -1976,13 +2025,13 @@ NODES['m1-cross']={kicker:'Module 1 · Causality and design',title:'Crossroads o
    opts:['A regional price test','A change in interest rates','A competitor’s pricing strategy','An economy-wide shift in demand'],a:0,
    why:'Price tests, regional advertising, and service offers can be assigned to comparable groups. Interest rates, competitor strategy, supply disruptions, and economy-wide demand usually cannot — so managers often work with observational data.'},
   {type:'mc',q:'An estimated regression coefficient is best described as…',
-   opts:['Evidence about a relationship — not proof of a causal mechanism','Proof that X causes Y, if the sample is large','The exact change in Y that will follow a change in X','A measure of how much of Y is explained by X'],a:0,
+   opts:['Evidence about a relationship — not proof of a causal mechanism','Proof that X causes Y, as long as the sample is reasonably large','The exact change in Y that will follow a change in X','A measure of how much of Y is explained by X'],a:0,
    why:'Coefficients turn market logic into measurable effects, but the design determines how confidently you can move from association toward causation.'},
   {type:'mc',q:'What do causal claims actually require?',
-   opts:['Theory, a credible research design, and evidence — not a coefficient alone','A p-value below 0.05','An R² above 0.8','At least 100 observations'],a:0,
+   opts:['Theory plus a design that rules out other explanations','A p-value below 0.05 on the variable of interest','An R² above 0.8, so other factors can’t matter much','A large sample — at least 100 observations'],a:0,
    why:'Statistical significance, fit, and sample size do not establish causality. Theory plus a credible design plus evidence do.'},
   {type:'mc',q:'What is the difference between the error term εᵢ and the residual eᵢ?',
-   opts:['ε is the true, unobservable deviation from the conditional mean; e = Y − Ŷ is the observed miss from the fitted model','They are the same thing measured in different units','ε is the miss on the training data; e is the miss on new data','e is unobservable; ε is what Excel reports'],a:0,
+   opts:['ε is the true, unobservable deviation; e = Y − Ŷ is the observed miss','They are the same quantity, just reported in different units','ε is the miss on the estimation data; e is the miss on new data','e is the unobservable one; ε is what Excel reports as residuals'],a:0,
    why:'εᵢ = Yᵢ − E(Yᵢ|Xᵢ) can’t be observed. eᵢ = Yᵢ − Ŷᵢ can, and residuals approximate the errors — large or patterned residuals are risk signals to investigate, not mistakes to erase.'},
 ]};
 
@@ -2020,7 +2069,7 @@ NODES['m1-magic']={kicker:'Module 1 · Fitted values and residuals',title:'The M
       solution:`${wins} within 10 lb × $2 − ${8-wins} misses × $3 = ${money(net,0)}.`,
       why:'Judge the model in the units of the decision — dollars at the booth — not only by statistical fit.'};}},
   {type:'mc',q:'Why does the booth model code height as <b>inches above 5 feet</b> instead of total inches?',
-   opts:['So the intercept becomes the predicted weight of a five-foot customer — a meaningful reference point','Because Excel cannot handle numbers above 60','To make the slope larger','So that residuals are always positive'],a:0,
+   opts:['So the intercept is the predicted weight at five feet','Because Excel handles small numbers more accurately','To make the slope larger and easier to read','So the residuals all come out positive'],a:0,
    why:'With total inches, X = 0 means a person zero inches tall, and the intercept is meaningless. The coding of X decides whether the intercept has a sensible meaning; the slope is unchanged.'},
 ]};
 
@@ -2035,7 +2084,7 @@ NODES['m1-units']={kicker:'Module 1 · Units, coding, and the relevant range',ti
   puzzles:[
   {make:r=>{const d=genFood(r);return {type:'mc',exhibit:Exhibit.scatter(d.inc,d.food,{line:[d.m.b[0],d.m.b[1]],xl:'Weekly income ($100 units)',yl:'Weekly food ($)',eq:`ŷ = ${d.b0} + ${d.b1}x`})+foodEq(d),
     q:'Forty three-person households. Which interpretation of the slope is correct?',
-    opts:[`A $100 increase in weekly income is associated with about $${d.b1} more expected weekly food spending`,`A $1 increase in weekly income is associated with $${d.b1} more weekly food spending`,`Every household that earns $100 more will spend exactly $${d.b1} more on food`,`A household with zero income spends $${d.b0} a week on food`],a:0,
+    opts:[`Each extra $100 of weekly income goes with about $${d.b1} more food spending`,`Each extra $1 of weekly income goes with about $${d.b1} more food spending`,`Every household earning $100 more will spend exactly $${d.b1} more on food`,`A household with zero income is expected to spend $${d.b0} a week on food`],a:0,
     hints:{1:'Check how income is coded.',2:'The slope is an average relationship, not a promise for each household.',3:'Is zero income anywhere near the observed data?'},
     why:'Translate the coded unit back into the manager’s natural unit. Scaling income to $100 units changes the coefficient’s number, not the economic relationship.'};}},
   {make:r=>{const d=genFood(r),inc=pick([1500,2000,2500,3000]),x=inc/100,a=d.b0+d.b1*x;return {type:'num',exhibit:foodEq(d),
@@ -2050,7 +2099,7 @@ NODES['m1-units']={kicker:'Module 1 · Units, coding, and the relevant range',ti
     why:'Regression gives a scenario input. Whether the store captures that spending depends on comparability, prices, competition, and how stable the relationship is.'};}},
   {make:r=>{const d=genHouse(r);return {type:'mc',exhibit:Exhibit.eq(`Predicted PRICE = ${d.b0<0?'−':''}${Math.abs(d.b0).toLocaleString()} + ${d.b1} × SIZE <small>(square feet; sample ${d.min.toLocaleString()}–${d.max.toLocaleString()})</small>`),
     q:`The intercept is ${money(d.b0,0)}. How should you read it?`,
-    opts:['It is the prediction at zero square feet — far outside the data, so it has no literal business meaning','Empty lots in this market sell for a negative price','The model is broken and the slope cannot be trusted','Every house loses that much value at sale'],a:0,
+    opts:['A prediction at zero sq. ft. — outside the data, not literal','Empty lots in this market sell for a negative price on average','The model is broken, so the slope can’t be trusted either','Every house loses that much value at the time of sale'],a:0,
     why:'A coefficient can be mathematically necessary without having a useful stand-alone interpretation. The slope is useful inside the relevant range; the intercept needs a reality check.'};}},
   {make:r=>{const d=genHouse(r),s=Math.round(rr(r,d.min+200,d.max-200)/50)*50,a=d.b0+d.b1*s;return {type:'num',
     exhibit:Exhibit.eq(`Predicted PRICE = ${d.b0<0?'−':''}${Math.abs(d.b0).toLocaleString()} + ${d.b1} × SIZE`),
@@ -2077,7 +2126,7 @@ NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild L
     why:'A point prediction starts the conversation. Is the link causal? Can operations serve the new customers? Would price or customer mix change? How wide is the uncertainty?'};}},
   {make:r=>{const d=genService(r),lo=Math.min(...d.c),hi=Math.max(...d.c);return {type:'mc',exhibit:svcEx(d),
     q:`Branches in the sample have between ${lo} and ${hi} customers. What does the intercept (≈ ${round(d.m.b[0],1)}) tell you?`,
-    opts:['An extrapolated baseline at zero customers — outside the observed range, not a meaningful operating forecast','A branch with no customers will earn that much revenue','Fixed revenue every branch earns regardless of customers','It is insignificant, so the model should be dropped'],a:0,
+    opts:['An extrapolated baseline outside the observed range','The revenue a branch with no customers will earn','Fixed revenue every branch earns regardless of customers','Nothing usable, so the whole model should be dropped'],a:0,
     why:'The slope is useful inside the relevant range; the intercept requires a business reality check.'};}},
   {make:r=>{const d=genService(r),x=ri(r,18,45),pred=d.m.predict(x),act=round(pred+(r()<.5?-1:1)*rr(r,2,7),1),a=act-pred;return {type:'num',exhibit:svcEx(d),
     q:`A branch with <b>${x} customers</b> earned <b>$${act}M</b>. What is its residual?`,a,tol:.1,pre:'$',unit:'M',
@@ -2086,13 +2135,13 @@ NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild L
     why:'A residual tells you how far the model missed — not why. Large or patterned residuals point to demand shifts, outages, churn, missing variables, or the wrong functional form.'};}},
   {make:r=>{const d=genService(r);return {type:'mc',exhibit:svcEx(d),
     q:`R Square is ${Exhibit.xl(d.m.R2)}. Which conclusion is justified?`,
-    opts:['Customers and revenue are strongly associated in this sample — but fit alone doesn’t prove that adding customers causes revenue','The model proves that adding customers causes revenue to rise','Every future branch will land almost exactly on the fitted line','A high R² means the intercept can now be read literally'],a:0,
+    opts:['A strong association here — but fit alone doesn’t prove cause','The model shows that adding customers causes revenue to rise','Every future branch should land almost exactly on the line','The intercept can now be read literally, given the fit'],a:0,
     why:'The goal is not to celebrate a high R² but to interpret what the model does and does not support. The teaching data are deliberately clean; real operating data are noisier.'};}},
 ]};
 
 /* exam-guide gap: why managers use econometrics */
 NODES['m1-signs'].puzzles.push({type:'mc',q:'What is econometrics mainly for in a managerial setting?',
-  opts:['Putting numbers — and honest uncertainty — on relationships so decisions under uncertainty are better informed','Proving that a theory is true','Replacing managerial judgment with a formula','Finding whichever variables are significant in the data'],a:0,
+  opts:['Measuring relationships and their uncertainty to inform decisions','Proving which business theories are true from past data','Replacing managerial judgment with an objective formula','Finding whichever variables turn out significant in the data'],a:0,
   why:'Regression quantifies a relationship and its uncertainty; theory supplies the story and judgment makes the decision.'});
 
 /* ==== content/m10.js ==== */
@@ -2130,15 +2179,15 @@ NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widenin
      {make:r=>{const n=pick([24,30,40,50]),R=round(rr(r,.05,.35),3),lm=n*R;return {type:'num',q:`A Breusch–Pagan auxiliary regression on <b>n = ${n}</b> observations has R² = <b>${R}</b>. What is the LM statistic?`,a:lm,tol:.02,
       hint:'LM = n × R² of the auxiliary regression',solution:`${n} × ${R} = ${round(lm,3)}.`,why:'Compare LM with the χ² critical value for the test’s degrees of freedom.'};}},
      {type:'mc',q:'Breusch–Pagan says “no heteroskedasticity” (p = .34); White says “yes” (p = .025) on the same data. Why?',
-      opts:['White also searches squared and interaction patterns that Breusch–Pagan’s linear search can miss','One of the tests was run incorrectly','White is always right and Breusch–Pagan is obsolete','They test different null hypotheses about the coefficients'],a:0,
+      opts:['White also searches squared and interaction patterns','One of the two tests must have been run incorrectly','White is always right; Breusch–Pagan is obsolete','They test different hypotheses about the coefficients'],a:0,
       why:'Narrow search found nothing; wider search found a pattern. That’s not a contradiction.'},
     ]},
   ],
   puzzles:[
    {make:r=>{const k=pick(['curve','spray']),d=genResid(r,k);return {type:'mc',exhibit:residPlot(d,'Fitted value'),
     q:'What is the first problem to address in this residual plot?',
-    opts:k==='curve'?['The functional form — residuals curve around zero, so the mean equation is missing a shape','Heteroskedasticity — switch to robust standard errors','Serial correlation — run Durbin–Watson','Nothing — the residuals average zero']
-                    :['Heteroskedasticity — the spread widens as the fitted value grows','The functional form — the residuals curve','Multicollinearity','Nothing — the residuals average zero'],a:0,
+    opts:k==='curve'?['The functional form — the residuals curve around zero','Heteroskedasticity — switch to robust standard errors','Serial correlation — run a Durbin–Watson test','Nothing — the residuals still average zero']
+                    :['Heteroskedasticity — the spread widens with the fit','The functional form — the residuals bend around zero','Multicollinearity between the explanatory variables','Nothing — the residuals still average zero'],a:0,
     why:k==='curve'?'A systematic curve is a mean problem. Fix the equation before testing the variance — robust SEs can’t repair the wrong shape.':'A widening spread with no curve is the classic heteroskedasticity signature: the uncertainty grows with scale.'};}},
    {make:r=>{const test=pick(['BP','White']),df=test==='BP'?2:5,n=pick([24,30,40]),R=round(rr(r,.05,.45),3),lm=n*R,crit=CHI5[df];
     return {type:'mc',exhibit:Exhibit.table(['Test','n','Auxiliary R²','df','χ² critical (5%)'],[[test==='BP'?'Breusch–Pagan':'White',n,R,df,crit]]),
@@ -2148,10 +2197,10 @@ NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widenin
            `LM = ${round(R/n,4)} → do not reject H₀`,`LM = ${round(n*(1-R),2)} → reject H₀`],a:0,
      why:`${n} × ${R} = ${round(lm,2)}, which is ${lm>crit?'above':'below'} the χ²(${df}) critical value of ${crit}.`};}},
    {type:'mc',q:'Why might White detect heteroskedasticity that Breusch–Pagan misses?',
-    opts:['White adds squared and interaction terms, so it can catch curved or combined patterns in the error size','White uses the original Y instead of residuals','Breusch–Pagan only works with time-series data','White always has fewer degrees of freedom'],a:0,
+    opts:['White also tests squared and cross-product terms','White uses the original Y instead of squared residuals','Breusch–Pagan only works with time-series data','White has fewer degrees of freedom, so it’s stricter'],a:0,
     why:'Two flashlights: Breusch–Pagan a narrow beam, White a wider one.'},
    {type:'mc',q:'Payload mass looks highly significant (p = 0.001), but residual spread widens sharply for heavier missions. What should the program manager conclude?',
-    opts:['The coefficient’s direction may be fine, but its reported precision is suspect — don’t size risk reserves on that p-value alone','The coefficient is biased, so payload mass doesn’t matter','Heteroskedasticity makes the coefficient more reliable','Nothing — significance settles it'],a:0,
+    opts:['Its direction may be fine; its precision is suspect','The coefficient is biased, so payload may not matter','The wider spread makes the estimate more reliable','Nothing changes — p = 0.001 settles the question'],a:0,
     why:'The danger is false confidence: understated uncertainty exactly where the stakes are largest.'},
    {type:'order',q:'Put the response to a suspicious residual plot in order.',
     items:['Plot the residuals against fitted values or key Xs','If they curve, fix the mean equation (add the justified nonlinear term) and re-estimate','Re-check the new residuals and run Breusch–Pagan / White','If the variance still changes, use robust standard errors'],
@@ -2160,7 +2209,7 @@ NODES['m10-hetero']={kicker:'Module 10 · Heteroskedasticity',title:'The Widenin
     items:[{t:'Profits of a mix of corner shops and national chains',c:0},{t:'Cost overruns across routine launches and first-of-a-kind missions',c:0},{t:'Daily output of identical machines in one plant',c:1},{t:'Household spending across incomes from $20k to $2M',c:0}],
     why:'Whenever the size of the observation changes dramatically, ask whether the size of the error changes too.'},
    {type:'mc',q:'Which statement is correct?',
-    opts:['Heteroskedasticity mainly harms inference (SEs, p-values), while a wrong functional form harms the average relationship itself','Both problems bias the coefficients in the same way','Robust standard errors fix a wrong functional form','Heteroskedasticity only occurs in time-series data'],a:0,
+    opts:['Heteroskedasticity harms inference; wrong form harms the fit','Both problems bias the coefficients in the same direction','Robust standard errors repair a wrong functional form too','Heteroskedasticity only arises in time-series data'],a:0,
     why:'Mean problem vs variance problem: fixing standard errors cannot repair an incorrectly specified equation.'},
   ]};
 
@@ -2191,9 +2240,9 @@ W1('m1-signs',[
    <p>The model can keep you from a blind bet, but it can’t decide for you.</p>`,
    practice:[
     {make:r=>{const b=round(rr(r,1.1,3.9),1);return {type:'mc',q:`An advertising coefficient is <b>${b}</b> (sales in units, advertising in $1,000s). Which reading is right?`,
-      opts:[`$1,000 more advertising is associated with about ${b} more units sold, holding the other included factors constant`,`$1 more advertising causes ${b} more units sold`,`Advertising explains ${Math.round(b*10)}% of sales`,`Sales will rise by exactly ${b} units every time advertising rises`],a:0,
+      opts:[`Each extra $1,000 of ads goes with about ${b} more units sold, others held fixed`,`Each extra $1 of advertising causes ${b} more units sold, others held fixed`,`Advertising explains about ${Math.round(b*10)}% of the variation in units sold`,`Sales rise by exactly ${b} units every time advertising rises by $1,000`],a:0,
       why:'Read it in the stated units, as an association, conditional on the other included variables.'};}},
-    {type:'mc',q:'Your model gives the sign you expected. Which follow-up matters most for a pricing decision?',opts:['Is the effect big and precise enough to change what we do?','Is the intercept positive?','Did Excel report any decimals?','Is the sample size an even number?'],a:0,
+    {type:'mc',q:'Your model gives the sign you expected. Which follow-up matters most for a pricing decision?',opts:['Is the effect big and precise enough to change what we do?','Is the intercept positive, as a baseline sanity check?','Is R² high enough to call the model reliable?','Is the coefficient larger than the intercept?'],a:0,
      why:'Sign ≠ decision. Materiality and precision decide whether the evidence should move resources.'},
   ]},
 ]);
@@ -2204,16 +2253,16 @@ W1('m1-cross',[
    <div class="ex"><b>A → B</b> · A causes B<br><b>B → A</b> · reverse causality<br><b>C → A and B</b> · a third factor drives both<br><b>Coincidence</b> · an unstable pattern with no mechanism</div>
    <p>A regression coefficient alone cannot tell these apart. Theory and research design have to.</p>`,
    practice:[
-    {type:'mc',q:'Cities with more firefighters on duty report more fire damage. What’s the most likely story?',opts:['A third factor — bigger fires bring both more firefighters and more damage','Firefighters cause fire damage','Coincidence with no mechanism','Fire damage has no relation to firefighters'],a:0,
+    {type:'mc',q:'Cities with more firefighters on duty report more fire damage. What’s the most likely story?',opts:['A third factor — bigger fires bring both crews and damage','Causation — more firefighters lead to more water damage','Coincidence — the two just happen to move together here','Measurement — damage is overcounted where crews are large'],a:0,
      why:'Fire size (C) drives both the staffing (A) and the damage (B). The association is real; the causal reading is wrong.'},
-    {type:'mc',q:'Stores that spend more on loss-prevention staff report more shoplifting. A manager who knows high-theft stores were the ones given extra staff should suspect…',opts:['Reverse causality — theft drove the staffing','That staff cause shoplifting','Pure coincidence','A data-entry error'],a:0,
+    {type:'mc',q:'Stores that spend more on loss-prevention staff report more shoplifting. A manager who knows high-theft stores were the ones given extra staff should suspect…',opts:['Reverse causality — theft drove the staffing','Causation — more staff somehow invite more theft','Coincidence — the two just happen to move together','A data-entry error in the shoplifting reports'],a:0,
      why:'B → A: the outcome (theft) caused the “driver” (staffing).'},
   ]},
   {title:'Design, errors, and residuals',
    teach:`<p><b>Controlled experiments</b> change one factor across comparable groups — ideally by random assignment (price tests, regional ads, service offers). <b>Observational</b> settings study outcomes as they happen — interest rates, competitor moves, and economy-wide demand usually can’t be randomized.</p>
    <div class="ex"><b>Error</b> εᵢ = Yᵢ − E(Yᵢ|Xᵢ) — the true deviation, never observed.<br><b>Residual</b> eᵢ = Yᵢ − Ŷᵢ — the miss you can see from your fitted model.</div>`,
    practice:[
-    {type:'mc',q:'Which study is a controlled experiment?',opts:['Randomly offering free shipping to half of new customers','Comparing sales before and after a recession','Tracking sales when a competitor cuts prices','Comparing regions with different interest rates'],a:0,
+    {type:'mc',q:'Which study is a controlled experiment?',opts:['Randomly offering free shipping to half of new customers','Comparing sales before and after a regional recession','Tracking our sales after a competitor cuts its prices','Comparing regions that have different interest rates'],a:0,
      why:'You chose who got the offer, at random — that is what makes it an experiment.'},
     {type:'mc',q:'Which one can you actually compute from your data?',opts:['The residual, eᵢ = Yᵢ − Ŷᵢ','The true error term, εᵢ','The population β₁','The exact causal effect'],a:0,
      why:'Residuals are observed misses; they approximate the unobservable errors.'},
@@ -2229,7 +2278,7 @@ W1('m1-magic',[
     {make:r=>{const b0=round(rr(r,98,108),2),b1=round(rr(r,5.6,7.2),3),x=ri(r,3,13),a=b0+b1*x;return {type:'num',
       exhibit:Exhibit.eq(`Predicted weight = ${b0} + ${b1} × (inches above 5 feet)`),q:`Predict the weight of a customer who is <b>${ftin(x)}</b>.`,a,tol:.15,unit:'lb',
       hint:`${ftin(x)} is X = ${x}.`,solution:`${b0} + ${b1} × ${x} = ${fmtNum(a,1)} lb.`,why:'Code first, then substitute.'};}},
-    {type:'mc',q:'If the model had used total height in inches instead, what would the intercept mean?',opts:['Predicted weight of a person zero inches tall — not meaningful','Predicted weight of a five-foot person','The average weight in the sample','The weight gained per inch'],a:0,
+    {type:'mc',q:'If the model had used total height in inches instead, what would the intercept mean?',opts:['Predicted weight at zero inches tall — not meaningful','Predicted weight of a five-foot person, the usual baseline','The average weight of everyone in the sample','The extra weight that goes with each added inch'],a:0,
      why:'Coding X so that 0 is a real, relevant value is what makes an intercept interpretable.'},
   ]},
   {title:'Residuals pay the bills',
@@ -2240,7 +2289,7 @@ W1('m1-magic',[
     {make:r=>{const pred=round(rr(r,135,195),1),off=round((r()<.5?-1:1)*rr(r,1,14),1),W_=round(pred+off,0),a=W_-pred;return {type:'num',
       q:`The model predicts <b>${fmtNum(pred,1)} lb</b>; the customer weighs <b>${W_} lb</b>. What is the residual?`,a,tol:.06,unit:'lb',
       hint:'actual − predicted',solution:`${W_} − ${fmtNum(pred,1)} = ${fmtNum(a,1)} lb.`,why:`${Math.abs(a)<=10?'Within 10 lb: +$2.':'More than 10 lb off: −$3.'}`};}},
-    {type:'mc',q:'Five customers have residuals of −4, +12, +3, −11, and +7 lb. What does the booth earn?',opts:['$0 — three wins (+$6) and two losses (−$6)','+$10','−$15','+$4'],a:0,
+    {type:'mc',q:'Five customers have residuals of −4, +12, +3, −11, and +7 lb. What does the booth earn?',opts:['$0 — three wins and two losses','+$10 — three wins and two small losses','−$15 — five misses at $3 each','+$4 — four wins and one loss'],a:0,
      why:'|−4|, |3|, |7| ≤ 10 → 3 × $2 = $6. |12| and |−11| > 10 → 2 × −$3 = −$6. Net $0.'},
   ]},
 ]);
@@ -2254,7 +2303,7 @@ W1('m1-units',[
     {make:r=>{const b0=round(rr(r,70,95),2),b1=round(rr(r,8.5,11.5),2),inc=pick([1200,1800,2400,3100]),a=b0+b1*inc/100;return {type:'num',
       exhibit:Exhibit.eq(`Food = ${b0} + ${b1} × Income <small>($100 units)</small>`),q:`Forecast weekly food spending at a weekly income of <b>$${inc.toLocaleString()}</b>.`,a,tol:.06,pre:'$',
       hint:`$${inc.toLocaleString()} → X = ${inc/100}.`,solution:`${b0} + ${b1} × ${inc/100} = ${money(a)}.`,why:'Convert the natural unit into the coded unit before you substitute.'};}},
-    {type:'mc',q:'You rescale income from $100 units to $1 units. What happens?',opts:['The coefficient’s number changes; the economic relationship does not','The relationship gets stronger','R² changes','The sign flips'],a:0,
+    {type:'mc',q:'You rescale income from $100 units to $1 units. What happens?',opts:['The coefficient’s number changes; the relationship doesn’t','The relationship gets stronger because the numbers are bigger','R² changes, because income now varies more','The sign flips to keep the units consistent'],a:0,
      why:'Scaling changes the number you report, not the underlying relationship.'},
   ]},
   {title:'Intercepts and the relevant range',
@@ -2262,9 +2311,9 @@ W1('m1-units',[
    <div class="ex">PRICE = −102,871 + 129.22 × SIZE<br>A 0 sq ft house “selling” for −$102,871 is an extrapolation, not a fact.</div>
    <p>Trust the slope inside the observed range; reality-check anything outside it.</p>`,
    practice:[
-    {type:'mc',q:'A model of store revenue uses data from stores with 40–300 employees. The intercept is negative. Best response?',opts:['Ignore its literal value — zero employees is outside the data','Conclude tiny stores lose money','Throw the model out','Force the intercept to zero'],a:0,
+    {type:'mc',q:'A model of store revenue uses data from stores with 40–300 employees. The intercept is negative. Best response?',opts:['Ignore its literal value — zero employees is outside the data','Conclude that very small stores lose money','Throw the model out — a negative intercept is impossible','Force the intercept to zero and re-estimate the model'],a:0,
      why:'Zero is outside the relevant range, so the intercept is an extrapolated anchor, not a forecast.'},
-    {type:'mc',q:'When IS an intercept meaningful?',opts:['When X = 0 is plausible and inside or near the observed data','Whenever it is positive','Whenever R² is high','Never'],a:0,
+    {type:'mc',q:'When IS an intercept meaningful?',opts:['When X = 0 is plausible and near the observed data','Whenever it is positive and statistically significant','Whenever R² is high enough to trust the model','Never — the intercept only makes the math work'],a:0,
      why:'That’s why the booth model codes height as inches above 5 feet — so X = 0 is a real customer.'},
   ]},
 ]);
@@ -2276,7 +2325,7 @@ W1('m1-ledger',[
    <div class="ex">1 Signs and units → 2 Magnitudes → 3 Standard errors, t, p → 4 Fit and residuals → 5 Plausibility of the specification</div>
    <p>Two numbers you’ll see in every output, covered properly in later modules: <b>R Square</b> (0 to 1) is the share of the outcome’s variation the model explains in this sample — fit, not proof. A coefficient’s <b>P-value</b> measures how surprising the estimate would be if the true effect were zero; smaller means stronger evidence. The <b>Standard Error</b> is how much the estimate would bounce around from sample to sample.</p>`,
    practice:[
-    {type:'mc',q:'What should you read first in a regression output?',opts:['Coefficient signs and units','R Square','The p-values','The residual plot'],a:0,
+    {type:'mc',q:'What should you read first in a regression output?',opts:['Coefficient signs and units','R Square, to see whether the model is worth reading','The p-values, to see which drivers are significant','The residual plot, to spot problems early'],a:0,
      why:'Signs and units first: if the direction or units don’t make sense, nothing after it matters yet.'},
     {type:'mc',q:'In Excel’s Regression dialog, where does “annual revenue” go if it’s the outcome?',opts:['Input Y Range','Input X Range','Output Range','Residuals box'],a:0,
      why:'Y is the outcome you want to explain; X holds the drivers.'},
@@ -2288,7 +2337,7 @@ W1('m1-ledger',[
    practice:[
     {make:r=>{const b1=round(rr(r,2.4,6.2),3),k=ri(r,2,12),a=k*b1;return {type:'num',exhibit:Exhibit.eq(`Revenue ($M) = ${round(rr(r,20,50),2)} + ${b1} × Customers`),
       q:`How much does expected revenue change if the branch adds <b>${k}</b> customers?`,a,tol:.02,pre:'$',unit:'M',hint:'k × slope',solution:`${k} × ${b1} = ${fmtNum(a,3)}.`,why:'The intercept drops out of a change; only the slope matters.'};}},
-    {type:'mc',q:'You computed a +$20M revenue change from adding customers. What’s the right next step?',opts:['Check capacity, causality, and uncertainty before committing','Book the $20M in next year’s budget','Report it as guaranteed','Add more variables until R² hits 1'],a:0,
+    {type:'mc',q:'You computed a +$20M revenue change from adding customers. What’s the right next step?',opts:['Check capacity, causality, and uncertainty first','Book the $20M in next year’s budget as expected revenue','Report it to leadership as a reliable gain','Add variables until R² is close to 1, then decide'],a:0,
      why:'A point prediction is the beginning of a managerial conversation — not the end.'},
   ]},
 ]);
@@ -2332,7 +2381,7 @@ NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loo
     practice:[
      {make:r=>{const d=genTiny(r);return {type:'num',exhibit:Exhibit.table(['x','y','ŷ = '+d.b0+' + '+d.b1+'x','e = y − ŷ'],d.x.map((x,i)=>[x,d.y[i],d.b0+d.b1*x,d.e[i]])),
        q:'Square each residual and add them up. What is Σe²?',a:d.sse,tol:.01,hint:'Square each value in the last column, then sum.',solution:`${d.e.map(v=>`(${v})²`).join(' + ')} = ${d.sse}.`,why:'This is exactly the quantity OLS makes as small as possible.'};}},
-     {type:'mc',q:'Why does OLS square the residuals instead of just adding them?',opts:['So positive and negative misses don’t cancel, and big misses count more','To make the numbers larger','Because Excel cannot add negative numbers','So R² is always positive'],a:0,why:'Raw residuals from OLS sum to zero, so their plain sum can’t measure fit.'},
+     {type:'mc',q:'Why does OLS square the residuals instead of just adding them?',opts:['So misses don’t cancel, and big misses count more','To make the residuals larger and easier to compare','Because spreadsheets can’t sum negative numbers reliably','So the intercept is always estimated correctly'],a:0,why:'Raw residuals from OLS sum to zero, so their plain sum can’t measure fit.'},
     ]},
    {title:'Explained and unexplained variation',
     teach:`<p>Total variation in Y splits into what the model explains and what it leaves behind:</p>
@@ -2350,13 +2399,13 @@ NODES['m2-ols']={kicker:'Module 2 · How OLS works',title:'The Least-Squares Loo
    {make:r=>{const d=genTiny(r);return {type:'num',exhibit:Exhibit.table(['x','y'],d.x.map((x,i)=>[x,d.y[i]]))+Exhibit.eq(`Candidate line: ŷ = ${d.b0} + ${d.b1}x`),
     q:'Compute the sum of squared residuals for this candidate line.',a:d.sse,tol:.01,hint:'For each row: e = y − ŷ, then square and add.',solution:`Residuals ${d.e.join(', ')} → Σe² = ${d.sse}.`,
     why:'OLS would search over every possible line and keep the one with the smallest Σe².'};}},
-   {type:'mc',q:'You run OLS with an intercept and add up all the residuals. You get…',opts:['Zero (up to rounding)','The Residual SS','The Standard Error','R²'],a:0,
+   {type:'mc',q:'You run OLS with an intercept and add up all the residuals. You get…',opts:['Zero (up to rounding)','The residual sum of squares','The standard error of the regression','R², the share of variation explained'],a:0,
     why:'Σeᵢ = 0 is a built-in property of OLS with an intercept: no systematic over- or underprediction within the sample.'},
    {make:r=>{const n=ri(r,20,40),X=[],Y=[];for(let i=0;i<n;i++){const x=rr(r,5,50);X.push(x);Y.push(30+3*x+rngGauss(r)*18);}const m=Stats.ols(X,Y,['Traffic']);
     return {type:'num',exhibit:Exhibit.excel(m,'Daily sales ($)').replace(/<tr><td>R Square<\/td>.*?<\/tr>/,'<tr><td>R Square</td><td class="n">?</td></tr>').replace(/<tr><td>Multiple R<\/td>.*?<\/tr>/,'<tr><td>Multiple R</td><td class="n">?</td></tr>').replace(/<tr><td>Adjusted R Square<\/td>.*?<\/tr>/,'<tr><td>Adjusted R Square</td><td class="n">?</td></tr>'),
      q:'The R² cells are hidden. Use the ANOVA table to compute <b>R²</b>.',a:m.R2,tol:.002,hint:'R² = Regression SS / Total SS (or 1 − Residual SS / Total SS).',
      solution:`${Exhibit.xl(m.SSR)} / ${Exhibit.xl(m.SST)} = ${Exhibit.xl(m.R2)}.`,why:'R² is the share of total variation the model explains: ESS / TSS.'};}},
-   {type:'mc',q:'A colleague says, “OLS is an estimate and b₁ = 2.4 is the estimator.” What’s the correction?',opts:['Swap them: OLS is the estimator (the recipe); b₁ = 2.4 is the estimate (the result)','Both are estimators','Both are estimates','b₁ is the population parameter β₁'],a:0,
+   {type:'mc',q:'A colleague says, “OLS is an estimate and b₁ = 2.4 is the estimator.” What’s the correction?',opts:['Swap them: OLS is the estimator; 2.4 is the estimate','Nothing — the two words mean the same thing here','b₁ = 2.4 is the population parameter, not an estimate','Both are estimators; “estimate” is only for forecasts'],a:0,
     why:'An estimator is the procedure applied to sample data; an estimate is the number it produces. Lowercase b’s are the same as beta-hats.'},
   ]};
 
@@ -2368,9 +2417,9 @@ NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s B
     <div class="ex">SALARY ($000) = 3.17 + 1.40·EXPERIENCE + 0.25·SCORE<br>Holding score constant, one more year of experience ↔ about <b>$1,404</b> more salary.<br>Holding experience constant, one more test point ↔ about <b>$251</b> more.</div>
     <p>Don’t compare coefficient sizes across variables measured in different units.</p>`,
     practice:[
-     {type:'mc',q:'In SALARY ($000) = 3.17 + 1.40·EXPERIENCE + 0.25·SCORE, what does 0.25 mean?',opts:['Holding experience constant, one more aptitude point is associated with about $250 more salary','One more point causes $0.25 more salary','Score matters less than experience because 0.25 < 1.40','Each point adds 25% to salary'],a:0,
+     {type:'mc',q:'In SALARY ($000) = 3.17 + 1.40·EXPERIENCE + 0.25·SCORE, what does 0.25 mean?',opts:['With experience fixed, one more point ≈ $250 more salary','One more point causes exactly $0.25 more salary','Score matters less than experience, since 0.25 < 1.40','Each extra point adds about 25% to salary'],a:0,
       why:'Salary is in thousands, so 0.25 → $250, and the comparison holds experience fixed. Different units mean the sizes aren’t directly comparable.'},
-     {type:'mc',q:'Why might a single-variable model of sales on advertising mislead?',opts:['It can mix advertising’s effect with other drivers, like price, that move with it','Single-variable models always have low R²','Excel can’t run them','Advertising can’t be measured'],a:0,
+     {type:'mc',q:'Why might a single-variable model of sales on advertising mislead?',opts:['It can mix in drivers, like price, that move with ads','Single-variable models always have too low an R²','Advertising effects are too small to detect alone','One variable can’t produce a significant F-test'],a:0,
       why:'Multiple regression asks whether a driver still matters after accounting for the others.'},
     ]},
    {title:'From coefficient to a pricing move',
@@ -2386,7 +2435,7 @@ NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s B
   ],
   puzzles:[
    {make:r=>{const d=genAndy(r),b=round(d.b1,3);return {type:'mc',exhibit:andyEx(d),q:'How should Big Andy read the PRICE coefficient?',
-    opts:[`Holding advertising constant, a $1 price increase is associated with about ${money(Math.abs(b)*1000,0)} ${b<0?'less':'more'} monthly sales revenue`,`A $1 price increase causes sales to fall by ${Math.abs(b)} dollars`,`Holding advertising constant, a $1,000 price increase is associated with ${Math.abs(b)} less revenue`,`Price explains ${Math.round(Math.abs(b)*10)}% of sales`],a:0,
+    opts:[`A $1 price rise goes with about ${money(Math.abs(b)*1000,0)} ${b<0?'less':'more'} monthly revenue, ads fixed`,`A $1 price rise causes revenue to fall by ${Math.abs(b)} dollars, ads fixed`,`A $1,000 price rise goes with ${Math.abs(b)} dollars less revenue, ads fixed`,`Price explains about ${Math.round(Math.abs(b)*10)}% of the variation in revenue`],a:0,
     why:'SALES is in $1,000s, PRICE in dollars, and the reading is conditional on ADVERT. It’s an estimated association, not proof of a causal effect.'};}},
    {make:r=>{const d=genAndy(r),c=pick([.10,.20,.25]),a=-d.b1*c*1000;return {type:'num',exhibit:andyEx(d),q:`Andy cuts price by <b>$${c.toFixed(2)}</b> and keeps advertising unchanged. By how much does predicted monthly revenue change, in dollars?`,a,tol:2,pre:'$',
     hint:'PRICE coefficient × (−change) × 1,000.',solution:`${Exhibit.xl(d.b1)} × (−${c.toFixed(2)}) × 1,000 ≈ ${money(a,0)}.`,why:'Holding advertising constant is what lets you read the price coefficient alone.'};}},
@@ -2398,7 +2447,7 @@ NODES['m2-andy']={kicker:'Module 2 · Multiple regression',title:'Big Andy’s B
     hint:`Convert ADVERT to $1,000s (${ad/1000}), plug both into the equation, then multiply the result by 1,000.`,solution:`(${Exhibit.xl(d.b0)} + ${Exhibit.xl(d.b1)} × ${p} + ${Exhibit.xl(d.b2)} × ${ad/1000}) × 1,000 ≈ ${money(pred,0)}.`,
     why:'A prediction is a planning baseline. Competition, local events, service, and weather can all move the actual result.'};}},
    {type:'mc',q:'Option A (cut price $0.10) leaves ~$791 before other costs; Option B (+$500 ads) leaves ~$432 after the ad spend. What should Andy conclude?',
-    opts:['A looks better on direct costs, but neither number is profit — subtract food, labor, and operating costs and weigh capacity and competitor response','Choose A — the model proves it earns $791 more profit','Choose B — advertising always pays back','The regression has made the decision; no further analysis is needed'],a:0,
+    opts:['A looks better, but neither figure is profit yet','Choose A — the model shows it earns $791 more profit','Choose B — ads build long-run sales the model can’t see','Either — the regression has already settled it'],a:0,
     why:'Regression compares expected outcomes; managers decide whether the expected gain justifies the cost and the risk.'},
   ]};
 
@@ -2411,7 +2460,7 @@ NODES['m2-fit']={kicker:'Module 2 · Fit and model selection',title:'The Mirror 
     <p>Fit describes the sample. It doesn’t guarantee a useful decision rule.</p>`,
     practice:[
      {make:r=>{const tss=round(rr(r,500,1500),0),rss=round(tss*rr(r,.15,.7),0),a=1-rss/tss;return {type:'num',q:`TSS = <b>${tss}</b>, RSS = <b>${rss}</b>. What is R²?`,a,tol:.002,hint:'1 − RSS/TSS',solution:`1 − ${rss}/${tss} = ${round(a,3)}.`,why:'R² is the explained share of total variation.'};}},
-     {type:'mc',q:'A model of sales on store traffic has R² = 0.96. What can you say?',opts:['Traffic and sales move closely together in this sample','More traffic definitely causes more sales','The model will forecast next year perfectly','No other variable could matter'],a:0,why:'Strong fit describes the sample; it doesn’t validate a causal story or guarantee forecasts.'},
+     {type:'mc',q:'A model of sales on store traffic has R² = 0.96. What can you say?',opts:['Traffic and sales move closely together in this sample','More traffic definitely causes more sales in these stores','The model will forecast next year almost perfectly','No other variable could add much to the model'],a:0,why:'Strong fit describes the sample; it doesn’t validate a causal story or guarantee forecasts.'},
     ]},
    {title:'Adjusted R² and the price of complexity',
     teach:`<p>Adding any variable — even pure noise — can’t lower R², because TSS stays fixed and RSS can only fall or stay the same. That rewards <b>overfitting</b>.</p>
@@ -2420,21 +2469,21 @@ NODES['m2-fit']={kicker:'Module 2 · Fit and model selection',title:'The Mirror 
     <div class="ex">Mozzarella = f(Income): adj R² 0.88 → add “boat drownings”: 0.97. Better fit — no credible mechanism. It doesn’t belong.</div>`,
     practice:[
      {type:'mc',q:'You add a variable of random numbers to a model. R² will…',opts:['Stay the same or rise','Definitely fall','Become negative','Stay exactly the same'],a:0,why:'RSS can only decrease or stay the same when you add a regressor, so R² can’t fall.'},
-     {type:'mc',q:'Which comparison is valid with adjusted R²?',opts:['Two models of monthly sales ($), one with an extra driver','A model of sales vs a model of profit','A model of sales in $ vs sales in units','A model for apples vs one for oranges'],a:0,why:'Same dependent variable, same units — otherwise it’s apples and oranges.'},
+     {type:'mc',q:'Which comparison is valid with adjusted R²?',opts:['Two monthly-sales models, one with an extra driver','A model of monthly sales vs. a model of monthly profit','A model of sales in dollars vs. one of sales in units','A sales model for one product vs. one for another'],a:0,why:'Same dependent variable, same units — otherwise it’s apples and oranges.'},
     ]},
   ],
   puzzles:[
-   {type:'mc',q:'What does R² measure?',opts:['The share of variation in Y, within the sample, that the model explains','Whether the coefficients are causal','How likely the model is to be correct','The average prediction error in dollars'],a:0,
+   {type:'mc',q:'What does R² measure?',opts:['The share of Y’s sample variation the model explains','Whether the coefficients can be read as causal effects','The probability that the model is correctly specified','The average size of the prediction error, in Y’s units'],a:0,
     why:'R² = 1 − RSS/TSS describes in-sample fit — not causality or decision value.'},
    {make:r=>{const {n,A,B}=genFitPair(r),x=Exhibit.xl;return {type:'mc',
     exhibit:Exhibit.table(['Model','Variables','R²','Adjusted R²'],[['A','Price',x(A.R2),x(A.adjR2)],['B','Price + Noise',x(B.R2),x(B.adjR2)]])+`<p class="meta">Same ${n} stores, same dependent variable (weekly sales).</p>`,
-    q:'Model B adds a variable. What do these results suggest?',opts:['R² rose but adjusted R² fell — the new variable isn’t earning its place','Model B is better because its R² is higher','Model A is wrong because its R² is lower','Adjusted R² can’t be used here'],a:0,
+    q:'Model B adds a variable. What do these results suggest?',opts:['The new variable isn’t earning its place','Model B is better, because its R² is higher','Model A is wrong, because its R² is lower','Adjusted R² can’t compare models with different sizes'],a:0,
     why:'R² can’t fall when a variable is added. Adjusted R² penalizes the extra coefficient and dropped, so the variable adds noise rather than information.'};}},
    {type:'mc',q:'Adding “U.S. deaths from falling off fishing boats” raises a mozzarella-consumption model’s adjusted R² from 0.88 to 0.97. Should it stay?',
-    opts:['No — there’s no credible economic mechanism; a better statistic doesn’t mean a better model','Yes — adjusted R² penalizes useless variables, so it must be real','Yes — any variable that raises fit belongs','Only if its p-value is below 0.05'],a:0,
+    opts:['No — there’s no credible mechanism behind it','Yes — adjusted R² already penalizes useless variables','Yes — any variable that raises adjusted R² belongs','Only if its p-value is also below 0.05'],a:0,
     why:'Statistics are a filter; economic logic and judgment make the final call. A variable doesn’t belong just because it raises adjusted R².'},
    {type:'mc',q:'Model 1 explains <b>sales revenue ($)</b> with adjusted R² = 0.62. Model 2 explains <b>profit margin (%)</b> with adjusted R² = 0.81. What can you conclude?',
-    opts:['Nothing about which is better — they explain different dependent variables','Model 2 is the better model','Model 1 is overfit','Profit is easier to predict than revenue'],a:0,
+    opts:['Nothing — they explain different dependent variables','Model 2 is better, since its adjusted R² is higher','Model 1 is overfit, since its adjusted R² is lower','Profit is generally easier to predict than revenue'],a:0,
     why:'Compare adjusted R² only across models with the same dependent variable in the same units.'},
    {make:r=>{const n=ri(r,25,60),k=ri(r,2,5),R2=round(rr(r,.45,.85),3),a=1-(1-R2)*(n-1)/(n-k-1);return {type:'num',
     q:`A model has R² = <b>${R2}</b> with <b>n = ${n}</b> observations and <b>k = ${k}</b> predictors. Compute adjusted R².`,a,tol:.002,
@@ -2471,7 +2520,7 @@ NODES['m3-design']={kicker:'Module 3 · Designing a regression',title:'The Archi
     <p>Step 1 is the anchor: explain <b>why</b> the outcome should respond to each driver before you open the spreadsheet. Data can’t supply missing business logic. Pick variables because the mechanism supports them, not because they’re available — and write down the expected signs <b>before</b> you see results.</p>
     <p><b>Step 6, documenting</b>, means reporting enough for another manager to reproduce and challenge the model: coefficients with units, standard errors or confidence intervals, t-statistics and p-values, R² and adjusted R², sample size N, any data changes or exclusions, and the assumptions and limitations — inconvenient results included.</p>`,
     practice:[
-     {type:'mc',q:'A manager wants to start by pulling every column in the data warehouse into a regression to “see what sticks.” Which step did they skip?',opts:['Anchoring the question in an economic mechanism','Documenting the model','Estimating in Excel','Inspecting the residuals'],a:0,
+     {type:'mc',q:'A manager wants to start by pulling every column in the data warehouse into a regression to “see what sticks.” Which step did they skip?',opts:['Anchoring the question in an economic mechanism','Documenting the model and its limitations','Estimating the equation in Excel','Inspecting the residuals for problems'],a:0,
       why:'Choose drivers because the business mechanism supports them — not because they’re available. Mining until something “works” is the opposite of step 1.'},
      {type:'mc',q:'When should you record the expected sign of each coefficient?',opts:['Before you estimate the model','After you see which ones are significant','Only if a result surprises you','Never — the data decide the sign'],a:0,
       why:'Expected signs turn reasoning into testable predictions. Writing them afterwards just rationalizes the output.'},
@@ -2499,10 +2548,10 @@ NODES['m3-design']={kicker:'Module 3 · Designing a regression',title:'The Archi
     hint:'The population coefficient is dollars per resident.',solution:`${c} × ${k.toLocaleString()} = ${money(a,0)}.`,
     why:'A per-resident coefficient looks tiny until you scale it to a managerially meaningful change.'};}},
    {type:'mc',q:'One store in the data reports annual sales ten times larger than any other. What’s the disciplined response?',
-    opts:['Flag it and check operating records — it could be an error, a different kind of store, or a real outlier','Delete it so the model fits better','Keep it but don’t mention it','Duplicate it so the model learns from it'],a:0,
+    opts:['Flag it and check the records before deciding','Delete it so the model fits the other stores better','Keep it quietly and leave it out of the report','Cap it at the next-largest value to limit its pull'],a:0,
     why:'Inspect and justify — never clean automatically. Dropping an observation changes the estimates, the standard errors, the fit, and the degrees of freedom.'},
    {type:'mc',q:'Which of these belongs in Step 6, documenting the model?',
-    opts:['Coefficients with units, standard errors, R² and adjusted R², N, data exclusions, and limitations','Only the coefficients that came out significant','Only R², since it summarizes everything','Nothing — a good model speaks for itself'],a:0,
+    opts:['Coefficients with units, SEs, R², N, exclusions, limitations','Only the coefficients that came out statistically significant','R² alone, since it summarizes how good the model is','The final equation; the process needn’t be recorded'],a:0,
     why:'Documentation makes the analysis reproducible, challengeable, and defensible — including inconvenient results.'},
   ]};
 
@@ -2515,9 +2564,9 @@ NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categ
     <p>b₃ is the predicted salary <b>difference from the baseline</b> (Degree = 0), holding experience and score constant. A dummy <b>shifts the intercept</b>; the slopes stay the same.</p>`,
     practice:[
      {make:r=>{const b=round(rr(r,1.5,4),2);return {type:'mc',q:`In a salary model (salary in $000), the Degree coefficient is <b>${b}</b>. What does it mean?`,
-      opts:[`Holding experience and score constant, degree holders are predicted to earn about $${Math.round(b*1000).toLocaleString()} more than those without`,`A degree raises salary by ${b}%`,`Everyone in the sample earns $${Math.round(b*1000).toLocaleString()} more`,`Degree holders earn ${b} times as much`],a:0,
+      opts:[`Others fixed, degree holders earn about $${Math.round(b*1000).toLocaleString()} more`,`Others fixed, a degree raises salary by about ${b}%`,`Everyone in the sample earns $${Math.round(b*1000).toLocaleString()} more than the average`,`Others fixed, degree holders earn ${b} times as much`],a:0,
       why:'A dummy coefficient is an adjusted difference from the 0 (baseline) category, in Y’s units.'};}},
-     {type:'mc',q:'On a chart of salary against experience, adding a Degree dummy does what to the fitted lines?',opts:['Shifts the line up or down — same slope, different intercept','Changes the slope only','Rotates the line around the origin','Nothing visible'],a:0,why:'A dummy changes the intercept while the slopes are held constant.'},
+     {type:'mc',q:'On a chart of salary against experience, adding a Degree dummy does what to the fitted lines?',opts:['Shifts the line up or down, keeping the slope','Changes the slope, keeping the intercept','Rotates the line around the origin','Nothing visible — dummies only change R²'],a:0,why:'A dummy changes the intercept while the slopes are held constant.'},
     ]},
    {title:'k − 1 dummies and the trap',
     teach:`<p>A category with <b>k</b> groups needs <b>k − 1</b> dummies. The omitted group is the <b>baseline</b>.</p>
@@ -2525,13 +2574,13 @@ NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categ
     <p>Include all three dummies with an intercept and they always sum to 1 — exactly the intercept’s column. That’s <b>perfect multicollinearity</b>, the <b>dummy-variable trap</b>. Never code categories 1, 2, 3 either — that implies a ranking and equal spacing.</p>`,
     practice:[
      {make:r=>{const k=ri(r,3,6);return {type:'num',q:`A variable has <b>${k}</b> categories. How many dummy variables go into a model with an intercept?`,a:k-1,tol:0,hint:'k − 1',solution:`${k} − 1 = ${k-1}.`,why:'The omitted category is the baseline every coefficient is compared against.'};}},
-     {type:'mc',q:'Why not code customer type as Government = 1, Commercial = 2, Defense = 3 in one variable?',opts:['It implies a ranking and equal distances between types that don’t exist','Excel can’t read numbers above 2','It would make R² too high','It is the same as using dummies'],a:0,why:'Categories have no numeric order; dummies let each group have its own shift from the baseline.'},
+     {type:'mc',q:'Why not code customer type as Government = 1, Commercial = 2, Defense = 3 in one variable?',opts:['It implies an order and spacing that don’t exist','Excel can’t read category codes above 2','It would push R² unrealistically high','It is equivalent to using separate dummies'],a:0,why:'Categories have no numeric order; dummies let each group have its own shift from the baseline.'},
     ]},
   ],
   puzzles:[
    {make:r=>{const d=genSalary(r),b=d.m.b[3];return {type:'mc',exhibit:Exhibit.excel(d.m,'Salary ($000) · Degree = 1 with graduate degree'),
     q:'How should you read the Degree coefficient?',
-    opts:[`Holding experience and score constant, degree holders are predicted to earn about ${money(Math.abs(b)*1000,0)} ${b>=0?'more':'less'} than non-holders`,`A degree causes a ${round(Math.abs(b),2)}% raise`,`Degree holders earn ${round(Math.abs(b),2)} thousand dollars in total`,`The Degree coefficient is the baseline salary`],a:0,
+    opts:[`Others fixed, degree holders earn about ${money(Math.abs(b)*1000,0)} ${b>=0?'more':'less'}`,`Others fixed, a degree causes a ${round(Math.abs(b),2)}% raise`,`Degree holders earn ${round(Math.abs(b),2)} thousand dollars in total`,`It is the baseline salary for the non-degree group`],a:0,
     why:'The dummy coefficient is an adjusted difference from the Degree = 0 baseline. Check its p-value too: a difference can be economically sizable yet estimated imprecisely.'};}},
    {make:r=>{const d=genSalary(r),e=ri(r,1,10),s=ri(r,72,98),deg=r()<.5?1:0,a=d.m.predict([e,s,deg]);return {type:'num',exhibit:Exhibit.excel(d.m,'Salary ($000)'),
     q:`Predict the salary (in $000) of a programmer with <b>${e}</b> years of experience, an aptitude score of <b>${s}</b>, and <b>${deg?'a':'no'}</b> graduate degree.`,a,tol:.05,unit:'thousand',
@@ -2543,7 +2592,7 @@ NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categ
     solution:pickT==='Government'?`Intercept = ${fmtNum(a,2)}%.`:`${Exhibit.xl(d.m.b[0])} + ${Exhibit.xl(pickT==='Commercial'?d.m.b[1]:d.m.b[2])} = ${fmtNum(a,2)}%.`,
     why:'The intercept is the baseline group’s level; each dummy coefficient is that group’s difference from the baseline.'};}},
    {type:'mc',q:'An analyst includes Government, Commercial, and Defense dummies <b>and</b> an intercept. Excel balks. Why?',
-    opts:['The three dummies always sum to 1 — the same as the intercept column — creating perfect multicollinearity (the dummy-variable trap)','There are too few observations','Dummy variables can’t be used with an intercept','Excel can only handle two dummies'],a:0,
+    opts:['The dummies sum to 1, duplicating the intercept','There are too few observations for three dummies','Dummy variables can’t be combined with an intercept','Excel can only estimate two dummies at a time'],a:0,
     why:'Drop one category to serve as the baseline: k categories → k − 1 dummies.'},
    {make:r=>{const k=ri(r,3,7);return {type:'num',q:`A bank models loan losses across <b>${k}</b> regions and includes an intercept. How many region dummies should it use?`,a:k-1,tol:0,
     hint:'Categories minus one.',solution:`${k} − 1 = ${k-1}; the omitted region is the baseline.`,why:'Each coefficient then reads as that region’s difference from the baseline region.'};}},
@@ -2558,7 +2607,7 @@ NODES['m3-dummy']={kicker:'Module 3 · Dummy variables',title:'The Fork of Categ
 const SEVEN=['Linearity in the coefficients and correct specification, with an additive error','Zero mean error','No endogeneity: X uncorrelated with the error','No serial correlation','Homoskedasticity: constant error variance','No perfect multicollinearity','Normally distributed errors (optional)'];
 
 const RES_PATTERNS={
-  random:{d:'Random scatter with roughly constant spread — consistent with homoskedasticity',sd:x=>9},
+  random:{d:'Random scatter, even spread — homoskedasticity',sd:x=>9},
   spray:{d:'A spray: spread grows as X rises — heteroskedasticity',sd:x=>1+x*.75},
   funnel:{d:'A funnel: spread shrinks as X rises — heteroskedasticity',sd:x=>1+(31-x)*.75},
   bowtie:{d:'A bow-tie: spread shrinks, then grows — heteroskedasticity',sd:x=>1.5+Math.abs(x-15.5)*1.3},
@@ -2589,9 +2638,9 @@ NODES['m4-seven']={kicker:'Module 4 · The classical assumptions',title:'The Sev
     <div class="ex"><b>Zero mean:</b> with an intercept, OLS residuals average zero automatically, so that proves nothing.<br><b>Endogeneity:</b> OLS residuals are uncorrelated with the included X’s by construction — a residual plot can’t reveal it.</div>
     <p>Instead, ask about omitted drivers, reverse causality, measurement error, and how the data were generated. Look for <b>systematic</b> misses: one customer group, big markets, certain periods.</p>`,
     practice:[
-     {type:'mc',q:'Your residuals average exactly 0. What does that show about Assumption 2?',opts:['Nothing — OLS with an intercept forces that','It proves the error has mean zero','It proves there’s no endogeneity','It proves errors are normal'],a:0,
+     {type:'mc',q:'Your residuals average exactly 0. What does that show about Assumption 2?',opts:['Nothing — OLS with an intercept forces that','It confirms the true error has mean zero','It confirms there’s no endogeneity','It confirms the errors are normally distributed'],a:0,
       why:'Σeᵢ = 0 is automatic. Look for systematic patterns instead.'},
-     {type:'mc',q:'A price coefficient might be soaking up the effect of an omitted product-quality variable. Which assumption is at risk?',opts:['No endogeneity (Cov(X, ε) = 0)','Homoskedasticity','No serial correlation','Normality'],a:0,
+     {type:'mc',q:'A price coefficient might be soaking up the effect of an omitted product-quality variable. Which assumption is at risk?',opts:['No endogeneity (X uncorrelated with ε)','Homoskedasticity (constant error variance)','No serial correlation among the errors','Normally distributed errors'],a:0,
       why:'If quality sits in ε and moves with price, price is correlated with the error — endogeneity, and a biased coefficient.'},
     ]},
   ],
@@ -2601,11 +2650,11 @@ NODES['m4-seven']={kicker:'Module 4 · The classical assumptions',title:'The Sev
     why:'Endogeneity: X correlated with ε. Serial correlation: errors linked across observations. Heteroskedasticity: non-constant error variance. Perfect multicollinearity: one X is an exact linear combination of others.'},
    {type:'mc',q:'Which equation <b>violates</b> Assumption 1 (linear in the coefficients)?',opts:['Sales = β₀ + e^(β₁·Ads)','Sales = β₀ + β₁·Ads²','Sales = β₀ + β₁·ln(Ads)','ln(Sales) = β₀ + β₁·ln(Ads)'],a:0,
     why:'A β inside an exponent isn’t linear in the parameters. Transforming the variables — squares, logs — is fine.'},
-   {type:'mc',q:'Under Assumptions 1–6, the Gauss–Markov theorem says OLS is…',opts:['BLUE — the minimum-variance estimator among linear unbiased estimators','Always unbiased, even with omitted variables','Normally distributed in every sample','The only estimator that gives R² above 0.5'],a:0,
+   {type:'mc',q:'Under Assumptions 1–6, the Gauss–Markov theorem says OLS is…',opts:['BLUE: lowest variance among linear unbiased estimators','Unbiased even when relevant variables are omitted','Normally distributed in every sample, of any size','Free of bias from measurement error in X'],a:0,
     why:'Best (smallest variance), Linear, Unbiased Estimator. Gauss–Markov does not require normal errors.'},
-   {type:'mc',q:'Serial correlation and heteroskedasticity usually leave coefficients unbiased. So why should a manager care?',opts:['Standard errors, t-tests, and confidence intervals become unreliable — confidence can be overstated','They always flip coefficient signs','They make R² negative','They stop Excel from running'],a:0,
+   {type:'mc',q:'Serial correlation and heteroskedasticity usually leave coefficients unbiased. So why should a manager care?',opts:['Standard errors and tests become unreliable','They flip coefficient signs in most samples','They push R² below zero in small samples','They bias the intercept, though not the slopes'],a:0,
     why:'The estimates may be centered right, but the reported precision is wrong — that’s decision risk.'},
-   {type:'mc',q:'Your colleague says, “The residual plot looks clean, so there’s no endogeneity.” What’s wrong?',opts:['OLS residuals are uncorrelated with included X’s by construction, so a plot can’t reveal endogeneity','Nothing — clean plots rule it out','Endogeneity only shows up in R²','Residual plots only check normality'],a:0,
+   {type:'mc',q:'Your colleague says, “The residual plot looks clean, so there’s no endogeneity.” What’s wrong?',opts:['Residuals are uncorrelated with X by construction','Nothing — a clean plot rules endogeneity out','Endogeneity would show up as a low R² instead','Residual plots can only check normality'],a:0,
     why:'No endogeneity is a defensibility claim built from theory and design: omitted drivers, reverse causality, measurement error.'},
   ]};
 
@@ -2619,7 +2668,7 @@ NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:
     practice:[
      {make:r=>{const k=pick(['random','spray','funnel']),d=genResid(r,k);const keys=['random','spray','funnel'];return {type:'mc',exhibit:residPlot(d,'Income'),q:'What does this residual plot suggest?',
       opts:keys.map(x=>RES_PATTERNS[x].d),a:keys.indexOf(k),why:'Spread that changes systematically with X signals heteroskedasticity; an even band is what you hope to see.'};}},
-     {type:'mc',q:'Residuals are positive for almost every large-market store and negative for small ones. Best interpretation?',opts:['The model is systematically wrong by market size — a missing driver or wrong form','Normal random noise','Proof of heteroskedasticity only','The intercept is wrong, nothing else'],a:0,
+     {type:'mc',q:'Residuals are positive for almost every large-market store and negative for small ones. Best interpretation?',opts:['A missing driver or wrong form tied to size','Ordinary random noise that will average out','Heteroskedasticity, and nothing more','A wrong intercept, which is easy to adjust'],a:0,
       why:'Ask whether the model is systematically wrong for particular groups — that points to specification problems.'},
     ]},
    {title:'Standardized residuals and precision',
@@ -2640,7 +2689,7 @@ NODES['m4-plots']={kicker:'Module 4 · Diagnostics and estimator quality',title:
    {make:r=>{const z=Array.from({length:12},()=>round(rngGauss(r)*1.3,2));z[ri(r,0,11)]=round((r()<.5?-1:1)*rr(r,2.2,3.4),2);const a=z.filter(v=>Math.abs(v)>2).length;
     return {type:'num',exhibit:Exhibit.table(['Store','Standardized residual'],z.map((v,i)=>[i+1,fmtNum(v,2)])),q:'Using the ±2 rule, how many stores get flagged for investigation?',a,tol:0,
      hint:'Flag any |standardized residual| > 2.',solution:`${a} store${a===1?'':'s'} beyond ±2.`,why:'A flagged store might be an error, a different population, or a rare but valid outcome. Investigate before deciding.'};}},
-   {type:'mc',q:'A store is flagged with a standardized residual of 3.1. What should you do first?',opts:['Investigate it — check records for errors, a different population, or a real shock','Delete it','Ignore the flag','Rerun the model until the flag disappears'],a:0,
+   {type:'mc',q:'A store is flagged with a standardized residual of 3.1. What should you do first?',opts:['Investigate it — check the records first','Delete it — it’s beyond the ±2 cutoff','Ignore it — one store won’t move the estimates','Re-run the model until the flag disappears'],a:0,
     why:'Large residuals are risk signals, not mistakes to erase. Exclude only with a documented, defensible reason.'},
    {make:r=>{const se=round(rr(r,1,6),2),n0=pick([25,50,100]),m=4;return {type:'num',q:`With n = ${n0}, a coefficient’s SE is <b>${se}</b>. Roughly what SE would n = <b>${n0*m}</b> produce, other things equal?`,a:se/2,tol:.011,
     hint:'Quadrupling n divides the SE by √4.',solution:`${se} / 2 = ${round(se/2,3)}.`,why:'Standard errors shrink roughly with 1/√n — precision improves, but bias from a bad specification does not go away with more data.'};}},
@@ -2676,7 +2725,7 @@ NODES['m5-tests']={kicker:'Module 5 · Hypotheses and t-tests',title:'The Tribun
     practice:[
      {type:'mc',q:'Theory says more competitors should <b>lower</b> sales. Which hypotheses?',opts:['H₀: β ≥ 0, Hₐ: β < 0','H₀: β ≤ 0, Hₐ: β > 0','H₀: β = 0, Hₐ: β ≠ 0','H₀: β < 0, Hₐ: β ≥ 0'],a:0,
       why:'The alternative holds the values you expect (negative); the null holds the ones you don’t.'},
-     {type:'mc',q:'You fail to reject H₀: β = 0. What can you say?',opts:['The sample doesn’t give strong enough evidence against H₀','β is exactly zero','The variable should be deleted','The model is wrong'],a:0,
+     {type:'mc',q:'You fail to reject H₀: β = 0. What can you say?',opts:['The data don’t give strong evidence against H₀','The true β is zero, so X has no effect','The variable should be deleted from the model','The model must be misspecified'],a:0,
       why:'Failing to reject is not proof of no effect — the evidence just isn’t strong enough at your α.'},
     ]},
    {title:'The t-statistic and the rejection region',
@@ -2702,7 +2751,7 @@ NODES['m5-tests']={kicker:'Module 5 · Hypotheses and t-tests',title:'The Tribun
     hints:{2:'A negative estimate isn’t enough — compare t to the critical value.',3:'Compute t = b / SE first.'},
     why:`t = ${b.toLocaleString()} / ${se.toLocaleString()} = ${round(t,2)}. ${rej?'It falls in the left-tail rejection region, so the evidence supports a negative relationship.':'It doesn’t reach the rejection region, so the evidence isn’t strong enough at α = 0.05.'}`};}},
    {make:r=>{const n=ri(r,20,60),k=ri(r,1,4);return {type:'num',q:`A regression has n = <b>${n}</b> and k = <b>${k}</b> explanatory variables. What df do you use for its t-tests?`,a:n-k-1,tol:0,hint:'n − k − 1',solution:`${n} − ${k} − 1 = ${n-k-1}.`,why:'The degrees of freedom set the shape of the t-distribution and the critical value.'};}},
-   {type:'mc',q:'A firm tests whether a defect creates a serious safety risk (Hₐ). Which error should it fear most, and what follows?',opts:['Type II — missing a real hazard; it may accept a larger α to reduce false negatives','Type I — always the worst error; use the smallest α possible','Neither — α = 0.05 settles it','Type I — delays are worse than injuries'],a:0,
+   {type:'mc',q:'A firm tests whether a defect creates a serious safety risk (Hₐ). Which error should it fear most, and what follows?',opts:['Type II — missing a real hazard; accept a larger α','Type I — always the worst; use the smallest α possible','Neither — the standard α = 0.05 settles it','Type I — false alarms cost more than injuries'],a:0,
     why:'When safety is at stake, a false negative can be catastrophic. α = 0.05 is a starting point, not an automatic rule.'},
    {make:r=>{const b=round(rr(r,.15,.6),3),se=round(b/rr(r,1.2,5),3),df=ri(r,25,40),t=b/se,c=tc1(.05,df);return {type:'num',
     exhibit:Exhibit.eq(`Population coefficient b = ${b} · SE = ${se} · df = ${df} · right-tailed critical value (α = 0.05) = ${round(c,3)}`),
@@ -2730,7 +2779,7 @@ NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The 
     practice:[
      {make:r=>{const k=ri(r,2,4),n=ri(r,20,45),ess=round(rr(r,200,900),1),rss=round(rr(r,80,500),1),F=(ess/k)/(rss/(n-k-1));return {type:'num',q:`ESS = <b>${ess}</b>, RSS = <b>${rss}</b>, k = <b>${k}</b>, n = <b>${n}</b>. Compute F.`,a:F,tol:.02,
       hint:'(ESS/k) / (RSS/(n − k − 1))',solution:`(${ess}/${k}) / (${rss}/${n-k-1}) = ${round(F,3)}.`,why:'F compares explained variation per predictor with unexplained variation per residual df.'};}},
-     {type:'mc',q:'Automation’s coefficient is 0.03 (p = 0.001). The project costs millions. Best reading?',opts:['Statistically clear, but possibly too small to justify the investment','Huge effect — invest now','Unreliable — ignore it','Proof automation causes productivity'],a:0,why:'Evaluate statistical evidence and business magnitude together.'},
+     {type:'mc',q:'Automation’s coefficient is 0.03 (p = 0.001). The project costs millions. Best reading?',opts:['Clearly nonzero, but maybe too small to be worth it','A huge effect — p = 0.001 means invest now','Unreliable — a coefficient that small is noise','Proof that automation drives productivity'],a:0,why:'Evaluate statistical evidence and business magnitude together.'},
     ]},
   ],
   puzzles:[
@@ -2746,15 +2795,15 @@ NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The 
     q:'F and Significance F are hidden. Compute the <b>F-statistic</b> from the ANOVA table.',a:m.F,tol:.02,
     hint:'F = (Regression SS / k) / (Residual SS / residual df) — or Regression MS / Residual MS.',solution:`${Exhibit.xl(m.SSR/(m.k-1))} / ${Exhibit.xl(m.SSE/m.df)} = ${round(m.F,3)}.`,
     why:`H₀: all slopes are zero. Here F = ${round(m.F,2)} with p = ${Exhibit.xl(m.pF)} — ${m.pF<=.05?'at least one driver adds explanatory power':'no joint evidence at α = 0.05'}. The F-test doesn’t say which one; the t-tests do.`};}},
-   {type:'mc',q:'Your F-test rejects H₀ at 1%, but two of three t-tests are not significant. Which statement is right?',opts:['Jointly the drivers explain something; the t-tests show which have individual evidence','The F-test is wrong','All three drivers matter equally','The model must be discarded'],a:0,
+   {type:'mc',q:'Your F-test rejects H₀ at 1%, but two of three t-tests are not significant. Which statement is right?',opts:['Jointly they matter; individually, less clearly','The F-test must be wrong if the t-tests disagree','All three drivers matter about equally','The model should be discarded as unreliable'],a:0,
     why:'The F-test asks whether the group adds explanatory power; it doesn’t identify the responsible coefficient.'},
-   {type:'mc',q:'Infrastructure spending has b = 12 with p = 0.28. A manager wants to cite it as proof of a big payoff. Your response?',opts:['The estimate is large but statistically unreliable — the true effect could be zero','It’s significant because 12 is large','p = 0.28 means a 28% effect','It proves the opposite effect'],a:0,
+   {type:'mc',q:'Infrastructure spending has b = 12 with p = 0.28. A manager wants to cite it as proof of a big payoff. Your response?',opts:['Too imprecise — the true effect could be zero','Significant, because an effect of 12 is large','Solid — p = 0.28 means a 28% effect','It shows spending has the opposite effect'],a:0,
     why:'Size without precision is fragile evidence. Report both magnitude and uncertainty before acting.'},
   ]};
 
 /* exam-guide gap: statistical significance is not causation */
 NODES['m5-three'].puzzles.push({type:'mc',q:'Customers who use the loyalty app spend more, and the app dummy is highly significant (p < 0.001). Does the app <b>cause</b> the extra spending?',
-  opts:['Not necessarily — significance only says the association is unlikely to be zero; heavy spenders may choose the app','Yes — p < 0.001 proves causation','Yes, as long as R² is high','No — significant coefficients are never causal'],a:0,
+  opts:['Not necessarily — heavy spenders may choose the app','Yes — p < 0.001 rules out other explanations','Yes, as long as the model’s R² is also high','No — significant coefficients are never causal'],a:0,
   why:'A tiny p-value measures evidence against β = 0, not why the association exists. Causal claims need a design — like random assignment — that rules out self-selection and confounders.'});
 
 /* ==== content/m6.js ==== */
@@ -2777,8 +2826,8 @@ NODES['m6-trial']={kicker:'Module 6 · From association to causation',title:'The
     <p><b>Random assignment</b> makes treatment and control similar in size, location, customers, and management — so the main systematic difference is the treatment itself.</p>
     <div class="ex">Regression estimates the size; the design supplies the causal interpretation.</div>`,
     practice:[
-     {type:'mc',q:'Why randomize which stores get extra advertising?',opts:['So the groups are similar in everything except the advertising','So the sample is larger','So R² goes up','So Excel can run the model'],a:0,why:'Randomization balances observed and unobserved factors on average.'},
-     {type:'mc',q:'A manager lets regional directors choose which stores get the new loyalty program. Why is a causal claim weaker?',opts:['Directors may pick stores that would have done well anyway','The sample is too small','The program can’t be measured','Regression can’t use 0/1 variables'],a:0,why:'Self-selected treatment means the groups may differ systematically — the coefficient could reflect that, not the program.'},
+     {type:'mc',q:'Why randomize which stores get extra advertising?',opts:['So the groups are alike except for the advertising','So the sample is larger and estimates tighter','So R² goes up and the model fits better','So the best stores get the extra budget'],a:0,why:'Randomization balances observed and unobserved factors on average.'},
+     {type:'mc',q:'A manager lets regional directors choose which stores get the new loyalty program. Why is a causal claim weaker?',opts:['Directors may pick stores that would do well anyway','The sample of stores will be too small to analyze','The program’s effect can’t be captured by a dummy','Regression can’t handle 0/1 treatment variables'],a:0,why:'Self-selected treatment means the groups may differ systematically — the coefficient could reflect that, not the program.'},
     ]},
    {title:'Treatment dummies measure the difference',
     teach:`<p>After the experiment, regress the outcome on a 0/1 treatment indicator:</p>
@@ -2795,14 +2844,14 @@ NODES['m6-trial']={kicker:'Module 6 · From association to causation',title:'The
     q:'Stores were randomly assigned to extra advertising (Treatment = 1). Estimate β₁ in SALES = β₀ + β₁·TREATMENT.',a:d.diff,tol:2,pre:'$',
     hint:'β₁ equals the treatment-group average minus the control-group average.',solution:`${money(d.mT,0)} − ${money(d.mC,0)} ≈ ${money(d.diff,0)}.`,
     why:'Because treatment was randomly assigned, β₁ has a much stronger causal interpretation than the same number from observational data.'};}},
-   {type:'mc',q:'What gives a regression coefficient a causal interpretation?',opts:['A research design — like random assignment — that creates a credible counterfactual','A p-value below 0.01','An R² above 0.9','Including many control variables'],a:0,
+   {type:'mc',q:'What gives a regression coefficient a causal interpretation?',opts:['A research design, such as random assignment','A p-value below 0.01 on the coefficient','An R² above 0.9 for the whole model','Adding many control variables to the model'],a:0,
     why:'Regression is not what makes the conclusion causal; the design is.'},
    {type:'sort',q:'Which designs support a causal reading of the coefficient?',cats:['Stronger causal design','Association only'],
     items:[{t:'Coin-flip assignment of a price discount across comparable stores',c:0},{t:'Comparing stores whose managers chose to adopt a new system',c:1},{t:'Random assignment of a training program to half the call-center agents',c:0},{t:'Regressing sales on advertising across all stores last year',c:1}],
     why:'Random assignment balances other factors; self-selection and ordinary observational data leave confounders in play.'},
-   {type:'mc',q:'Why can’t you just compare a store’s sales with and without extra advertising?',opts:['You can’t observe the same store both ways at the same time — you need a comparison group','Because sales are measured in dollars','Because advertising has no effect','You can, if you run the regression twice'],a:0,
+   {type:'mc',q:'Why can’t you just compare a store’s sales with and without extra advertising?',opts:['One store can’t be observed both ways at once','Sales are too noisy to compare within one store','Advertising effects take too long to show up','You can — just run the regression twice'],a:0,
     why:'The counterfactual for the same unit is unobservable, so a control group stands in for it.'},
-   {type:'mc',q:'A 10-store experiment finds β₁ = $16,600. What’s the honest caveat?',opts:['With so few stores, the estimate is noisy — check its standard error before acting','Nothing; randomization makes it exact','The effect must be negative','Random assignment guarantees significance'],a:0,
+   {type:'mc',q:'A 10-store experiment finds β₁ = $16,600. What’s the honest caveat?',opts:['So few stores make it noisy — check the SE','Nothing — randomization makes the estimate exact','The true effect is probably negative','Random assignment guarantees it’s significant'],a:0,
     why:'Randomization supports a causal interpretation; sample size still governs precision.'},
   ]};
 
@@ -2816,7 +2865,7 @@ NODES['m6-omit']={kicker:'Module 6 · Choosing independent variables',title:'The
     practice:[
      {make:r=>{const b2=round(rr(r,.2,1.5),2)*(r()<.3?-1:1),a1=round(rr(r,-.8,.8),2)||.4,bias=b2*a1;return {type:'num',q:`Omitted variable effect β₂ = <b>${b2}</b>; its relationship with the included X, α₁ = <b>${a1}</b>. What is the bias in β₁*?`,a:bias,tol:.006,
       hint:'Bias = β₂ × α₁',solution:`${b2} × ${a1} = ${round(bias,4)}.`,why:`${bias>0?'Positive bias: the estimate overstates β₁.':'Negative bias: the estimate understates β₁.'}`};}},
-     {type:'mc',q:'Coffee and sleep both affect productivity, and heavy coffee drinkers sleep less. You omit sleep. The coffee coefficient…',opts:['Absorbs part of sleep’s effect and is biased','Stays unbiased','Becomes exactly zero','Only gets a larger standard error'],a:0,
+     {type:'mc',q:'Coffee and sleep both affect productivity, and heavy coffee drinkers sleep less. You omit sleep. The coffee coefficient…',opts:['Absorbs part of sleep’s effect and is biased','Stays unbiased, but becomes less precise','Shrinks toward zero and loses significance','Only gets a larger standard error than before'],a:0,
       why:'Sleep affects productivity (β₂ ≠ 0) and moves with coffee (α₁ ≠ 0), so both bias conditions hold.'},
     ]},
    {title:'Irrelevant variables and the four criteria',
@@ -2838,10 +2887,10 @@ NODES['m6-omit']={kicker:'Module 6 · Choosing independent variables',title:'The
     q:`True model: Y = β₀ + <b>${b1}</b>X₁ + <b>${b2}</b>X₂. You leave out X₂, and X₂ = α₀ + <b>${a1}</b>X₁ + v. What coefficient on X₁ should you expect to estimate?`,a:est,tol:.006,
     hint:'β₁* = β₁ + β₂·α₁',solution:`${b1} + ${b2} × ${a1} = ${round(est,4)}.`,why:'The included variable gets credit for part of the omitted variable’s effect.'};}},
    {type:'mc',q:'Dropping population from Woody’s model moves the competition coefficient from −10,605 (t = −5.07) to −1,684 (t = −0.81). What’s the likely explanation?',
-    opts:['Omitted-variable bias — population affects sales and is correlated with competition','Population was irrelevant all along','Competition never mattered','A data-entry error in competition'],a:0,
+    opts:['Omitted-variable bias from leaving out population','Population was irrelevant, so the shift is just noise','Competition never really mattered for sales','A data-entry error in the competition variable'],a:0,
     why:'Large coefficient changes across defensible specifications deserve investigation — here, the classic omitted-variable story.'},
    {type:'mc',q:'In a Brazilian-coffee demand model, its own price has a positive, insignificant coefficient. What’s the theory-first move?',
-    opts:['Keep price and look for a missing substitute price, like Colombian coffee','Drop price — it isn’t significant','Conclude demand ignores price','Flip the sign by hand'],a:0,
+    opts:['Keep price; look for a missing substitute price','Drop price — it isn’t significant in this sample','Conclude this demand doesn’t respond to price','Report it as is — theory can’t override data'],a:0,
     why:'Adding the substitute price restored the negative own-price coefficient. Don’t drop a variable theory says belongs just because one sample gives it a weak t.'},
    {type:'sort',q:'Sensitivity analysis or data mining?',cats:['Sensitivity analysis','Data mining'],
     items:[{t:'Start from theory, then check whether the key result survives reasonable alternatives',c:0},{t:'Add and drop variables until p-values look good',c:1},{t:'Report the model with and without SAT to test robustness',c:0},{t:'Search 40 variables and keep whichever three are significant',c:1}],
@@ -2885,7 +2934,7 @@ NODES['m7-form']={kicker:'Module 7 · Choosing the functional form',title:'The B
       q:`What is the slope — the change in predicted profit from one more $1,000 of ads — when Ads = <b>${X}</b>?`,a:s,tol:.02,hint:'Slope = β₁ + 2β₂X',
       solution:`${b1} + 2 × (−${-b2}) × ${X} = ${round(s,2)}.`,why:'In a quadratic the payoff from one more unit depends on where you start.'};}},
      {type:'mc',q:'A model of sales on house size was fit to homes from 800 to 3,000 sq. ft. A developer asks for a forecast for a 9,000 sq. ft. estate. Best response?',
-      opts:['Warn that it’s far outside the data — the chosen shape may not hold there','Use the forecast; the R² is high','Switch to whichever form gives the biggest number','Extrapolation is safe if the form is quadratic'],a:0,
+      opts:['Warn that it’s far outside the data','Use it — with a high R² the model travels','Use whichever form gives the larger number','It’s fine as long as the model is quadratic'],a:0,
       why:'Predictions outside the observed range are where a wrong functional form does the most damage.'},
     ]},
   ],
@@ -2898,7 +2947,7 @@ NODES['m7-form']={kicker:'Module 7 · Choosing the functional form',title:'The B
     q:'At what staffing level does predicted output <b>peak</b>?',a:xs,tol:.06,unit:'staff',hint:'The peak is where the slope β₁ + 2β₂X equals zero: X* = −β₁ / (2β₂).',
     solution:`X* = −${b1} / (2 × −${-b2}) = ${round(xs,2)}.`,why:'Past the peak, adding staff lowers predicted output — something a linear model could never show.'};}},
    {type:'mc',q:'Why can OLS estimate Y = β₀ + β₁X + β₂X² even though the relationship is curved?',
-    opts:['It is still linear in the coefficients — X² is just another variable','OLS automatically bends the line','Because R² is higher','It can’t; you need a different estimator'],a:0,
+    opts:['It’s still linear in the coefficients','OLS bends the fitted line automatically','The X² term raises R² enough to allow it','It can’t — a curve needs another estimator'],a:0,
     why:'OLS requires linearity in the coefficients, not in the variables. Y = β₀ + X^β₁ would not qualify.'},
    {make:r=>{const a=round(rr(r,3.8,4.6),4),b=round(rr(r,.92,1.12),4),S=ri(r,15,32)*100,p=Math.exp(a+b*Math.log(S));return {type:'num',
     exhibit:Exhibit.eq(`ln(Price) = ${a} + ${b}·ln(SQFT)`),
@@ -2906,14 +2955,14 @@ NODES['m7-form']={kicker:'Module 7 · Choosing the functional form',title:'The B
     solution:`ln(${S}) = ${round(Math.log(S),4)}; ln(Price) = ${a} + ${b} × ${round(Math.log(S),4)} = ${round(a+b*Math.log(S),4)}; Price ≈ e^${round(a+b*Math.log(S),4)} ≈ ${money(p,0)}.`,
     why:`Interpret in logs, report in dollars. Here ${b} is the elasticity: 1% more space → about ${b}% higher price.`};}},
    {type:'mc',q:'Advertising runs this month, but customers take weeks to notice, compare, and buy. Which model fits the mechanism?',
-    opts:['Salesₜ = β₀ + β₁Advertisingₜ₋₁ + εₜ','Salesₜ = β₀ + β₁Advertisingₜ + εₜ, because it’s simpler','Drop advertising — it isn’t significant this month','Salesₜ₋₁ = β₀ + β₁Advertisingₜ + εₜ'],a:0,
+    opts:['Salesₜ = β₀ + β₁Advertisingₜ₋₁ + εₜ','Salesₜ = β₀ + β₁Advertisingₜ + εₜ','Drop advertising — it isn’t significant this month','Salesₜ₋₁ = β₀ + β₁Advertisingₜ + εₜ'],a:0,
     why:'A lag represents the real timing of the decision; using only current advertising can understate the campaign.'},
    {make:r=>{const d=genResid(r,'curve');return {type:'mc',exhibit:residPlot(d,'Fitted value'),
     q:'A straight-line model leaves these residuals. What should you do first?',
-    opts:['Revise the shape — add the missing curve (e.g. an X² or log term) and re-estimate','Nothing; residuals average zero','Drop the observations at both ends','Report robust standard errors and move on'],a:0,
+    opts:['Add the missing curve and re-estimate','Nothing — the residuals still average zero','Drop the observations at both ends','Switch to robust standard errors'],a:0,
     why:'A systematic curve means the average relationship is misspecified. Fixing standard errors can’t repair the wrong shape.'};}},
    {type:'mc',q:'Model A (linear) has R² = 0.41; Model B (Y on ln X) has R² = 0.39. Theory predicts diminishing returns. Which should you prefer?',
-    opts:['Model B — it matches the mechanism, and the fit difference is trivial','Model A — higher R² always wins','Neither — R² below 0.5 is useless','Average the two forecasts'],a:0,
+    opts:['Model B — it fits the mechanism; the gap is trivial','Model A — with the same Y, higher R² should win','Neither — an R² below 0.5 is too weak to use','Average the two models’ forecasts to be safe'],a:0,
     why:'With the same Y, R² is comparable — but a tiny fit gap is no reason to pick a form that contradicts the theory.'},
   ]};
 
@@ -2947,7 +2996,7 @@ NODES['m8-multi']={kicker:'Module 8 · Multicollinearity',title:'The Twin Prisms
       items:[{t:'Store size in square feet and in square meters',c:0},{t:'TV and online ad spending, which usually rise together',c:1},{t:'Dummies for North, South, East, and West, plus an intercept',c:0},{t:'Household income and years of education',c:1}],
       why:'Perfect = an exact linear relationship (same information twice); imperfect = strong but not exact overlap.'},
      {type:'mc',q:'Two related ad variables are both in the model. Compared with a model where they were unrelated, their coefficients are…',
-      opts:['Still unbiased, but less precise — larger standard errors','Biased toward zero','Biased away from zero','Exactly the same, with the same standard errors'],a:0,
+      opts:['Still unbiased, but less precise','Biased toward zero, and less precise','Biased away from zero','Unchanged, with the same standard errors'],a:0,
       why:'Multicollinearity is a precision problem, not automatically a bias problem: the aim is still on target, just shakier.'},
     ]},
    {title:'Detecting it — and deciding what to do',
@@ -2959,7 +3008,7 @@ NODES['m8-multi']={kicker:'Module 8 · Multicollinearity',title:'The Twin Prisms
      {make:r=>{const R=round(rr(r,.55,.95),2),v=1/(1-R);return {type:'num',q:`Regressing Cadence on the other explanatory variables gives an auxiliary R² of <b>${R}</b>. What is Cadence’s VIF?`,a:v,tol:.02,
       hint:'VIF = 1 / (1 − auxiliary R²)',solution:`1 / (1 − ${R}) = ${round(v,2)}.`,why:v>10?'Above 10: serious multicollinearity for Cadence.':v>5?'Above 5: a warning sign.':'Below 5: usually not a concern on its own.'};}},
      {type:'mc',q:'Price has a VIF of 8, the expected negative sign, and p = 0.002. What should you do about the multicollinearity?',
-      opts:['Probably nothing — the estimate is still useful for the decision','Drop price to lower the VIF','Drop every variable with a VIF above 5','Collect a new sample before using the model'],a:0,
+      opts:['Probably nothing — the estimate is still usable','Drop price to bring its VIF down','Drop every variable with a VIF above 5','Collect a new sample before using the model'],a:0,
       why:'A high VIF doesn’t automatically mean removing a variable. Adjust only if multicollinearity is actually damaging the estimates you need.'},
     ]},
   ],
@@ -2967,26 +3016,26 @@ NODES['m8-multi']={kicker:'Module 8 · Multicollinearity',title:'The Twin Prisms
    {make:r=>{const d=genCollinear(r);if(!d)return {type:'mc',q:'High R² and a significant F-test, but no individual t-test is significant. What is the classic explanation?',opts:['Multicollinearity — the variables matter jointly but can’t be separated','The model is useless','Heteroskedasticity','A coding error'],a:0,why:'Joint significance with individual weakness is the signature of overlapping predictors.'};
     return {type:'mc',exhibit:Exhibit.excel(d.res,'Sales ($000)'),
      q:`The F-test is highly significant and R² = ${round(d.res.R2,2)}, but neither ad coefficient is significant on its own. Best reading?`,
-     opts:['The two ad budgets matter jointly but overlap so much the model can’t separate their effects','Advertising has no effect on sales','The model is misspecified and should be discarded','One of the variables must be dropped to fix the bias'],a:0,
+     opts:['They matter jointly but can’t be told apart','Advertising has no clear effect on sales','The model is misspecified and should be discarded','One variable must be dropped to remove the bias'],a:0,
      why:'High R² + significant F + weak t-tests is the classic warning sign of multicollinearity: precision, not bias.'};}},
    {make:r=>{const rr_=round(rr(r,.80,.97),2),v=1/(1-rr_*rr_);return {type:'num',
     q:`A model has just two explanatory variables, and their correlation is <b>r = ${rr_}</b>. With only two Xs, the auxiliary R² is r². What is the VIF for each?`,a:v,tol:.05,
     hint:'Auxiliary R² = r²; then VIF = 1 / (1 − r²).',solution:`r² = ${round(rr_*rr_,4)}; VIF = 1 / (1 − ${round(rr_*rr_,4)}) = ${round(v,2)}.`,
     why:`${v>10?'Serious':v>5?'A warning-level':'Mild'} multicollinearity. Note how fast VIF climbs as r approaches 1.`};}},
    {type:'mc',q:'Which statement about the consequences of imperfect multicollinearity is correct?',
-    opts:['Coefficients stay unbiased, but standard errors rise and estimates become sensitive to specification','Coefficients become biased and R² falls sharply','OLS can no longer be computed','t-scores rise, so everything looks more significant'],a:0,
+    opts:['Unbiased, but larger SEs and unstable estimates','Biased coefficients and a sharply lower R²','OLS can no longer be computed at all','Higher t-scores, so more looks significant'],a:0,
     why:'Not bias — less precision, larger p-values, unexpected signs more likely, and big swings when related variables are added or dropped.'},
    {type:'mc',q:'Dropping Infrastructure makes Cadence’s p-value fall from 0.80 to 0.0002. What’s the risk in celebrating?',
-    opts:['If Infrastructure truly matters and moves with Cadence, Cadence now carries omitted-variable bias','None — a lower p-value means a better model','Cadence’s coefficient can’t change','R² will collapse'],a:0,
+    opts:['Cadence may now carry omitted-variable bias','None — a lower p-value means a better model','None — only the p-value moved, not the estimate','R² will collapse once a variable is dropped'],a:0,
     why:'Better significance is not automatically a better specification. Theory decides whether a variable belongs.'},
    {type:'sort',q:'Sort each response to multicollinearity.',cats:['Defensible','Not defensible'],
     items:[{t:'Leave it alone: signs are as expected and the key estimate is precise enough to decide',c:0},{t:'Drop whichever variable has the weaker p-value in this sample',c:1},{t:'Drop one of two variables that measure the same concept, keeping the one theory favors',c:0},{t:'Remove every variable with a VIF above 5',c:1},{t:'Collect more observations if that’s feasible',c:0}],
     why:'Diagnose first; adjust only if it’s hurting the model you need — and let theory, not p-values, choose what stays.'},
    {type:'mc',q:'Why does multicollinearity damage interpretation more than forecasting?',
-    opts:['Overall fit and predictions can stay good while the separate coefficients are unstable and imprecise','Forecasts become biased while coefficients don’t','It lowers R², which only affects forecasts','It doesn’t affect either'],a:0,
+    opts:['Joint predictions hold up; separate effects don’t','Forecasts become biased while coefficients don’t','It lowers R², which matters only for forecasts','It harms both equally in practice'],a:0,
     why:'If the Xs keep moving together as they did in the sample, joint predictions still work; it’s the “who gets the credit” question that suffers.'},
    {type:'mc',q:'No pair of explanatory variables has a correlation above 0.5, yet one VIF is 14. How is that possible?',
-    opts:['A combination of several other variables predicts it well, even though no single pair is highly correlated','The VIF must be wrong','VIFs only use pairwise correlations','It means perfect multicollinearity'],a:0,
+    opts:['Several other variables together predict it well','The VIF must have been miscalculated','VIFs are built from pairwise correlations only','It signals perfect multicollinearity'],a:0,
     why:'Correlation is a pairwise screen; VIF uses all the other Xs at once, so it catches group overlap.'},
   ]};
 
@@ -2999,7 +3048,7 @@ NODES['m8-multi']={kicker:'Module 8 · Multicollinearity',title:'The Twin Prisms
 // Durbin–Watson 5% critical values [dL, dU] by sample size T and number of predictors k
 const DWT={20:{1:[1.20,1.41],2:[1.10,1.54],3:[1.00,1.68]},25:{1:[1.29,1.45],2:[1.21,1.55],3:[1.12,1.65]},
            30:{1:[1.35,1.49],2:[1.28,1.57],3:[1.21,1.65]},40:{1:[1.44,1.54],2:[1.39,1.60],3:[1.34,1.66]}};
-const SC_KIND={pos:'Positive serial correlation — residuals stay on the same side for runs of periods',none:'No serial correlation — residuals hop around at random',neg:'Negative serial correlation — residuals tend to flip sign every period'};
+const SC_KIND={pos:'Positive serial correlation — residuals stay on one side in long runs',none:'No serial correlation — residuals jump around with no pattern',neg:'Negative serial correlation — residuals tend to flip sign every period'};
 function genAR(r,rho,n=30){const e=[];let prev=0;for(let t=0;t<n;t++){prev=rho*prev+rngGauss(r)*(rho?Math.sqrt(1-rho*rho):1);e.push(prev);}
   const m=e.reduce((a,b)=>a+b,0)/n;return e.map(v=>round((v-m)*10,2));}
 const timePlot=e=>Exhibit.scatter(e.map((_,i)=>i+1),e,{xl:'Time period',yl:'Residual',hline:0,connect:true,title:'Residuals over time'});
@@ -3054,16 +3103,16 @@ NODES['m9-serial']={kicker:'Module 9 · Serial correlation',title:'The Echoing I
      q:'Test for positive first-order serial correlation at the 5% level. Decision?',opts,a:{rej:0,inc:1,no:2}[zone],
      why:`DW = ${dw} is ${zone==='rej'?`below dL = ${dL}: reject H₀`:zone==='inc'?`between dL = ${dL} and dU = ${dU}: inconclusive`:`above dU = ${dU}: do not reject H₀`}.`};}},
    {type:'mc',q:'A time-series demand model shows strong positive serial correlation, but every coefficient has p < 0.01. What should a manager conclude?',
-    opts:['The p-values are probably too optimistic — standard errors are likely understated','The model is extra reliable because everything is significant','The coefficients must be biased, so ignore the signs','Serial correlation only matters for R²'],a:0,
+    opts:['The p-values are probably too optimistic','The model is extra reliable, since all are significant','The coefficients must be biased; ignore the signs','Serial correlation only affects R², not the tests'],a:0,
     why:'Serial correlation can make weak evidence look strong. In the pure case the coefficients are unbiased; the reported precision is what you can’t trust.'},
    {type:'sort',q:'Sort each statement about pure serial correlation.',cats:['True','False'],
     items:[{t:'OLS coefficients are still unbiased',c:0},{t:'OLS is still the minimum-variance (BLUE) estimator',c:1},{t:'The usual standard errors and t-tests become unreliable',c:0},{t:'It always means a variable was omitted',c:1}],
     why:'Pure serial correlation hurts efficiency and inference, not the center of the estimates. Impure serial correlation is the one caused by specification errors.'},
    {type:'mc',q:'Monthly ice-cream sales residuals are positive every summer and negative every winter. What’s the best first move?',
-    opts:['Add seasonal dummies (or the missing seasonal driver) and re-estimate','Apply an advanced correction to the standard errors right away','Drop the summer months','Ignore it; DW only matters for annual data'],a:0,
+    opts:['Add seasonal dummies and re-estimate','Apply a standard-error correction right away','Drop the summer months from the sample','Ignore it — DW only matters for annual data'],a:0,
     why:'That pattern is impure serial correlation from missing seasonality. Fix the specification before reaching for statistical patches.'},
    {type:'mc',q:'DW = 1.31 with T = 25 and k = 3 (dL = 1.12, dU = 1.65). What does “inconclusive” mean for a decision?',
-    opts:['The test can’t confirm or rule out positive serial correlation — proceed cautiously and don’t over-trust the p-values','There is definitely no serial correlation','There is definitely serial correlation','The test was run incorrectly'],a:0,
+    opts:['It can’t confirm or rule it out — proceed with caution','There is no meaningful serial correlation to worry about','There is positive serial correlation, just weaker','The test was set up or run incorrectly'],a:0,
     why:'The inconclusive zone is part of the Durbin–Watson test, not an error.'},
   ]};
 
@@ -3182,7 +3231,7 @@ function renderHud(){
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
-const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||fading;
+const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||fading;
 
 /* ---------- dialogs ---------- */
 function openDialog(npc,i=0){
@@ -3334,7 +3383,41 @@ function renderLog(){
     const b=$('importBtn');b.textContent='Load';b.onclick=()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(ta.value.trim()))));if(s.v!==1)throw 0;SAVE={...blankSave(),...s,reset:Date.now()};persist();travel(SAVE.scene,'start');L.classList.add('hidden');toast('Progress loaded.');}catch(e){$('toolMsg').textContent='That code could not be read.';}};};
   $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.arm){SAVE={...blankSave(),reset:Date.now()};persist();travel('hub','start');L.classList.add('hidden');toast('Progress reset.');}else{b.dataset.arm=1;b.textContent='Tap again to erase everything';}};
 }
-function toggleLog(){const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
+/* ---------- map: the three regions and what each stone covers, in plain language ---------- */
+function renderMap(){
+  const R=COURSE.regions,here=curScene||'hub',icon=s=>({done:'<i class="ic done">✓</i>',todo:'<i class="ic todo">!</i>',sealed:'<i class="ic sealed"></i>',frozen:'<i class="ic frozen">❄</i>'}[s]);
+  const pos={hub:[200,128],woods:[200,34],hollow:[56,128],reach:[344,128]};
+  const stat=id=>{if(id==='hub')return '';const r=regionById(id),l=liveNodes(r);return `${l.filter(n=>SAVE.done[n]).length}/${l.length}`;};
+  const col=id=>id==='hub'?'#ffd27a':regionDone(id)?'#8fe0a0':regionUnlocked(id)?'#ffd27a':'#7f8aa8';
+  let svg=`<svg viewBox="0 0 400 170" role="img" aria-label="Map: the village in the middle, Signpost Woods to the north, Lantern Hollow to the west, Crystal Reach to the east">`;
+  for(const id of ['woods','hollow','reach'])svg+=`<line x1="${pos.hub[0]}" y1="${pos.hub[1]}" x2="${pos[id][0]}" y2="${pos[id][1]}" stroke="${regionUnlocked(id)?'rgba(255,214,150,.55)':'rgba(140,150,180,.35)'}" stroke-width="2.5" stroke-dasharray="${regionUnlocked(id)?'':'5 5'}"/>`;
+  for(const id of ['hub','woods','hollow','reach']){const [x,y]=pos[id],name=id==='hub'?'Frostmere Village':regionById(id).name,lk=id!=='hub'&&!regionUnlocked(id);
+    svg+=`<g class="rg" data-r="${id}"><circle cx="${x}" cy="${y}" r="${id==='hub'?17:15}" fill="rgba(10,16,34,.85)" stroke="${col(id)}" stroke-width="2.5"/>
+      <text x="${x}" y="${y+4.5}" text-anchor="middle" font-size="12" fill="${col(id)}">${id==='hub'?'⌂':lk?'🔒':stat(id)}</text>
+      <text x="${x}" y="${y+(id==='woods'?-22:31)+(id==='woods'?0:0)}" text-anchor="middle" font-size="12.5">${esc(name)}</text>
+      ${id===here?`<text x="${x}" y="${y+(id==='woods'?34:45)}" text-anchor="middle" font-size="10.5" fill="#8fe0a0">● you are here</text>`:''}</g>`;}
+  svg+=`</svg>`;
+  const sec=(id,name,tag,body,lk,lockMsg)=>`<section class="mreg${lk?' locked':''}" id="mr-${id}"><h3><span>${esc(name)} ${id===here?'<em class="here">· you are here</em>':''}</span><small>${tag}</small></h3><p class="pl">${COURSE.plain[id]}${lk?` <i>${lockMsg}</i>`:''}</p>${body}</section>`;
+  let h=`<button class="close" id="mapClose" aria-label="Close">×</button><div class="kicker">Map of Frostmere</div><h2>Where to go, and what you’ll learn there</h2>${svg}`;
+  h+=sec('hub','Frostmere Village','home base',`<ul>
+    <li><i class="ic todo">?</i><span><b>Warden Quill</b> — your guide; replay his welcome at the sign</span></li>
+    <li><i class="ic ${SAVE.missed.length?'todo':'done'}">${SAVE.missed.length?'!':'✓'}</i><span><b>Review board</b> — retry questions you missed, with fresh numbers<em>${SAVE.missed.length} waiting</em></span></li>
+    <li><i class="ic ${SAVE.exam?'done':'todo'}">${SAVE.exam?'✓':'!'}</i><span><b>Practice final</b> — 20 mixed questions from every area, with a clock<em>${SAVE.exam?`best ${SAVE.exam.best} / ${SAVE.exam.n}`:'not taken yet'}</em></span></li></ul>`,false)
+;
+  for(const r of R){const un=regionUnlocked(r.id),req=r.requires?regionById(r.requires).name:'';
+    const items=r.nodes.map(id=>{const n=NODES[id],st=un?nodeState(id):'sealed',L=lessonsOf(id).length;
+      return `<li>${icon(st)}<span><b>${esc(n.title)}</b> — ${COURSE.about[id]||esc(n.kicker||'')}<em>${st==='done'?'restored':st==='frozen'?'frozen — finish its waypoints':un?`${L?`${lessonsDone(id)} of ${L} lessons done`:''}`:'locked'}${n.kicker?` · <span class="tag">${esc(n.kicker.split('·')[0].trim())}</span>`:''}</em></span></li>`;}).join('');
+    const tag=(r.sub.split('·')[0]||'').trim();
+    h+=sec(r.id,r.name,tag,`<ul>${items}</ul>${un&&r.id!==here?`<div class="acts" style="justify-content:flex-start;margin-top:8px"><button class="go" data-go="${r.id}">Travel to ${esc(r.name)}</button></div>`:''}`,!un,`Opens once every stone in ${esc(req)} is restored.`);}
+  if(here!=='hub')h+=`<div class="acts" style="justify-content:flex-start"><button class="go" data-go="hub">Return to the village</button></div>`;
+  const M=$('map');M.innerHTML=h;
+  $('mapClose').onclick=()=>M.classList.add('hidden');
+  M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{M.classList.add('hidden');const to=b.dataset.go;travel(to,to==='hub'?('from'+here[0].toUpperCase()+here.slice(1)):'fromHub');});
+  M.querySelectorAll('svg .rg').forEach(g=>g.onclick=()=>$('mr-'+g.dataset.r)?.scrollIntoView({behavior:'smooth',block:'start'}));
+}
+function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
+$('mapBtn').onclick=toggleMap;
+function toggleLog(){$('map').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
 $('logBtn').onclick=toggleLog;
 
 /* ---------- interaction + travel ---------- */
@@ -3344,8 +3427,8 @@ const readBtn=$('readBtn');
 function tapPick(wx,wy){let best=null,bd=1e9;for(const it of INTER){const dx=wx-it.x,dy=wy-(it.y-34);const d=Math.hypot(dx,dy*.7);if(d<48&&d<bd){bd=d;best=it;}}return best;}
 function tryRead(){if(nearI&&!uiOpen())nearI.act();}
 readBtn.onclick=tryRead;
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();
-  if(k==='escape'){closeCard();$('log').classList.add('hidden');}
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();if(k==='m'&&card.classList.contains('hidden'))toggleMap();
+  if(k==='escape'){closeCard();$('log').classList.add('hidden');$('map').classList.add('hidden');}
   if(k==='enter'&&!uiOpen())tryRead();});
 function travel(to,spawnKey){
   fading=true;const f=$('fade');f.classList.add('on');
@@ -3430,7 +3513,7 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,toggleMap,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });
 

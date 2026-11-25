@@ -6,7 +6,7 @@
 // Durbin–Watson 5% critical values [dL, dU] by sample size T and number of predictors k
 const DWT={20:{1:[1.20,1.41],2:[1.10,1.54],3:[1.00,1.68]},25:{1:[1.29,1.45],2:[1.21,1.55],3:[1.12,1.65]},
            30:{1:[1.35,1.49],2:[1.28,1.57],3:[1.21,1.65]},40:{1:[1.44,1.54],2:[1.39,1.60],3:[1.34,1.66]}};
-const SC_KIND={pos:'Positive serial correlation — residuals stay on the same side for runs of periods',none:'No serial correlation — residuals hop around at random',neg:'Negative serial correlation — residuals tend to flip sign every period'};
+const SC_KIND={pos:'Positive serial correlation — residuals stay on one side in long runs',none:'No serial correlation — residuals jump around with no pattern',neg:'Negative serial correlation — residuals tend to flip sign every period'};
 function genAR(r,rho,n=30){const e=[];let prev=0;for(let t=0;t<n;t++){prev=rho*prev+rngGauss(r)*(rho?Math.sqrt(1-rho*rho):1);e.push(prev);}
   const m=e.reduce((a,b)=>a+b,0)/n;return e.map(v=>round((v-m)*10,2));}
 const timePlot=e=>Exhibit.scatter(e.map((_,i)=>i+1),e,{xl:'Time period',yl:'Residual',hline:0,connect:true,title:'Residuals over time'});
@@ -61,15 +61,15 @@ NODES['m9-serial']={kicker:'Module 9 · Serial correlation',title:'The Echoing I
      q:'Test for positive first-order serial correlation at the 5% level. Decision?',opts,a:{rej:0,inc:1,no:2}[zone],
      why:`DW = ${dw} is ${zone==='rej'?`below dL = ${dL}: reject H₀`:zone==='inc'?`between dL = ${dL} and dU = ${dU}: inconclusive`:`above dU = ${dU}: do not reject H₀`}.`};}},
    {type:'mc',q:'A time-series demand model shows strong positive serial correlation, but every coefficient has p < 0.01. What should a manager conclude?',
-    opts:['The p-values are probably too optimistic — standard errors are likely understated','The model is extra reliable because everything is significant','The coefficients must be biased, so ignore the signs','Serial correlation only matters for R²'],a:0,
+    opts:['The p-values are probably too optimistic','The model is extra reliable, since all are significant','The coefficients must be biased; ignore the signs','Serial correlation only affects R², not the tests'],a:0,
     why:'Serial correlation can make weak evidence look strong. In the pure case the coefficients are unbiased; the reported precision is what you can’t trust.'},
    {type:'sort',q:'Sort each statement about pure serial correlation.',cats:['True','False'],
     items:[{t:'OLS coefficients are still unbiased',c:0},{t:'OLS is still the minimum-variance (BLUE) estimator',c:1},{t:'The usual standard errors and t-tests become unreliable',c:0},{t:'It always means a variable was omitted',c:1}],
     why:'Pure serial correlation hurts efficiency and inference, not the center of the estimates. Impure serial correlation is the one caused by specification errors.'},
    {type:'mc',q:'Monthly ice-cream sales residuals are positive every summer and negative every winter. What’s the best first move?',
-    opts:['Add seasonal dummies (or the missing seasonal driver) and re-estimate','Apply an advanced correction to the standard errors right away','Drop the summer months','Ignore it; DW only matters for annual data'],a:0,
+    opts:['Add seasonal dummies and re-estimate','Apply a standard-error correction right away','Drop the summer months from the sample','Ignore it — DW only matters for annual data'],a:0,
     why:'That pattern is impure serial correlation from missing seasonality. Fix the specification before reaching for statistical patches.'},
    {type:'mc',q:'DW = 1.31 with T = 25 and k = 3 (dL = 1.12, dU = 1.65). What does “inconclusive” mean for a decision?',
-    opts:['The test can’t confirm or rule out positive serial correlation — proceed cautiously and don’t over-trust the p-values','There is definitely no serial correlation','There is definitely serial correlation','The test was run incorrectly'],a:0,
+    opts:['It can’t confirm or rule it out — proceed with caution','There is no meaningful serial correlation to worry about','There is positive serial correlation, just weaker','The test was set up or run incorrectly'],a:0,
     why:'The inconclusive zone is part of the Durbin–Watson test, not an error.'},
   ]};

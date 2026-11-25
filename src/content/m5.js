@@ -20,7 +20,7 @@ NODES['m5-tests']={kicker:'Module 5 · Hypotheses and t-tests',title:'The Tribun
     practice:[
      {type:'mc',q:'Theory says more competitors should <b>lower</b> sales. Which hypotheses?',opts:['H₀: β ≥ 0, Hₐ: β < 0','H₀: β ≤ 0, Hₐ: β > 0','H₀: β = 0, Hₐ: β ≠ 0','H₀: β < 0, Hₐ: β ≥ 0'],a:0,
       why:'The alternative holds the values you expect (negative); the null holds the ones you don’t.'},
-     {type:'mc',q:'You fail to reject H₀: β = 0. What can you say?',opts:['The sample doesn’t give strong enough evidence against H₀','β is exactly zero','The variable should be deleted','The model is wrong'],a:0,
+     {type:'mc',q:'You fail to reject H₀: β = 0. What can you say?',opts:['The data don’t give strong evidence against H₀','The true β is zero, so X has no effect','The variable should be deleted from the model','The model must be misspecified'],a:0,
       why:'Failing to reject is not proof of no effect — the evidence just isn’t strong enough at your α.'},
     ]},
    {title:'The t-statistic and the rejection region',
@@ -46,7 +46,7 @@ NODES['m5-tests']={kicker:'Module 5 · Hypotheses and t-tests',title:'The Tribun
     hints:{2:'A negative estimate isn’t enough — compare t to the critical value.',3:'Compute t = b / SE first.'},
     why:`t = ${b.toLocaleString()} / ${se.toLocaleString()} = ${round(t,2)}. ${rej?'It falls in the left-tail rejection region, so the evidence supports a negative relationship.':'It doesn’t reach the rejection region, so the evidence isn’t strong enough at α = 0.05.'}`};}},
    {make:r=>{const n=ri(r,20,60),k=ri(r,1,4);return {type:'num',q:`A regression has n = <b>${n}</b> and k = <b>${k}</b> explanatory variables. What df do you use for its t-tests?`,a:n-k-1,tol:0,hint:'n − k − 1',solution:`${n} − ${k} − 1 = ${n-k-1}.`,why:'The degrees of freedom set the shape of the t-distribution and the critical value.'};}},
-   {type:'mc',q:'A firm tests whether a defect creates a serious safety risk (Hₐ). Which error should it fear most, and what follows?',opts:['Type II — missing a real hazard; it may accept a larger α to reduce false negatives','Type I — always the worst error; use the smallest α possible','Neither — α = 0.05 settles it','Type I — delays are worse than injuries'],a:0,
+   {type:'mc',q:'A firm tests whether a defect creates a serious safety risk (Hₐ). Which error should it fear most, and what follows?',opts:['Type II — missing a real hazard; accept a larger α','Type I — always the worst; use the smallest α possible','Neither — the standard α = 0.05 settles it','Type I — false alarms cost more than injuries'],a:0,
     why:'When safety is at stake, a false negative can be catastrophic. α = 0.05 is a starting point, not an automatic rule.'},
    {make:r=>{const b=round(rr(r,.15,.6),3),se=round(b/rr(r,1.2,5),3),df=ri(r,25,40),t=b/se,c=tc1(.05,df);return {type:'num',
     exhibit:Exhibit.eq(`Population coefficient b = ${b} · SE = ${se} · df = ${df} · right-tailed critical value (α = 0.05) = ${round(c,3)}`),
@@ -74,7 +74,7 @@ NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The 
     practice:[
      {make:r=>{const k=ri(r,2,4),n=ri(r,20,45),ess=round(rr(r,200,900),1),rss=round(rr(r,80,500),1),F=(ess/k)/(rss/(n-k-1));return {type:'num',q:`ESS = <b>${ess}</b>, RSS = <b>${rss}</b>, k = <b>${k}</b>, n = <b>${n}</b>. Compute F.`,a:F,tol:.02,
       hint:'(ESS/k) / (RSS/(n − k − 1))',solution:`(${ess}/${k}) / (${rss}/${n-k-1}) = ${round(F,3)}.`,why:'F compares explained variation per predictor with unexplained variation per residual df.'};}},
-     {type:'mc',q:'Automation’s coefficient is 0.03 (p = 0.001). The project costs millions. Best reading?',opts:['Statistically clear, but possibly too small to justify the investment','Huge effect — invest now','Unreliable — ignore it','Proof automation causes productivity'],a:0,why:'Evaluate statistical evidence and business magnitude together.'},
+     {type:'mc',q:'Automation’s coefficient is 0.03 (p = 0.001). The project costs millions. Best reading?',opts:['Clearly nonzero, but maybe too small to be worth it','A huge effect — p = 0.001 means invest now','Unreliable — a coefficient that small is noise','Proof that automation drives productivity'],a:0,why:'Evaluate statistical evidence and business magnitude together.'},
     ]},
   ],
   puzzles:[
@@ -90,13 +90,13 @@ NODES['m5-three']={kicker:'Module 5 · Three methods and the F-test',title:'The 
     q:'F and Significance F are hidden. Compute the <b>F-statistic</b> from the ANOVA table.',a:m.F,tol:.02,
     hint:'F = (Regression SS / k) / (Residual SS / residual df) — or Regression MS / Residual MS.',solution:`${Exhibit.xl(m.SSR/(m.k-1))} / ${Exhibit.xl(m.SSE/m.df)} = ${round(m.F,3)}.`,
     why:`H₀: all slopes are zero. Here F = ${round(m.F,2)} with p = ${Exhibit.xl(m.pF)} — ${m.pF<=.05?'at least one driver adds explanatory power':'no joint evidence at α = 0.05'}. The F-test doesn’t say which one; the t-tests do.`};}},
-   {type:'mc',q:'Your F-test rejects H₀ at 1%, but two of three t-tests are not significant. Which statement is right?',opts:['Jointly the drivers explain something; the t-tests show which have individual evidence','The F-test is wrong','All three drivers matter equally','The model must be discarded'],a:0,
+   {type:'mc',q:'Your F-test rejects H₀ at 1%, but two of three t-tests are not significant. Which statement is right?',opts:['Jointly they matter; individually, less clearly','The F-test must be wrong if the t-tests disagree','All three drivers matter about equally','The model should be discarded as unreliable'],a:0,
     why:'The F-test asks whether the group adds explanatory power; it doesn’t identify the responsible coefficient.'},
-   {type:'mc',q:'Infrastructure spending has b = 12 with p = 0.28. A manager wants to cite it as proof of a big payoff. Your response?',opts:['The estimate is large but statistically unreliable — the true effect could be zero','It’s significant because 12 is large','p = 0.28 means a 28% effect','It proves the opposite effect'],a:0,
+   {type:'mc',q:'Infrastructure spending has b = 12 with p = 0.28. A manager wants to cite it as proof of a big payoff. Your response?',opts:['Too imprecise — the true effect could be zero','Significant, because an effect of 12 is large','Solid — p = 0.28 means a 28% effect','It shows spending has the opposite effect'],a:0,
     why:'Size without precision is fragile evidence. Report both magnitude and uncertainty before acting.'},
   ]};
 
 /* exam-guide gap: statistical significance is not causation */
 NODES['m5-three'].puzzles.push({type:'mc',q:'Customers who use the loyalty app spend more, and the app dummy is highly significant (p < 0.001). Does the app <b>cause</b> the extra spending?',
-  opts:['Not necessarily — significance only says the association is unlikely to be zero; heavy spenders may choose the app','Yes — p < 0.001 proves causation','Yes, as long as R² is high','No — significant coefficients are never causal'],a:0,
+  opts:['Not necessarily — heavy spenders may choose the app','Yes — p < 0.001 rules out other explanations','Yes, as long as the model’s R² is also high','No — significant coefficients are never causal'],a:0,
   why:'A tiny p-value measures evidence against β = 0, not why the association exists. Causal claims need a design — like random assignment — that rules out self-selection and confounders.'});

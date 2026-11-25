@@ -19,10 +19,10 @@ NODES['m1-signs']={kicker:'Module 1 · Theory and evidence',title:'Stone of Sign
    opts:['A proof-generating machine that decides for you','A disciplined way to structure assumptions','A method for comparing evidence with claims','An input into a decision under uncertainty'],a:0,
    why:'The model can keep you from a blind bet, but it cannot decide for you. Models reduce analytical risk; leaders still own business risk.'},
   {make:r=>{const b=round(rr(r,.12,.48),2);return {type:'mc',q:`Your demand model estimates an income coefficient of <b>${b}</b>. What is the correct managerial reading?`,
-   opts:[`Expected demand rises by ${b} units for a one-unit rise in income, holding the included factors constant`,`A one-unit rise in income causes demand to rise by ${Math.round(b*100)}%`,`Demand rises by ${b} units whenever income rises, no matter what else changes`,`${Math.round(b*100)}% of the variation in demand is explained by income`],a:0,
+   opts:[`About ${b} more units demanded per one-unit rise in income, others fixed`,`A one-unit rise in income causes demand to rise by ${Math.round(b*100)}%, others held fixed`,`Demand rises by ${b} units whenever income rises, whatever else changes`,`Income explains ${Math.round(b*100)}% of the variation in demand, others held fixed`],a:0,
    why:'A coefficient is a marginal relationship in the units of the problem, conditional on the other included factors. It is evidence about a relationship — not proof of a causal mechanism, and not a share of variance explained.'};}},
   {type:'mc',q:'Your price coefficient has the sign theory predicted. What should a manager ask next?',
-   opts:['Is the effect large enough — and precise enough — to change the decision?','Nothing; the expected sign settles the question','Whether R² is above 0.9','Whether the intercept is positive'],a:0,
+   opts:['Is the effect big and precise enough to change the decision?','Nothing more — the expected sign confirms the model','Whether R² is above 0.9, so the model can be trusted','Whether the intercept is positive, as a sanity check'],a:0,
    why:'Sign ≠ decision. Ask whether the estimate is economically material, precise enough for the stakes, sensible given market structure, and likely to survive changes in competitors, technology, or policy.'},
 ]};
 
@@ -42,13 +42,13 @@ NODES['m1-cross']={kicker:'Module 1 · Causality and design',title:'Crossroads o
    opts:['A regional price test','A change in interest rates','A competitor’s pricing strategy','An economy-wide shift in demand'],a:0,
    why:'Price tests, regional advertising, and service offers can be assigned to comparable groups. Interest rates, competitor strategy, supply disruptions, and economy-wide demand usually cannot — so managers often work with observational data.'},
   {type:'mc',q:'An estimated regression coefficient is best described as…',
-   opts:['Evidence about a relationship — not proof of a causal mechanism','Proof that X causes Y, if the sample is large','The exact change in Y that will follow a change in X','A measure of how much of Y is explained by X'],a:0,
+   opts:['Evidence about a relationship — not proof of a causal mechanism','Proof that X causes Y, as long as the sample is reasonably large','The exact change in Y that will follow a change in X','A measure of how much of Y is explained by X'],a:0,
    why:'Coefficients turn market logic into measurable effects, but the design determines how confidently you can move from association toward causation.'},
   {type:'mc',q:'What do causal claims actually require?',
-   opts:['Theory, a credible research design, and evidence — not a coefficient alone','A p-value below 0.05','An R² above 0.8','At least 100 observations'],a:0,
+   opts:['Theory plus a design that rules out other explanations','A p-value below 0.05 on the variable of interest','An R² above 0.8, so other factors can’t matter much','A large sample — at least 100 observations'],a:0,
    why:'Statistical significance, fit, and sample size do not establish causality. Theory plus a credible design plus evidence do.'},
   {type:'mc',q:'What is the difference between the error term εᵢ and the residual eᵢ?',
-   opts:['ε is the true, unobservable deviation from the conditional mean; e = Y − Ŷ is the observed miss from the fitted model','They are the same thing measured in different units','ε is the miss on the training data; e is the miss on new data','e is unobservable; ε is what Excel reports'],a:0,
+   opts:['ε is the true, unobservable deviation; e = Y − Ŷ is the observed miss','They are the same quantity, just reported in different units','ε is the miss on the estimation data; e is the miss on new data','e is the unobservable one; ε is what Excel reports as residuals'],a:0,
    why:'εᵢ = Yᵢ − E(Yᵢ|Xᵢ) can’t be observed. eᵢ = Yᵢ − Ŷᵢ can, and residuals approximate the errors — large or patterned residuals are risk signals to investigate, not mistakes to erase.'},
 ]};
 
@@ -86,7 +86,7 @@ NODES['m1-magic']={kicker:'Module 1 · Fitted values and residuals',title:'The M
       solution:`${wins} within 10 lb × $2 − ${8-wins} misses × $3 = ${money(net,0)}.`,
       why:'Judge the model in the units of the decision — dollars at the booth — not only by statistical fit.'};}},
   {type:'mc',q:'Why does the booth model code height as <b>inches above 5 feet</b> instead of total inches?',
-   opts:['So the intercept becomes the predicted weight of a five-foot customer — a meaningful reference point','Because Excel cannot handle numbers above 60','To make the slope larger','So that residuals are always positive'],a:0,
+   opts:['So the intercept is the predicted weight at five feet','Because Excel handles small numbers more accurately','To make the slope larger and easier to read','So the residuals all come out positive'],a:0,
    why:'With total inches, X = 0 means a person zero inches tall, and the intercept is meaningless. The coding of X decides whether the intercept has a sensible meaning; the slope is unchanged.'},
 ]};
 
@@ -101,7 +101,7 @@ NODES['m1-units']={kicker:'Module 1 · Units, coding, and the relevant range',ti
   puzzles:[
   {make:r=>{const d=genFood(r);return {type:'mc',exhibit:Exhibit.scatter(d.inc,d.food,{line:[d.m.b[0],d.m.b[1]],xl:'Weekly income ($100 units)',yl:'Weekly food ($)',eq:`ŷ = ${d.b0} + ${d.b1}x`})+foodEq(d),
     q:'Forty three-person households. Which interpretation of the slope is correct?',
-    opts:[`A $100 increase in weekly income is associated with about $${d.b1} more expected weekly food spending`,`A $1 increase in weekly income is associated with $${d.b1} more weekly food spending`,`Every household that earns $100 more will spend exactly $${d.b1} more on food`,`A household with zero income spends $${d.b0} a week on food`],a:0,
+    opts:[`Each extra $100 of weekly income goes with about $${d.b1} more food spending`,`Each extra $1 of weekly income goes with about $${d.b1} more food spending`,`Every household earning $100 more will spend exactly $${d.b1} more on food`,`A household with zero income is expected to spend $${d.b0} a week on food`],a:0,
     hints:{1:'Check how income is coded.',2:'The slope is an average relationship, not a promise for each household.',3:'Is zero income anywhere near the observed data?'},
     why:'Translate the coded unit back into the manager’s natural unit. Scaling income to $100 units changes the coefficient’s number, not the economic relationship.'};}},
   {make:r=>{const d=genFood(r),inc=pick([1500,2000,2500,3000]),x=inc/100,a=d.b0+d.b1*x;return {type:'num',exhibit:foodEq(d),
@@ -116,7 +116,7 @@ NODES['m1-units']={kicker:'Module 1 · Units, coding, and the relevant range',ti
     why:'Regression gives a scenario input. Whether the store captures that spending depends on comparability, prices, competition, and how stable the relationship is.'};}},
   {make:r=>{const d=genHouse(r);return {type:'mc',exhibit:Exhibit.eq(`Predicted PRICE = ${d.b0<0?'−':''}${Math.abs(d.b0).toLocaleString()} + ${d.b1} × SIZE <small>(square feet; sample ${d.min.toLocaleString()}–${d.max.toLocaleString()})</small>`),
     q:`The intercept is ${money(d.b0,0)}. How should you read it?`,
-    opts:['It is the prediction at zero square feet — far outside the data, so it has no literal business meaning','Empty lots in this market sell for a negative price','The model is broken and the slope cannot be trusted','Every house loses that much value at sale'],a:0,
+    opts:['A prediction at zero sq. ft. — outside the data, not literal','Empty lots in this market sell for a negative price on average','The model is broken, so the slope can’t be trusted either','Every house loses that much value at the time of sale'],a:0,
     why:'A coefficient can be mathematically necessary without having a useful stand-alone interpretation. The slope is useful inside the relevant range; the intercept needs a reality check.'};}},
   {make:r=>{const d=genHouse(r),s=Math.round(rr(r,d.min+200,d.max-200)/50)*50,a=d.b0+d.b1*s;return {type:'num',
     exhibit:Exhibit.eq(`Predicted PRICE = ${d.b0<0?'−':''}${Math.abs(d.b0).toLocaleString()} + ${d.b1} × SIZE`),
@@ -143,7 +143,7 @@ NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild L
     why:'A point prediction starts the conversation. Is the link causal? Can operations serve the new customers? Would price or customer mix change? How wide is the uncertainty?'};}},
   {make:r=>{const d=genService(r),lo=Math.min(...d.c),hi=Math.max(...d.c);return {type:'mc',exhibit:svcEx(d),
     q:`Branches in the sample have between ${lo} and ${hi} customers. What does the intercept (≈ ${round(d.m.b[0],1)}) tell you?`,
-    opts:['An extrapolated baseline at zero customers — outside the observed range, not a meaningful operating forecast','A branch with no customers will earn that much revenue','Fixed revenue every branch earns regardless of customers','It is insignificant, so the model should be dropped'],a:0,
+    opts:['An extrapolated baseline outside the observed range','The revenue a branch with no customers will earn','Fixed revenue every branch earns regardless of customers','Nothing usable, so the whole model should be dropped'],a:0,
     why:'The slope is useful inside the relevant range; the intercept requires a business reality check.'};}},
   {make:r=>{const d=genService(r),x=ri(r,18,45),pred=d.m.predict(x),act=round(pred+(r()<.5?-1:1)*rr(r,2,7),1),a=act-pred;return {type:'num',exhibit:svcEx(d),
     q:`A branch with <b>${x} customers</b> earned <b>$${act}M</b>. What is its residual?`,a,tol:.1,pre:'$',unit:'M',
@@ -152,11 +152,11 @@ NODES['m1-ledger']={kicker:'Module 1 · Reading Excel output',title:'The Guild L
     why:'A residual tells you how far the model missed — not why. Large or patterned residuals point to demand shifts, outages, churn, missing variables, or the wrong functional form.'};}},
   {make:r=>{const d=genService(r);return {type:'mc',exhibit:svcEx(d),
     q:`R Square is ${Exhibit.xl(d.m.R2)}. Which conclusion is justified?`,
-    opts:['Customers and revenue are strongly associated in this sample — but fit alone doesn’t prove that adding customers causes revenue','The model proves that adding customers causes revenue to rise','Every future branch will land almost exactly on the fitted line','A high R² means the intercept can now be read literally'],a:0,
+    opts:['A strong association here — but fit alone doesn’t prove cause','The model shows that adding customers causes revenue to rise','Every future branch should land almost exactly on the line','The intercept can now be read literally, given the fit'],a:0,
     why:'The goal is not to celebrate a high R² but to interpret what the model does and does not support. The teaching data are deliberately clean; real operating data are noisier.'};}},
 ]};
 
 /* exam-guide gap: why managers use econometrics */
 NODES['m1-signs'].puzzles.push({type:'mc',q:'What is econometrics mainly for in a managerial setting?',
-  opts:['Putting numbers — and honest uncertainty — on relationships so decisions under uncertainty are better informed','Proving that a theory is true','Replacing managerial judgment with a formula','Finding whichever variables are significant in the data'],a:0,
+  opts:['Measuring relationships and their uncertainty to inform decisions','Proving which business theories are true from past data','Replacing managerial judgment with an objective formula','Finding whichever variables turn out significant in the data'],a:0,
   why:'Regression quantifies a relationship and its uncertainty; theory supplies the story and judgment makes the decision.'});

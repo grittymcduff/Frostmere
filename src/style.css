@@ -156,3 +156,21 @@
   .sc .cn{stroke:#2f7fb5;stroke-width:1.1;opacity:.45}
   .clock{float:right;margin-right:30px;font-variant-numeric:tabular-nums;color:#ffd27a}
   .exres td.mod{white-space:nowrap}.exres .ok{color:#8fe0a0}.exres .no{color:#ffb39a}
+  #map{position:fixed;left:50%;top:62px;transform:translateX(-50%);width:min(720px,calc(100vw - 20px));max-height:calc(100dvh - 76px);overflow:auto;box-sizing:border-box;padding:18px 20px 16px;z-index:6}
+  #map h2{margin:2px 0 4px;font-size:21px;color:#ffe2a8;font-weight:normal}
+  #map .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+  #map .close{position:absolute;right:10px;top:8px;background:none;border:none;color:#f3ead8;font-size:22px;cursor:pointer;opacity:.6;width:40px;height:40px}
+  #map svg{width:100%;max-width:440px;height:auto;display:block;margin:6px auto 10px}
+  #map svg .rg{cursor:pointer}#map svg text{font-family:Georgia,serif;fill:#f3ead8}
+  #map .mreg{border-top:1px solid rgba(255,214,150,.18);padding:12px 0 6px}
+  #map .mreg h3{margin:0;font-size:17px;font-weight:normal;color:#ffe2a8;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  #map .mreg h3 small{font-size:12px;color:#cdbfa6;font-style:italic}
+  #map .mreg .pl{margin:4px 0 8px;font-size:14px;line-height:1.45}
+  #map .mreg.locked{opacity:.62}
+  #map ul{list-style:none;margin:0;padding:0}#map li{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.07)}
+  #map li .ic{flex:none;margin-top:2px}#map li b{font-weight:normal;color:#ffe2a8}#map li span{font-size:13.5px;line-height:1.4}
+  #map li em{display:block;font-style:normal;font-size:12px;opacity:.65;margin-top:1px}
+  #map .go{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:8px;cursor:pointer;background:rgba(255,200,110,.14);color:#ffe2a8;border:1px solid rgba(255,214,150,.4)}
+  #map .here{color:#8fe0a0;font-size:12px;font-style:normal}
+  #map .tag{font-size:11px;opacity:.55;letter-spacing:.04em}
+  @media (max-width:600px){.topbtns{gap:5px;right:8px;top:8px}.topbtns kbd{display:none}.topbtns button{padding:7px 9px}#hud{top:56px;left:8px}#log{top:56px}#map{top:56px;max-height:calc(100dvh - 66px)}}
