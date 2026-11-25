@@ -4,7 +4,7 @@ const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locke
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})},audioV:s.audioV};}catch(e){}}
-function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;SAVE.t=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();cloudQueue();}
+function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;SAVE.t=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();cloudQueue();checkNotes();}
 
 /* ---------- progress rules ---------- */
 const regionById=id=>COURSE.regions.find(r=>r.id===id);
@@ -26,14 +26,14 @@ function renderHud(){
   $('hSub').textContent=reg?reg.sub:COURSE.hubSub;
   let line='';
   if(reg){const l=liveNodes(reg);const fz=l.filter(n=>nodeState(n)==='frozen').length;line=`Study stones restored: ${l.filter(n=>SAVE.done[n]).length} / ${l.length}`+(fz?` · ${fz} frozen`:'')+(reg.nodes.length>l.length?` · ${reg.nodes.length-l.length} sealed`:'');}
-  else{const all=COURSE.regions.flatMap(liveNodes);line=`Course progress: ${all.filter(n=>SAVE.done[n]).length} / ${all.length} stones`+(SAVE.missed.length?` · ${SAVE.missed.length} to review`:'');}
+  else{const all=COURSE.regions.flatMap(liveNodes);line=`Course progress: ${all.filter(n=>SAVE.done[n]).length} / ${all.length} stones`+(reviewCount()?` · ${reviewCount()} to review`:'')+(dailyReady()?' · daily quest ready':'');}
   $('hLine').textContent=line;
   const iv=invText();$('hInv').textContent=iv?`Carrying: ${iv}`:'';$('hInv').classList.toggle('hidden',!iv);
 }
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
-const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||fading;
+const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||!$('notes').classList.contains('hidden')||fading;
 
 /* ---------- dialogs ---------- */
 function openDialog(npc,i=0){
@@ -61,13 +61,14 @@ function openNode(id){
     const miss=items.filter(x=>x.missed).length,first=items.length-miss,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
     if(wasDone){SAVE.done[id].best=Math.max(first,SAVE.done[id].best);persist();toast(`Studied again · ${first} / ${items.length} on the first try`);return;}
     if(miss>=FREEZE_AT){
-      if(L&&lessonsDone(id)<L){SAVE.locked[id]=true;persist();freezeFx(id);
+      if(L&&lessonsDone(id)<L){SAVE.locked[id]=true;persist();freezeFx(id);chime('freeze');quillOnce('barkFreeze','Frozen. No shame in it — walk back to its waypoints. The lessons there are exactly what this stone was asking.');
         toast(`<b>${esc(n.title)}</b> froze over · ${miss} misses. Finish its ${L} waypoints to thaw it.`,4200);}
       else{persist();toast(`The stone dims · ${miss} misses. It needs at most one — try again.`,3600);}
       return;}
     delete SAVE.locked[id];SAVE.done[id]={best:first,ts:Date.now()};persist();
-    burst();toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
-    if(!regBefore&&regionDone(curScene)){const nx=COURSE.regions.find(r=>r.requires===curScene);
+    burst();chime('restore');quillOnce('barkStone','Your first stone, restored. One idea you can now defend — nineteen to go.');toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
+    if(!regBefore&&regionDone(curScene)){const nx=COURSE.regions.find(r=>r.requires===curScene);chime('region');
+      quillOnce('barkRegion_'+curScene,{woods:'Signpost Woods is restored. You can read a regression now — next, learn when to trust one. Lantern Hollow awaits to the west.',hollow:'Lantern Hollow is restored. You know the rules and the tests. Crystal Reach, to the east, is where broken models go to be diagnosed.',reach:'Every stone restored. Take the practice final under exam conditions — and keep the review board empty.'}[curScene]);
       setTimeout(()=>banner(`${regionById(curScene).name} restored`,nx?`The gate to ${nx.name} is unsealed`:'Every stone in this region is restored'),900);}
   },'stone');
 }
@@ -81,7 +82,7 @@ function openLesson(id,j){
   b.onclick=()=>startSession(L.title,kick,L.practice.map((_,idx)=>({node:lid,idx})),()=>{
     const was=SAVE.lessons[lid];SAVE.lessons[lid]=true;
     const all=lessonsDone(id)===Ls.length;
-    if(all&&SAVE.locked[id]){delete SAVE.locked[id];persist();thawFx(id);toast(`<b>${esc(n.title)}</b> thaws — challenge it again.`,3600);return;}
+    if(all&&SAVE.locked[id]){delete SAVE.locked[id];persist();thawFx(id);chime('thaw');quillOnce('barkThaw','Thawed. Try the stone again while the lessons are fresh.');toast(`<b>${esc(n.title)}</b> thaws — challenge it again.`,3600);return;}
     persist();if(!was&&SAVE.locked[id])crackFx(id);if(!was)toast(all?`All waypoints for <b>${esc(n.title)}</b> complete.`:`Waypoint complete · next one is further along the path.`);
   });
 }
@@ -93,7 +94,7 @@ function openCache(id){
   showCard(`<div class="kicker">Supply cache · near ${esc(NODES[id].title)}</div><h2>A frozen supply cache</h2><p class="say">A rune-lock seals it. Solve the problem etched on the lid to open it. Inside: a <b>${it.n}</b> — it ${it.d}. Items work only during a stone challenge.</p><div class="acts"></div>`);
   const b=btn('Read the lock','primary');card.querySelector('.acts').appendChild(b);b.focus();
   b.onclick=()=>startSession('Supply cache',`Supply cache · ${NODES[id].title}`,[{node:cid,idx:0}],()=>{
-    SAVE.caches[cid]=true;SAVE.inv[C.item]=(SAVE.inv[C.item]||0)+1;persist();
+    SAVE.caches[cid]=true;SAVE.inv[C.item]=(SAVE.inv[C.item]||0)+1;persist();chime('cache');quillOnce('barkCache','A cache! Items only work at the stones — save them for the ones that worry you.');
     const o=objects.find(o=>o.cache===id);if(o){o.spr=SPR.cacheOpen;burst();}
     toast(`Found a <b>${it.n}</b> — it ${it.d}.`,4200);},'cache');
 }
@@ -124,40 +125,50 @@ function thawFx(id){const o=stoneObj(id);ICEFX[id]={k:'thaw',t0:nowS()};if(!o||!
   for(let i=0;i<50;i++){emit({t:'mote',warm:1,x:o.x+rand(-20,20),y:o.y-rand(0,80),vx:rand(-20,20),vy:rand(-60,-20),l:0,m:rand(1,2),sz:rand(2,5),ph:rand(0,9)});}}
 /* ---------- practice final: 2 questions from every module, mixed ---------- */
 const EXAM_PER=2;
-function examPool(){const pool={};for(const [id,n] of Object.entries(NODES)){const m=/^m(\d+)-[a-z]+$/.exec(id);if(!m||n.sealed||!n.puzzles)continue;
+function examPool(){const pool={};for(const [id,n] of Object.entries(NODES)){const m=/^m(\d+)-[a-z]+$/.exec(id);if(!m||n.sealed||!n.puzzles||n.explain)continue;
   (pool[+m[1]]=pool[+m[1]]||[]).push(...n.puzzles.map((_,idx)=>({node:id,idx})));}return pool;}
 function openExam(){
   const pool=examPool(),mods=Object.keys(pool).map(Number).sort((a,b)=>a-b),N=mods.length*EXAM_PER,E=SAVE.exam;
   showCard(`<div class="kicker">Village exam hall</div><h2>Practice final</h2>
     <p class="say">${N} questions — ${EXAM_PER} from each of Modules ${mods[0]}–${mods[mods.length-1]}, drawn at random from the study stones and shuffled, with fresh numbers where a question uses data. The clock runs while you work.</p>
-    <p class="say">Your score is the number you get right <b>on the first try</b>. Items don’t work here, but the calculator does. Anything you miss is pinned to the review board.</p>
+    <p class="say"><b>Practice mode:</b> you see whether each answer is right and can try again; your score counts first tries. <b>Exam conditions:</b> one attempt per question, a countdown on each (75 s multiple choice, 2 min sorting, 2½ min calculations), and no feedback until the end — then you review every miss with its answer.</p>
+    <p class="meta">Items don’t work here; the calculator does. Misses go to the review board.</p>
     ${E?`<p class="meta">Best: <b>${E.best} / ${E.n}</b> · last: ${E.last} / ${E.n} in ${fmtClock(E.time)} · taken ${E.count} time${E.count>1?'s':''}</p>`:''}<div class="acts"></div>`);
-  const b=btn('Start the practice final','primary');card.querySelector('.acts').appendChild(b);b.focus();
-  b.onclick=()=>{const items=shuffle(mods.flatMap(m=>shuffle(pool[m]).slice(0,EXAM_PER)));
-    startSession('Practice final','Village exam hall',items,res=>examResult(res,mods),'exam');};
+  const draw=()=>shuffle(mods.flatMap(m=>shuffle(pool[m]).slice(0,EXAM_PER)));
+  const b=btn('Practice mode','sol'),c=btn('Exam conditions','primary');card.querySelector('.acts').append(b,c);c.focus();
+  b.onclick=()=>startSession('Practice final','Village exam hall',draw(),res=>examResult(res,mods,false),'exam');
+  c.onclick=()=>startSession('Practice final · exam conditions','Village exam hall',draw(),res=>examResult(res,mods,true),'examc');
 }
 setInterval(()=>{const c=document.getElementById('exClock');if(c&&run?.mode==='exam')c.textContent=fmtClock(Date.now()-run.t0);},500);
-function examResult(items,mods){
+function examResult(items,mods,strict){
   const n=items.length,score=items.filter(x=>!x.missed).length;
   const by=m=>items.filter(x=>+/^m(\d+)/.exec(x.node)[1]===m);
-  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};SAVE.examHist=[...(SAVE.examHist||[]),{s:score,n,t:examTime,ts:Date.now()}].slice(-12);persist();
+  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};SAVE.examHist=[...(SAVE.examHist||[]),{s:score,n,t:examTime,ts:Date.now(),c:strict?1:0}].slice(-12);persist();
   const weak=mods.filter(m=>by(m).some(x=>x.missed));
   const rows=mods.map(m=>{const its=by(m),ok=its.filter(x=>!x.missed).length;return `<tr><td class="mod">Module ${m}</td><td class="n ${ok===its.length?'ok':'no'}">${ok} / ${its.length}</td><td>${[...new Set(its.filter(x=>x.missed).map(x=>esc(NODES[x.node].title)))].join(', ')||'—'}</td></tr>`;}).join('');
   setTimeout(()=>{showCard(`<div class="kicker">Village exam hall · results</div><h2>${score} / ${n} on the first try</h2>
     <p class="say">${score>=n*.9?'Excellent — exam-ready across the board.':score>=n*.75?'Solid. Tighten up the modules marked below.':score>=n*.5?'Getting there. Revisit the stones listed below, and do their waypoints if you skipped them.':'Plenty to review — work through the waypoints and stones listed below, then try again.'} Time: <b>${fmtClock(examTime)}</b>.${prev?` Best so far: ${SAVE.exam.best} / ${n}.`:''}</p>
     <table class="tb exres"><tr><th>Module</th><th class="n">Right first try</th><th>Revisit</th></tr>${rows}</table>
+    ${strict&&weak.length?`<details class="tools" open><summary>Review your ${n-score} miss${n-score>1?'es':''}</summary>${items.filter(x=>x.missed).map(x=>{const p=x.p,ans=p.type==='mc'?p.opts[p.a]:p.type==='num'?`${p.pre||''}${p.fmt?p.fmt(p.a):fmtNum(p.a,Math.abs(p.a)<10?3:2)}${p.unit?' '+p.unit:''}`:p.type==='order'?p.items.join(' → '):p.items.map(t=>`${t.t} → <i>${p.cats[t.c]}</i>`).join('<br>');
+      return `<div class="miss"><p class="q">${p.q}${x.timedOut?' <em>(time ran out)</em>':''}</p><p><b>Answer:</b> ${ans}</p>${p.solution?`<p class="meta">${p.solution}</p>`:''}<p class="meta">${p.why||''}</p></div>`;}).join('')}</details>`:''}
     ${weak.length?`<p class="meta">Missed questions are pinned to the review board by the fire.</p>`:''}<div class="acts"></div>`);
-    const a=btn('Take it again','primary'),c=btn('Close','sol');card.querySelector('.acts').append(a,c);a.onclick=openExam;c.onclick=closeCard;},60);
+    if(!SAVE.seen.barkExam){SAVE.seen.barkExam=1;quillSay('Your first practice final. Whatever the score, the misses are the gift — each one is now waiting on the review board.');}
+    chime('restore');const a=btn('Take it again','primary'),c=btn('Close','sol');card.querySelector('.acts').append(a,c);a.onclick=openExam;c.onclick=closeCard;},60);
 }
 let examTime=0;
+const reviewCount=()=>{const due=dueKeys().filter(k=>!SAVE.missed.some(m=>m.node+'|'+m.idx===k));return SAVE.missed.length+due.length;};
 function openReview(){
-  if(!SAVE.missed.length){showCard(`<div class="kicker">Review board</div><h2>Nothing to review</h2><p class="say">Questions you miss anywhere in the world are pinned here, so you can retry them with fresh numbers. The board is empty — nice work.</p>`);return;}
-  const pickN=shuffle(SAVE.missed).slice(0,6);
-  showCard(`<div class="kicker">Review board</div><h2>${SAVE.missed.length} pinned question${SAVE.missed.length>1?'s':''}</h2><p class="say">Here are ${pickN.length} of them, with fresh numbers where the question uses data. Answer one right on the first try and it comes off the board.</p><div class="acts"></div>`);
+  const miss=SAVE.missed.map(m=>({node:m.node,idx:m.idx})),due=dueKeys().filter(k=>!SAVE.missed.some(m=>m.node+'|'+m.idx===k)).map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};});
+  if(!miss.length&&!due.length){
+    const Q=SAVE.qs||{},next=Object.values(Q).filter(q=>q.box>0&&q.due).sort((a,b)=>a.due-b.due)[0];
+    showCard(`<div class="kicker">Review board</div><h2>Nothing due right now</h2><p class="say">Two kinds of questions come back here: ones you <b>missed</b>, and ones you got right that are due for a <b>spaced refresher</b> — after 1 day, then 3, 7, 16 and 35. Spacing reviews out like this is the most reliable way to remember material on exam day.</p>${next?`<p class="meta">Next refresher due ${new Date(next.due).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'})}.</p>`:''}`);return;}
+  const pickN=[...shuffle(miss).slice(0,6),...due].slice(0,8);
+  showCard(`<div class="kicker">Review board</div><h2>${miss.length} missed · ${due.length} due for a refresher</h2>
+    <p class="say">Here are ${pickN.length}, missed ones first, with fresh numbers where the question uses data. Get a missed question right first time and it comes off the board; get a refresher right and it comes back later, at a longer gap.</p><div class="acts"></div>`);
   const b=btn('Start review','primary');card.querySelector('.acts').appendChild(b);b.focus();
   b.onclick=()=>{startSession('Review board','Spaced review',pickN,items=>{
     let cleared=0;for(const it of items)if(!it.missed){SAVE.missed=SAVE.missed.filter(m=>!(m.node===it.node&&m.idx===it.idx));cleared++;}
-    persist();toast(`Review done · ${cleared} cleared · ${SAVE.missed.length} left`);},'review');};
+    persist();toast(`Review done · ${cleared} of ${items.length} right first time · ${reviewCount()} left`);},'review');};
 }
 function burst(){if(!FX.particles)return;for(let i=0;i<60;i++){const a=rand(0,TAU),v=rand(40,170);emit({t:'mote',warm:1,x:player.x+rand(-10,10),y:player.y-30,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,l:0,m:rand(.8,1.8),sz:rand(2,5),ph:rand(0,9)});}}
 
@@ -203,7 +214,8 @@ function renderMap(){
   let h=`<button class="close" id="mapClose" aria-label="Close">×</button><div class="kicker">Map of Frostmere</div><h2>Where to go, and what you’ll learn there</h2>${svg}`;
   h+=sec('hub','Frostmere Village','home base',`<ul>
     <li><i class="ic todo">?</i><span><b>Warden Quill</b> — your guide; replay his welcome at the sign</span></li>
-    <li><i class="ic ${SAVE.missed.length?'todo':'done'}">${SAVE.missed.length?'!':'✓'}</i><span><b>Review board</b> — retry questions you missed, with fresh numbers<em>${SAVE.missed.length} waiting</em></span></li>
+    <li><i class="ic ${reviewCount()?'todo':'done'}">${reviewCount()?'!':'✓'}</i><span><b>Review board</b> — missed questions, plus ones due for a spaced refresher<em>${SAVE.missed.length} missed · ${dueKeys().length} due</em></span></li>
+    <li><i class="ic todo">✎</i><span><b>Interpretation desk</b> — explain a result in your own words, then compare with a model answer</span></li>
     <li><i class="ic ${SAVE.exam?'done':'todo'}">${SAVE.exam?'✓':'!'}</i><span><b>Practice final</b> — 20 mixed questions from every area, with a clock<em>${SAVE.exam?`best ${SAVE.exam.best} / ${SAVE.exam.n}`:'not taken yet'}</em></span></li></ul>`,false)
 ;
   for(const r of R){const un=regionUnlocked(r.id),req=r.requires?regionById(r.requires).name:'';
@@ -217,9 +229,9 @@ function renderMap(){
   M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{M.classList.add('hidden');const to=b.dataset.go;travel(to,to==='hub'?('from'+here[0].toUpperCase()+here.slice(1)):'fromHub');});
   M.querySelectorAll('svg .rg').forEach(g=>g.onclick=()=>$('mr-'+g.dataset.r)?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
-function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');$('report').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
+function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');$('report').classList.add('hidden');$('notes').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
 $('mapBtn').onclick=toggleMap;
-function toggleLog(){$('map').classList.add('hidden');$('report').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
+function toggleLog(){$('map').classList.add('hidden');$('report').classList.add('hidden');$('notes').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
 $('logBtn').onclick=toggleLog;
 
 /* ---------- interaction + travel ---------- */
@@ -229,8 +241,8 @@ const readBtn=$('readBtn');
 function tapPick(wx,wy){let best=null,bd=1e9;for(const it of INTER){const dx=wx-it.x,dy=wy-(it.y-34);const d=Math.hypot(dx,dy*.7);if(d<48&&d<bd){bd=d;best=it;}}return best;}
 function tryRead(){if(nearI&&!uiOpen())nearI.act();}
 readBtn.onclick=tryRead;
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();if(k==='m'&&card.classList.contains('hidden'))toggleMap();
-  if(k==='escape'){closeCard();$('log').classList.add('hidden');$('map').classList.add('hidden');}
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();if(k==='m'&&card.classList.contains('hidden'))toggleMap();if(k==='n'&&card.classList.contains('hidden'))toggleNotes();
+  if(k==='escape'){closeCard();['log','map','notes'].forEach(x=>$(x).classList.add('hidden'));}
   if(k==='enter'&&!uiOpen())tryRead();});
 function travel(to,spawnKey){
   fading=true;const f=$('fade');f.classList.add('on');
@@ -320,6 +332,6 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,toggleMap,toggleReport:()=>toggleReport(),practiceArea:m=>practiceArea(m),inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openReview,openExam,toggleMap,openDaily:()=>openDaily(),openDesk:()=>openDesk(),toggleNotes:()=>toggleNotes(),quillSay:t=>quillSay(t),dueKeys:()=>dueKeys(),toggleReport:()=>toggleReport(),practiceArea:m=>practiceArea(m),inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });

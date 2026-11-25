@@ -83,7 +83,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function shuffle(a,r=Math.random){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function showCard(html){card.innerHTML=`<button class="close" aria-label="Close">×</button>${html}`;card.classList.remove('hidden');card.scrollTop=0;
   card.querySelector('.close').onclick=closeCard;keys.clear();tapTarget=null;}
-function closeCard(){card.classList.add('hidden');run=null;calcEl.classList.add('hidden');}
+function closeCard(){card.classList.add('hidden');if(run)clearInterval(run.qTimer);run=null;calcEl.classList.add('hidden');}
 
 function instantiate(p,seed){
   if(!p.make)return {...p};
@@ -97,14 +97,23 @@ function startSession(title,kicker,items,onDone,mode='practice'){
   renderPuzzle();
 }
 function header(){const n=run.items.length,i=run.i;
-  return `<div class="kicker">${esc(run.kicker)}${run.mode==='exam'?` · question ${i+1} of ${n} <span class="clock" id="exClock">${fmtClock(Date.now()-run.t0)}</span>`:''}</div><h2>${esc(run.title)}</h2>
-  <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
+  const EC=run.mode==='examc';
+  return `<div class="kicker">${esc(run.kicker)}${run.mode==='exam'?` · question ${i+1} of ${n} <span class="clock" id="exClock">${fmtClock(Date.now()-run.t0)}</span>`:EC?` · question ${i+1} of ${n} <span class="clock" id="qClock"></span>`:''}</div><h2>${esc(run.title)}</h2>
+  <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(EC?'dn':it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
 function renderPuzzle(){
   const it=run.items[run.i],p=it.p;it.t0=it.t0||Date.now();
-  let body=`${header()}${p.exhibit||''}<div class="ptools" id="ptools"></div><p class="q">${p.q}</p><div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
+  const askConf=SAVE.confOn!==false&&p.type!=='explain';
+  let body=`${header()}${p.exhibit||''}<div class="ptools" id="ptools"></div><p class="q">${p.q}</p>${askConf?`<div class="conf" id="conf"><span>How sure are you?</span><button data-c="1">Sure</button><button data-c="0">Not sure</button></div>`:''}<div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
   showCard(body);
   const pz=card.querySelector('#pz'),acts=card.querySelector('#acts');
-  const fail=(msg)=>{
+  card.querySelectorAll('#conf button').forEach(b=>b.onclick=()=>{const v=+b.dataset.c;it.conf=it.conf===v?undefined:v;card.querySelectorAll('#conf button').forEach(x=>x.classList.toggle('on',+x.dataset.c===it.conf));});
+  // exam conditions: one attempt, no feedback, a countdown per question
+  const EC=run.mode==='examc';
+  const commit=ok=>{if(it.done)return;it.done=true;clearInterval(run.qTimer);it.missed=!ok;stat(ok?1:0,it);if(!ok)noteMiss(it);next();};
+  if(EC){const lim=(p.type==='num'?150:p.type==='mc'?75:120)*1000,end=Date.now()+lim;clearInterval(run.qTimer);
+    const tick=()=>{const left=end-Date.now(),c=card.querySelector('#qClock');if(c){c.textContent='⏱ '+fmtClock(Math.max(0,left));c.classList.toggle('low',left<15000);}if(left<=0){it.timedOut=true;commit(false);}};
+    tick();run.qTimer=setInterval(tick,250);}
+  const fail=EC?()=>commit(false):(msg)=>{
     if(it.charm){it.charm=false;feedback('no','<b>Your Warding Charm absorbed that miss</b> — it won’t count. '+(msg||p.hint||'Try again.'));drawTools();return;}
     if(!it.missed){it.missed=true;noteMiss(it);}feedback('no',msg||p.hint||'Not quite — try again.');drawTools();};
   const drawTools=()=>{
@@ -125,7 +134,7 @@ function renderPuzzle(){
       if(k==='charm'){it.charm=true;feedback('', '<b>Warding Charm armed:</b> your next miss on this question won’t count.');}
       drawTools();});
   };
-  const pass=()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1,it);};
+  const pass=EC?()=>commit(true):()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1,it);};
   if(p.type==='mc'){
     const order=shuffle(p.opts.map((o,k)=>k));
     order.forEach(k=>{const b=btn(p.opts[k],'opt');b.dataset.k=k;pz.appendChild(b);b.onclick=()=>{if(b.disabled)return;
@@ -155,6 +164,19 @@ function renderPuzzle(){
     draw();const chk=btn('Check order','primary');acts.appendChild(chk);
     chk.onclick=()=>{const wrong=cur.filter((k,i)=>k!==i).length;pz.querySelectorAll('li').forEach((li,i)=>{li.classList.toggle('good',cur[i]===i);li.classList.toggle('bad',cur[i]!==i);});
       if(!wrong){pz.querySelectorAll('.mv').forEach(b=>b.disabled=true);pass();}else fail(`${wrong} step${wrong>1?'s are':' is'} out of place.`);};
+  }else if(p.type==='explain'){
+    pz.innerHTML=`<textarea id="exIn" rows="5" placeholder="Write 2–4 sentences, the way you would on the exam…" aria-label="Your answer"></textarea>`;
+    const ta=pz.querySelector('#exIn');ta.addEventListener('keydown',e=>e.stopPropagation());setTimeout(()=>ta.focus(),50);
+    const chk=btn('Compare with the model answer','primary');acts.appendChild(chk);
+    chk.onclick=()=>{if(ta.value.trim().length<15){feedback('no','Write a few sentences first — a rough answer is fine.');return;}
+      ta.readOnly=true;acts.innerHTML='';feedback('','');
+      pz.insertAdjacentHTML('beforeend',`<div class="model"><b>Model answer</b><p>${p.model}</p><b>Tick each key point your answer covered:</b>${p.points.map((t,i)=>`<label class="kp"><input type="checkbox" data-i="${i}"> <span>${t}</span></label>`).join('')}</div>`);
+      const done=btn('Done','primary');acts.appendChild(done);done.focus();
+      done.onclick=()=>{const got=pz.querySelectorAll('.kp input:checked').length,need=Math.ceil(p.points.length*2/3);
+        pz.querySelectorAll('.kp input').forEach(x=>x.disabled=true);
+        if(got>=need){p.why=`You covered ${got} of ${p.points.length} key points. ${p.why||''}`;pass();}
+        else{it.missed=true;noteMiss(it);feedback('no',`You covered ${got} of ${p.points.length} key points — aim for at least ${need}. ${p.why||''}`);acts.innerHTML='';
+          const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(0,it);}};};
   }
   function feedback(kind,msg){const fb=card.querySelector('#fb');fb.className='fb '+(kind||'info');fb.innerHTML=msg;}
   drawTools();
@@ -164,12 +186,19 @@ function stat(correctFirst,it){SAVE.stats.answered++;SAVE.stats.first+=correctFi
 /* per-question history for the study report: attempts, first-try hits, last 3 outcomes, time, calc vs concept */
 function recordQ(it,c){
   const k=it.node+'|'+it.idx,Q=SAVE.qs||(SAVE.qs={}),q=Q[k]||(Q[k]={n:0,ok:0,h:'',ms:0});
-  q.n++;q.ok+=c;q.h=(q.h+c).slice(-3);q.ts=Date.now();q.ms+=Math.min(600000,Date.now()-(it.t0||Date.now()));q.c=it.p.type==='num'?1:0;
+  q.n++;q.ok+=c;q.h=(q.h+c).slice(-3);q.ts=Date.now();
+  // spaced review: right first time → next review further out (1, 3, 7, 16, 35 days); a miss → due again now
+  q.box=c?Math.min((q.box||0)+1,5):0;q.due=Date.now()+[0,1,3,7,16,35][q.box]*864e5;
+  // calibration: how often 'sure' answers are actually right
+  if(it.conf!==undefined){const C=SAVE.cal||(SAVE.cal={s:{n:0,ok:0},u:{n:0,ok:0}}),b=it.conf?C.s:C.u;b.n++;b.ok+=c;q.sw=it.conf===1&&!c?1:(c?0:q.sw||0);}q.ms+=Math.min(600000,Date.now()-(it.t0||Date.now()));q.c=it.p.type==='num'?1:0;
   const d=new Date().toLocaleDateString('en-CA'),D=SAVE.days||(SAVE.days={});D[d]=(D[d]||0)+1;
   const ks=Object.keys(D).sort();while(ks.length>60)delete D[ks.shift()];
 }
-function noteMiss(it){if(!['stone','exam','focus'].includes(run.mode))return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function noteMiss(it){if(!['stone','exam','focus','examc'].includes(run.mode))return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
-  const r=run;if(r.mode==='exam')examTime=Date.now()-r.t0;closeCard();r.onDone&&r.onDone(r.items);persist();
+  const r=run;if(r.mode==='exam'||r.mode==='examc')examTime=Date.now()-r.t0;closeCard();r.onDone&&r.onDone(r.items);persist();
 }
+
+/* questions whose spaced-review date has come round */
+function dueKeys(){const now=Date.now(),Q=SAVE.qs||{};return Object.keys(Q).filter(k=>{const q=Q[k],[node,idx]=k.split('|');return q.due&&q.due<=now&&q.box>0&&NODES[node]?.puzzles?.[+idx];}).sort((a,b)=>Q[a].due-Q[b].due);}

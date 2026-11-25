@@ -180,7 +180,7 @@
   #map .here{color:#8fe0a0;font-size:12px;font-style:normal}
   #map .tag{font-size:11px;opacity:.55;letter-spacing:.04em}
   #menuBtn{display:none}
-  @media (max-width:600px){
+  @media (max-width:900px){
     .topbtns{right:8px;top:8px;flex-direction:column;align-items:stretch;gap:6px;z-index:8}
     .topbtns kbd{display:none}
     #menuBtn{display:block;align-self:flex-end}
@@ -216,12 +216,38 @@
   #report .spark span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:11px;font-style:normal;opacity:.8}
   @media (max-width:600px){#report .kpis{grid-template-columns:repeat(2,1fr)}}
   #card ol.steps{margin:6px 0 10px;padding-left:22px;line-height:1.5}#card ol.steps li{margin:6px 0}
+  .conf{display:flex;align-items:center;gap:6px;margin:-2px 0 10px;font-size:12.5px;opacity:.9}.conf span{opacity:.75;margin-right:2px}
+  .conf button{font:inherit;font-size:12px;padding:4px 10px;border-radius:14px;cursor:pointer;background:rgba(255,255,255,.05);color:#f3ead8;border:1px solid rgba(255,214,150,.25)}
+  .conf button.on{background:rgba(255,200,110,.22);border-color:#e9b35c;color:#ffe2a8}
+  .prog i.dn{background:rgba(255,226,168,.55)}.clock.low{color:#ff9a7a}
+  #exIn{width:100%;box-sizing:border-box;font:inherit;font-size:14.5px;line-height:1.45;background:rgba(0,0,0,.28);color:#f3ead8;border:1px solid rgba(255,214,150,.3);border-radius:10px;padding:10px}
+  .model{margin-top:12px;padding:12px;border-radius:10px;background:rgba(143,224,160,.07);border:1px solid rgba(143,224,160,.25);font-size:14px;line-height:1.5}
+  .model p{margin:4px 0 10px}.model b{color:#cfeed6;font-weight:normal}.kp{display:flex;gap:8px;align-items:flex-start;padding:5px 0;cursor:pointer}.kp input{margin-top:3px;accent-color:#6fcf8a}
+  .miss{border-top:1px dashed rgba(255,255,255,.12);padding:8px 0;font-size:13.5px}.miss p{margin:4px 0}.miss .q{font-size:14px}
+  #notes{position:fixed;left:50%;top:62px;transform:translateX(-50%);width:min(720px,calc((100vw - 20px)/var(--ts,1)));max-height:calc((100dvh - 76px)/var(--ts,1));overflow:auto;box-sizing:border-box;padding:18px 20px 16px;z-index:6}
+  #notes h2{margin:2px 0 6px;font-size:21px;color:#ffe2a8;font-weight:normal}#notes .kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+  #notes .close{position:absolute;right:10px;top:8px;background:none;border:none;color:#f3ead8;font-size:22px;cursor:pointer;opacity:.6;width:40px;height:40px}
+  #notes .lnk{background:none;border:none;color:#ffd27a;text-decoration:underline;cursor:pointer;font:inherit;font-size:12.5px;padding:0;margin-left:6px}
+  #notes .nsec h3{font-weight:normal;font-size:15px;color:#ffe2a8;margin:14px 0 6px;border-top:1px solid rgba(255,214,150,.18);padding-top:10px}
+  #notes .note{padding:8px 10px;margin:6px 0;border-radius:8px;background:rgba(255,255,255,.035);border:1px solid rgba(255,214,150,.12);font-size:13.5px;line-height:1.5}
+  #notes .note>b{color:#ffe2a8;font-weight:normal;display:block;margin-bottom:2px}#notes .note div b{color:#ffe9c4;font-weight:normal}#notes .note.locked{opacity:.45}
+  #notes .fx{font-family:Georgia,serif;background:rgba(0,0,0,.25);border-radius:6px;padding:6px 8px;margin:4px 0;color:#ffe9c4}
+  #report .today{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:10px 0 0;padding:10px 12px;border-radius:10px;background:rgba(255,200,110,.07);border:1px solid rgba(255,214,150,.2)}
+  #report .today b{font-weight:normal;color:#ffe2a8;display:block;font-size:14px}#report .today span{font-size:12.5px;opacity:.85;line-height:1.4}#report .today span b{display:inline;font-size:inherit}
+  #narr.bark .nh span{display:none}
+  #card,#log,#map,#report,#notes,#narr,#fx,#calc{zoom:var(--ts,1)}
+  #card{width:min(580px,calc(94vw/var(--ts,1)));max-height:min(88vh,calc(88dvh/var(--ts,1)))}
+  #log{width:min(420px,calc((100vw - 24px)/var(--ts,1)));max-height:calc((100dvh - 80px)/var(--ts,1))}
+  #map,#report{width:min(720px,calc((100vw - 20px)/var(--ts,1)));max-height:calc((100dvh - 76px)/var(--ts,1))}
+  #narr{width:min(620px,calc((100% - 24px)/var(--ts,1)))}
+  #fx select{font:inherit;font-size:12.5px;background:rgba(0,0,0,.3);color:#f3ead8;border:1px solid rgba(255,214,150,.3);border-radius:6px;padding:2px 4px;margin-left:auto}
+  .fb:empty{display:none}
 </style>
 </head>
 <body>
 <canvas id="game" aria-label="Frostmere Village game world"></canvas>
 <div id="hud" class="panel"><span class="t1" id="hName"></span><span class="t2" id="hSub"></span><div class="line" id="hLine"></div><div class="line inv hidden" id="hInv"></div></div>
-<div class="topbtns" id="topbtns"><button id="menuBtn" class="panel" aria-expanded="false" aria-controls="topbtns">☰ Menu</button><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="mapBtn" class="panel">Map <kbd>M</kbd></button><button id="repBtn" class="panel">Progress <kbd>P</kbd></button><button id="muteBtn" class="panel" aria-label="Mute music and ambience" aria-pressed="false">🔊</button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
+<div class="topbtns" id="topbtns"><button id="menuBtn" class="panel" aria-expanded="false" aria-controls="topbtns">☰ Menu</button><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="mapBtn" class="panel">Map <kbd>M</kbd></button><button id="repBtn" class="panel">Progress <kbd>P</kbd></button><button id="notesBtn" class="panel">Notes <kbd>N</kbd></button><button id="muteBtn" class="panel" aria-label="Mute music and ambience" aria-pressed="false">🔊</button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
 <div id="fx" class="panel hidden">
   <div class="sub">Layers (code only)</div>
   <label><input type="checkbox" data-fx="light" checked> Lighting &amp; glow</label>
@@ -233,6 +259,8 @@
   <div class="sub">Sound</div>
   <label><input type="checkbox" id="musOn" checked> Music</label>
   <label><input type="checkbox" id="voiceOn" checked> Narration</label>
+  <label>Text size <select id="tsSel" aria-label="Text size"><option value="1">Normal</option><option value="1.12">Large</option><option value="1.25">Larger</option></select></label>
+  <label><input type="checkbox" id="confOn" checked> Ask “how sure?”</label>
   <label><input type="checkbox" id="sfxOn" checked> Ambient sounds</label>
   <label class="vol">Ambience <input type="range" id="sfxVol" min="0" max="100" value="10" aria-label="Ambient sound volume"></label>
   <label class="vol">Volume <input type="range" id="musVol" min="0" max="100" value="8" aria-label="Music volume"></label>
@@ -243,6 +271,7 @@
 <div id="log" class="panel hidden" role="dialog" aria-label="Quest log"></div>
 <div id="map" class="panel hidden" role="dialog" aria-label="Map of Frostmere"></div>
 <div id="report" class="panel hidden" role="dialog" aria-label="Study report"></div>
+<div id="notes" class="panel hidden" role="dialog" aria-label="Field notes"></div>
 <div id="hint" class="panel">WASD / arrows to move · Shift to jog · tap to walk · drag for joystick · E to interact</div>
 <button id="readBtn" class="panel hidden"><span></span> <kbd>E</kbd></button>
 <div id="card" class="panel hidden" role="dialog" aria-modal="true"></div>
@@ -785,7 +814,7 @@ const endPtr=e=>{
 };
 // stop the browser treating joystick drags as page gestures (pull-to-refresh, swipe-to-close):
 // block touch scrolling everywhere except inside the scrollable panels
-const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx,#report');
+const scrollable=t=>t instanceof Element&&t.closest('#card,#log,#calc,#map,#fx,#report,#notes');
 document.addEventListener('touchmove',e=>{if(!scrollable(e.target))e.preventDefault();},{passive:false});
 cv.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
@@ -1404,8 +1433,12 @@ function buildHub(){
   const sign=(x,y,label,act,state)=>{addObj({kind:'sign',x,y,spr:SPR.sign,marker:{x,y,h:80,state}});colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,30);
     addLight(x,y-78,70,[255,205,110],.8,.1);INTER.push({x,y,r:60,label:()=>label,act});};
   sign(1090,1185,'Read the welcome sign',openWelcome,()=>SAVE.seen.welcome?'none':'todo');
-  sign(860,880,'Open the review board',openReview,()=>SAVE.missed.length?'todo':'none');
+  sign(860,880,'Open the review board',openReview,()=>reviewCount()?'todo':'none');
   addOwl(1120,700,COURSE.hubNpc);
+  // interpretation desk: explain-it questions
+  {const x=880,y=1040;addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>'none'}});
+   colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,26);addLight(x,y-60,80,[200,230,255],.65,.1);
+   INTER.push({x,y,r:52,label:()=>'Use the interpretation desk',act:()=>openDesk()});}
   // practice final: a lectern by the south path
   {const x=1130,y=1035;addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>SAVE.exam?'none':'todo'}});
    colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,26);addLight(x,y-60,80,[255,215,140],.75,.1);
@@ -1805,7 +1838,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function shuffle(a,r=Math.random){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function showCard(html){card.innerHTML=`<button class="close" aria-label="Close">×</button>${html}`;card.classList.remove('hidden');card.scrollTop=0;
   card.querySelector('.close').onclick=closeCard;keys.clear();tapTarget=null;}
-function closeCard(){card.classList.add('hidden');run=null;calcEl.classList.add('hidden');}
+function closeCard(){card.classList.add('hidden');if(run)clearInterval(run.qTimer);run=null;calcEl.classList.add('hidden');}
 
 function instantiate(p,seed){
   if(!p.make)return {...p};
@@ -1819,14 +1852,23 @@ function startSession(title,kicker,items,onDone,mode='practice'){
   renderPuzzle();
 }
 function header(){const n=run.items.length,i=run.i;
-  return `<div class="kicker">${esc(run.kicker)}${run.mode==='exam'?` · question ${i+1} of ${n} <span class="clock" id="exClock">${fmtClock(Date.now()-run.t0)}</span>`:''}</div><h2>${esc(run.title)}</h2>
-  <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
+  const EC=run.mode==='examc';
+  return `<div class="kicker">${esc(run.kicker)}${run.mode==='exam'?` · question ${i+1} of ${n} <span class="clock" id="exClock">${fmtClock(Date.now()-run.t0)}</span>`:EC?` · question ${i+1} of ${n} <span class="clock" id="qClock"></span>`:''}</div><h2>${esc(run.title)}</h2>
+  <div class="prog">${run.items.map((it,k)=>`<i class="${k<i?(EC?'dn':it.missed?'m':'ok'):k===i?'cur':''}"></i>`).join('')}</div>`;}
 function renderPuzzle(){
   const it=run.items[run.i],p=it.p;it.t0=it.t0||Date.now();
-  let body=`${header()}${p.exhibit||''}<div class="ptools" id="ptools"></div><p class="q">${p.q}</p><div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
+  const askConf=SAVE.confOn!==false&&p.type!=='explain';
+  let body=`${header()}${p.exhibit||''}<div class="ptools" id="ptools"></div><p class="q">${p.q}</p>${askConf?`<div class="conf" id="conf"><span>How sure are you?</span><button data-c="1">Sure</button><button data-c="0">Not sure</button></div>`:''}<div id="pz"></div><div id="fb" class="fb"></div><div class="acts" id="acts"></div>`;
   showCard(body);
   const pz=card.querySelector('#pz'),acts=card.querySelector('#acts');
-  const fail=(msg)=>{
+  card.querySelectorAll('#conf button').forEach(b=>b.onclick=()=>{const v=+b.dataset.c;it.conf=it.conf===v?undefined:v;card.querySelectorAll('#conf button').forEach(x=>x.classList.toggle('on',+x.dataset.c===it.conf));});
+  // exam conditions: one attempt, no feedback, a countdown per question
+  const EC=run.mode==='examc';
+  const commit=ok=>{if(it.done)return;it.done=true;clearInterval(run.qTimer);it.missed=!ok;stat(ok?1:0,it);if(!ok)noteMiss(it);next();};
+  if(EC){const lim=(p.type==='num'?150:p.type==='mc'?75:120)*1000,end=Date.now()+lim;clearInterval(run.qTimer);
+    const tick=()=>{const left=end-Date.now(),c=card.querySelector('#qClock');if(c){c.textContent='⏱ '+fmtClock(Math.max(0,left));c.classList.toggle('low',left<15000);}if(left<=0){it.timedOut=true;commit(false);}};
+    tick();run.qTimer=setInterval(tick,250);}
+  const fail=EC?()=>commit(false):(msg)=>{
     if(it.charm){it.charm=false;feedback('no','<b>Your Warding Charm absorbed that miss</b> — it won’t count. '+(msg||p.hint||'Try again.'));drawTools();return;}
     if(!it.missed){it.missed=true;noteMiss(it);}feedback('no',msg||p.hint||'Not quite — try again.');drawTools();};
   const drawTools=()=>{
@@ -1847,7 +1889,7 @@ function renderPuzzle(){
       if(k==='charm'){it.charm=true;feedback('', '<b>Warding Charm armed:</b> your next miss on this question won’t count.');}
       drawTools();});
   };
-  const pass=()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1,it);};
+  const pass=EC?()=>commit(true):()=>{feedback('ok',p.why||'Correct.');drawTools();acts.innerHTML='';const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(it.missed?0:1,it);};
   if(p.type==='mc'){
     const order=shuffle(p.opts.map((o,k)=>k));
     order.forEach(k=>{const b=btn(p.opts[k],'opt');b.dataset.k=k;pz.appendChild(b);b.onclick=()=>{if(b.disabled)return;
@@ -1877,6 +1919,19 @@ function renderPuzzle(){
     draw();const chk=btn('Check order','primary');acts.appendChild(chk);
     chk.onclick=()=>{const wrong=cur.filter((k,i)=>k!==i).length;pz.querySelectorAll('li').forEach((li,i)=>{li.classList.toggle('good',cur[i]===i);li.classList.toggle('bad',cur[i]!==i);});
       if(!wrong){pz.querySelectorAll('.mv').forEach(b=>b.disabled=true);pass();}else fail(`${wrong} step${wrong>1?'s are':' is'} out of place.`);};
+  }else if(p.type==='explain'){
+    pz.innerHTML=`<textarea id="exIn" rows="5" placeholder="Write 2–4 sentences, the way you would on the exam…" aria-label="Your answer"></textarea>`;
+    const ta=pz.querySelector('#exIn');ta.addEventListener('keydown',e=>e.stopPropagation());setTimeout(()=>ta.focus(),50);
+    const chk=btn('Compare with the model answer','primary');acts.appendChild(chk);
+    chk.onclick=()=>{if(ta.value.trim().length<15){feedback('no','Write a few sentences first — a rough answer is fine.');return;}
+      ta.readOnly=true;acts.innerHTML='';feedback('','');
+      pz.insertAdjacentHTML('beforeend',`<div class="model"><b>Model answer</b><p>${p.model}</p><b>Tick each key point your answer covered:</b>${p.points.map((t,i)=>`<label class="kp"><input type="checkbox" data-i="${i}"> <span>${t}</span></label>`).join('')}</div>`);
+      const done=btn('Done','primary');acts.appendChild(done);done.focus();
+      done.onclick=()=>{const got=pz.querySelectorAll('.kp input:checked').length,need=Math.ceil(p.points.length*2/3);
+        pz.querySelectorAll('.kp input').forEach(x=>x.disabled=true);
+        if(got>=need){p.why=`You covered ${got} of ${p.points.length} key points. ${p.why||''}`;pass();}
+        else{it.missed=true;noteMiss(it);feedback('no',`You covered ${got} of ${p.points.length} key points — aim for at least ${need}. ${p.why||''}`);acts.innerHTML='';
+          const b=btn(run.i<run.items.length-1?'Continue':'Finish','primary');acts.appendChild(b);b.onclick=next;b.focus();stat(0,it);}};};
   }
   function feedback(kind,msg){const fb=card.querySelector('#fb');fb.className='fb '+(kind||'info');fb.innerHTML=msg;}
   drawTools();
@@ -1886,15 +1941,22 @@ function stat(correctFirst,it){SAVE.stats.answered++;SAVE.stats.first+=correctFi
 /* per-question history for the study report: attempts, first-try hits, last 3 outcomes, time, calc vs concept */
 function recordQ(it,c){
   const k=it.node+'|'+it.idx,Q=SAVE.qs||(SAVE.qs={}),q=Q[k]||(Q[k]={n:0,ok:0,h:'',ms:0});
-  q.n++;q.ok+=c;q.h=(q.h+c).slice(-3);q.ts=Date.now();q.ms+=Math.min(600000,Date.now()-(it.t0||Date.now()));q.c=it.p.type==='num'?1:0;
+  q.n++;q.ok+=c;q.h=(q.h+c).slice(-3);q.ts=Date.now();
+  // spaced review: right first time → next review further out (1, 3, 7, 16, 35 days); a miss → due again now
+  q.box=c?Math.min((q.box||0)+1,5):0;q.due=Date.now()+[0,1,3,7,16,35][q.box]*864e5;
+  // calibration: how often 'sure' answers are actually right
+  if(it.conf!==undefined){const C=SAVE.cal||(SAVE.cal={s:{n:0,ok:0},u:{n:0,ok:0}}),b=it.conf?C.s:C.u;b.n++;b.ok+=c;q.sw=it.conf===1&&!c?1:(c?0:q.sw||0);}q.ms+=Math.min(600000,Date.now()-(it.t0||Date.now()));q.c=it.p.type==='num'?1:0;
   const d=new Date().toLocaleDateString('en-CA'),D=SAVE.days||(SAVE.days={});D[d]=(D[d]||0)+1;
   const ks=Object.keys(D).sort();while(ks.length>60)delete D[ks.shift()];
 }
-function noteMiss(it){if(!['stone','exam','focus'].includes(run.mode))return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
+function noteMiss(it){if(!['stone','exam','focus','examc'].includes(run.mode))return;if(!SAVE.missed.some(m=>m.node===it.node&&m.idx===it.idx))SAVE.missed.push({node:it.node,idx:it.idx});persist();}
 function next(){
   if(run.i<run.items.length-1){run.i++;renderPuzzle();return;}
-  const r=run;if(r.mode==='exam')examTime=Date.now()-r.t0;closeCard();r.onDone&&r.onDone(r.items);persist();
+  const r=run;if(r.mode==='exam'||r.mode==='examc')examTime=Date.now()-r.t0;closeCard();r.onDone&&r.onDone(r.items);persist();
 }
+
+/* questions whose spaced-review date has come round */
+function dueKeys(){const now=Date.now(),Q=SAVE.qs||{};return Object.keys(Q).filter(k=>{const q=Q[k],[node,idx]=k.split('|');return q.due&&q.due<=now&&q.box>0&&NODES[node]?.puzzles?.[+idx];}).sort((a,b)=>Q[a].due-Q[b].due);}
 
 /* ==== content/00_art.js ==== */
 /* ==========================================================================
@@ -3160,6 +3222,86 @@ NODES['m9-serial']={kicker:'Module 9 · Serial correlation',title:'The Echoing I
     why:'The inconclusive zone is part of the Durbin–Watson test, not an error.'},
   ]};
 
+/* ==== content/x_explain.js ==== */
+/* ==========================================================================
+   INTERPRETATION DESK — "explain it" questions (one or two per area).
+   The player writes a short interpretation, sees a model answer, and ticks
+   the key points they covered (2/3 of them counts as a pass).
+   ========================================================================== */
+const EXPLAIN=(m,title,puzzles)=>{NODES[`m${m}-explain`]={explain:true,kicker:`Interpretation desk · ${AREAS_SHORT[m]}`,title,puzzles:puzzles.map(p=>({type:'explain',...p}))};};
+const AREAS_SHORT={1:'Regression basics',2:'Fit and multiple regression',3:'Building a model',4:'Assumptions and residuals',5:'Hypothesis tests',
+  6:'Causation and specification',7:'Functional form',8:'Multicollinearity',9:'Serial correlation',10:'Heteroskedasticity'};
+
+EXPLAIN(1,'Explain a coefficient',[
+ {exhibit:Exhibit.eq('Sales ($000) = 42.0 + 3.6·Ads ($000) − 1.9·CompetitorStores'),
+  q:'Your VP asks what the <b>3.6</b> on Ads means and whether it proves advertising works. Answer in a few sentences.',
+  model:'Holding the number of competitor stores constant, each extra $1,000 of advertising is associated with about $3,600 more in sales. That is an estimated association in this sample, not proof that ads cause the sales — other factors that move with advertising could be involved, and we’d want its precision (standard error) and a credible design before treating it as causal.',
+  points:['Gives the size in real units ($1,000 of ads ↔ about $3,600 of sales)','Says “holding competitor stores constant” (other included factors fixed)','Calls it an association, not proof of cause','Mentions checking precision or what else could explain it'],
+  why:'A complete interpretation covers units, the “holding constant” condition, and what the number can’t prove.'},
+]);
+EXPLAIN(2,'Explain R² and adjusted R²',[
+ {exhibit:Exhibit.table(['Model','Drivers','R²','Adjusted R²'],[['A','Price, Ads','0.71','0.69'],['B','Price, Ads, Day of week code','0.72','0.66']]),
+  q:'A colleague wants Model B because its R² is higher. Explain which model you’d prefer and why.',
+  model:'R² always rises (or stays the same) when you add a variable, so B’s slightly higher R² doesn’t show the new variable helps. Adjusted R² penalizes extra variables, and it falls from 0.69 to 0.66, so the added driver isn’t earning its place. I’d prefer Model A unless theory gives a strong reason the extra variable belongs — and neither R² says anything about causation.',
+  points:['R² can’t fall when a variable is added, so a higher R² alone means little','Adjusted R² falls for B — the extra variable isn’t worth it','Prefers Model A (unless theory says otherwise)','Notes fit is not proof of a good or causal model'],
+  why:'Compare models with adjusted R² and theory, not raw R².'},
+]);
+EXPLAIN(3,'Explain a dummy variable',[
+ {exhibit:Exhibit.eq('Margin (%) = 11.2 + 0.4·Size + 3.1·Defense + 1.4·Government &nbsp;·&nbsp; base group: Commercial'),
+  q:'Explain what the <b>3.1</b> on Defense means, and why there is no Commercial dummy in the model.',
+  model:'Holding contract size constant, Defense contracts have a predicted margin about 3.1 percentage points higher than Commercial contracts — the left-out base group. Commercial has no dummy because including a dummy for every category alongside the intercept would make them sum to the intercept column (perfect multicollinearity, the dummy-variable trap); with k categories you include k − 1 dummies.',
+  points:['3.1 percentage points higher margin than the base group','Names Commercial as the comparison (base/reference) group','Holding size constant','Explains the dummy-variable trap / k − 1 dummies'],
+  why:'Every dummy coefficient is a comparison with the omitted base group.'},
+]);
+EXPLAIN(4,'Explain a residual plot',[
+ {make:r=>({exhibit:residPlot(genResid(r,'spray'),'Store size'),
+  q:'Explain what this residual plot tells you about the model and what it means for a manager reading its p-values.',
+  model:'The residuals fan out as store size grows — the errors are much bigger for large stores. That is heteroskedasticity: the constant-variance assumption fails. The coefficients aren’t biased by this alone, but the usual standard errors are wrong, so the reported p-values and confidence intervals can’t be trusted as printed; robust standard errors (after checking the model’s form) are the usual response.',
+  points:['Spread grows with store size (a fan / spray)','Names it heteroskedasticity / non-constant variance','Coefficients still unbiased','Standard errors and p-values are unreliable']})},
+]);
+EXPLAIN(5,'Explain a significance result',[
+ {exhibit:Exhibit.table(['','Coefficient','Std. error','t','p-value'],[['Training hours','0.84','0.29','2.90','0.006'],['Bonus ($000)','0.02','0.01','2.10','0.042']]),
+  q:'Productivity is measured in units per day. Explain whether each driver is statistically significant and whether that makes it important.',
+  model:'Both coefficients are statistically significant at the 5% level (p = 0.006 and 0.042), so the data give evidence that neither effect is zero. Significance isn’t importance, though: an extra training hour goes with about 0.84 more units a day, while $1,000 of bonus goes with only 0.02 — tiny in practical terms. Whether to act depends on size and cost, and significance alone doesn’t prove either one causes productivity.',
+  points:['Both are significant at 5% (p below 0.05)','Significance means evidence the effect isn’t zero — not that it’s large','Compares practical size: training 0.84 vs bonus 0.02 units','Notes significance doesn’t prove causation (or that cost matters)'],
+  why:'Statistical significance and economic importance are different questions.'},
+]);
+EXPLAIN(6,'Explain a changing coefficient',[
+ {exhibit:Exhibit.table(['Model','Competitors coefficient','t'],[['With population','−10,605','−5.07'],['Without population','−1,684','−0.81']]),
+  q:'When population is dropped, the competition coefficient shrinks and loses significance. Explain what’s going on and which model to trust.',
+  model:'This is omitted-variable bias. Population affects sales and is correlated with the number of competitors (busy areas attract more competitors), so when it’s left out, the competition coefficient absorbs part of population’s positive effect and is pulled toward zero. The model with population is more credible: theory says population belongs, and its inclusion lets competition show its real negative effect.',
+  points:['Names omitted-variable bias','Population affects sales AND moves with competition','The competition estimate is biased toward zero when population is dropped','Trusts the model that includes population, on theory grounds'],
+  why:'Bias needs both conditions: the omitted variable matters, and it’s correlated with an included one.'},
+]);
+EXPLAIN(7,'Explain a log model',[
+ {exhibit:Exhibit.eq('ln(Price) = 4.24 + 1.02·ln(SQFT)'),
+  q:'Explain what the <b>1.02</b> means in plain language, and one caution about using this model for a very large estate.',
+  model:'In a double-log model the coefficient is an elasticity: a 1% increase in square footage is associated with about a 1.02% increase in expected price — roughly proportional. To forecast a price you compute ln(Price) and exponentiate back to dollars. Using it for an estate far bigger than the homes in the data is extrapolation: the constant-elasticity shape may not hold outside the observed range.',
+  points:['Calls 1.02 an elasticity','1% more square footage → about 1.02% higher price','Forecasts need converting back from logs (exponentiate)','Warns against extrapolating beyond the data’s range'],
+  why:'Interpret in percentages, report in dollars, and stay inside the data.'},
+]);
+EXPLAIN(8,'Explain multicollinearity',[
+ {exhibit:Exhibit.table(['','Coefficient','p-value','VIF'],[['TV ads','2.9','0.31','11.4'],['Online ads','2.1','0.38','11.4'],['Model: R² = 0.91, F-test p < 0.001','','','']]),
+  q:'A manager concludes that neither ad channel works because neither is significant. Explain why that’s the wrong conclusion and what you’d do.',
+  model:'The overall F-test is highly significant and R² is high, so the two channels matter jointly. Their VIFs above 10 show severe multicollinearity: TV and online spend move together, so the model can’t separate their individual effects and their standard errors are inflated — that’s why the individual p-values look weak. The estimates aren’t biased, just imprecise. I wouldn’t drop a channel to “fix” it (that risks omitted-variable bias); I’d report their combined effect or get more varied data.',
+  points:['Jointly significant: F-test and R² show the ads matter together','High VIFs = severe multicollinearity; the two move together','Weak t-tests come from inflated standard errors, not irrelevance','Don’t just drop one — risk of omitted-variable bias'],
+  why:'Multicollinearity hides individual effects; it doesn’t erase them.'},
+]);
+EXPLAIN(9,'Explain a Durbin–Watson result',[
+ {exhibit:Exhibit.table(['T','k','DW','dL (5%)','dU (5%)'],[[30,2,'0.94','1.28','1.57']]),
+  q:'This is a quarterly sales model. Explain the Durbin–Watson result and what it means for the model’s p-values.',
+  model:'DW = 0.94 is below dL = 1.28, so we reject the null and conclude there is positive first-order serial correlation: errors in one quarter tend to carry into the next. The coefficients may still be unbiased, but the standard errors are likely understated, so the p-values look more convincing than they should. First check for something missing — a trend, seasonality, a lag, or the wrong form — before reaching for a statistical correction.',
+  points:['DW below dL → reject H₀: positive serial correlation','Errors persist from one period to the next','Standard errors understated → p-values too optimistic','Check for a missing trend, seasonality, lag, or wrong form first'],
+  why:'Durbin–Watson is a credibility check on time-series significance.'},
+]);
+EXPLAIN(10,'Explain two tests that disagree',[
+ {exhibit:Exhibit.table(['Test','LM','df','p-value'],[['Breusch–Pagan','2.16','2','0.340'],['White','12.81','5','0.025']]),
+  q:'The two heteroskedasticity tests disagree. Explain why that can happen and what you would do next.',
+  model:'They aren’t contradicting each other. Breusch–Pagan only looks for error variance that changes linearly with the predictors and found nothing (p = 0.34). White also searches squared and interaction patterns and found one (p = 0.025). Before treating it as pure heteroskedasticity, I’d check the residual plot for a curve — a U-shape points to a missing nonlinear term in the equation. Fix the form, re-test, and if the variance still changes, use robust standard errors.',
+  points:['Breusch–Pagan searches only linear patterns','White also searches squared/interaction patterns — a wider search','Not a contradiction: White found something BP couldn’t look for','Check functional form first, then robust standard errors if needed'],
+  why:'Don’t choose the test that gives the answer you prefer.'},
+]);
+
 /* ==== content/z_caches.js ==== */
 /* ==========================================================================
    SUPPLY CACHES — one hidden near each stone. Each lock is a short problem
@@ -3246,7 +3388,7 @@ const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locke
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})},audioV:s.audioV};}catch(e){}}
-function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;SAVE.t=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();cloudQueue();}
+function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;SAVE.t=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();cloudQueue();checkNotes();}
 
 /* ---------- progress rules ---------- */
 const regionById=id=>COURSE.regions.find(r=>r.id===id);
@@ -3268,14 +3410,14 @@ function renderHud(){
   $('hSub').textContent=reg?reg.sub:COURSE.hubSub;
   let line='';
   if(reg){const l=liveNodes(reg);const fz=l.filter(n=>nodeState(n)==='frozen').length;line=`Study stones restored: ${l.filter(n=>SAVE.done[n]).length} / ${l.length}`+(fz?` · ${fz} frozen`:'')+(reg.nodes.length>l.length?` · ${reg.nodes.length-l.length} sealed`:'');}
-  else{const all=COURSE.regions.flatMap(liveNodes);line=`Course progress: ${all.filter(n=>SAVE.done[n]).length} / ${all.length} stones`+(SAVE.missed.length?` · ${SAVE.missed.length} to review`:'');}
+  else{const all=COURSE.regions.flatMap(liveNodes);line=`Course progress: ${all.filter(n=>SAVE.done[n]).length} / ${all.length} stones`+(reviewCount()?` · ${reviewCount()} to review`:'')+(dailyReady()?' · daily quest ready':'');}
   $('hLine').textContent=line;
   const iv=invText();$('hInv').textContent=iv?`Carrying: ${iv}`:'';$('hInv').classList.toggle('hidden',!iv);
 }
 let toastT=0;
 function toast(msg,ms=2600){const t=$('toast');t.innerHTML=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
 function banner(title,sub){const b=$('banner');b.querySelector('b').textContent=title;b.querySelector('span').textContent=sub||'';b.classList.remove('on');void b.offsetWidth;b.classList.add('on');}
-const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||fading;
+const uiOpen=()=>!card.classList.contains('hidden')||!$('log').classList.contains('hidden')||!$('map').classList.contains('hidden')||!$('report').classList.contains('hidden')||!$('notes').classList.contains('hidden')||fading;
 
 /* ---------- dialogs ---------- */
 function openDialog(npc,i=0){
@@ -3303,13 +3445,14 @@ function openNode(id){
     const miss=items.filter(x=>x.missed).length,first=items.length-miss,wasDone=!!SAVE.done[id],regBefore=regionDone(curScene);
     if(wasDone){SAVE.done[id].best=Math.max(first,SAVE.done[id].best);persist();toast(`Studied again · ${first} / ${items.length} on the first try`);return;}
     if(miss>=FREEZE_AT){
-      if(L&&lessonsDone(id)<L){SAVE.locked[id]=true;persist();freezeFx(id);
+      if(L&&lessonsDone(id)<L){SAVE.locked[id]=true;persist();freezeFx(id);chime('freeze');quillOnce('barkFreeze','Frozen. No shame in it — walk back to its waypoints. The lessons there are exactly what this stone was asking.');
         toast(`<b>${esc(n.title)}</b> froze over · ${miss} misses. Finish its ${L} waypoints to thaw it.`,4200);}
       else{persist();toast(`The stone dims · ${miss} misses. It needs at most one — try again.`,3600);}
       return;}
     delete SAVE.locked[id];SAVE.done[id]={best:first,ts:Date.now()};persist();
-    burst();toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
-    if(!regBefore&&regionDone(curScene)){const nx=COURSE.regions.find(r=>r.requires===curScene);
+    burst();chime('restore');quillOnce('barkStone','Your first stone, restored. One idea you can now defend — nineteen to go.');toast(`<b>${esc(n.title)}</b> restored · ${first} / ${items.length} on the first try`);
+    if(!regBefore&&regionDone(curScene)){const nx=COURSE.regions.find(r=>r.requires===curScene);chime('region');
+      quillOnce('barkRegion_'+curScene,{woods:'Signpost Woods is restored. You can read a regression now — next, learn when to trust one. Lantern Hollow awaits to the west.',hollow:'Lantern Hollow is restored. You know the rules and the tests. Crystal Reach, to the east, is where broken models go to be diagnosed.',reach:'Every stone restored. Take the practice final under exam conditions — and keep the review board empty.'}[curScene]);
       setTimeout(()=>banner(`${regionById(curScene).name} restored`,nx?`The gate to ${nx.name} is unsealed`:'Every stone in this region is restored'),900);}
   },'stone');
 }
@@ -3323,7 +3466,7 @@ function openLesson(id,j){
   b.onclick=()=>startSession(L.title,kick,L.practice.map((_,idx)=>({node:lid,idx})),()=>{
     const was=SAVE.lessons[lid];SAVE.lessons[lid]=true;
     const all=lessonsDone(id)===Ls.length;
-    if(all&&SAVE.locked[id]){delete SAVE.locked[id];persist();thawFx(id);toast(`<b>${esc(n.title)}</b> thaws — challenge it again.`,3600);return;}
+    if(all&&SAVE.locked[id]){delete SAVE.locked[id];persist();thawFx(id);chime('thaw');quillOnce('barkThaw','Thawed. Try the stone again while the lessons are fresh.');toast(`<b>${esc(n.title)}</b> thaws — challenge it again.`,3600);return;}
     persist();if(!was&&SAVE.locked[id])crackFx(id);if(!was)toast(all?`All waypoints for <b>${esc(n.title)}</b> complete.`:`Waypoint complete · next one is further along the path.`);
   });
 }
@@ -3335,7 +3478,7 @@ function openCache(id){
   showCard(`<div class="kicker">Supply cache · near ${esc(NODES[id].title)}</div><h2>A frozen supply cache</h2><p class="say">A rune-lock seals it. Solve the problem etched on the lid to open it. Inside: a <b>${it.n}</b> — it ${it.d}. Items work only during a stone challenge.</p><div class="acts"></div>`);
   const b=btn('Read the lock','primary');card.querySelector('.acts').appendChild(b);b.focus();
   b.onclick=()=>startSession('Supply cache',`Supply cache · ${NODES[id].title}`,[{node:cid,idx:0}],()=>{
-    SAVE.caches[cid]=true;SAVE.inv[C.item]=(SAVE.inv[C.item]||0)+1;persist();
+    SAVE.caches[cid]=true;SAVE.inv[C.item]=(SAVE.inv[C.item]||0)+1;persist();chime('cache');quillOnce('barkCache','A cache! Items only work at the stones — save them for the ones that worry you.');
     const o=objects.find(o=>o.cache===id);if(o){o.spr=SPR.cacheOpen;burst();}
     toast(`Found a <b>${it.n}</b> — it ${it.d}.`,4200);},'cache');
 }
@@ -3366,40 +3509,50 @@ function thawFx(id){const o=stoneObj(id);ICEFX[id]={k:'thaw',t0:nowS()};if(!o||!
   for(let i=0;i<50;i++){emit({t:'mote',warm:1,x:o.x+rand(-20,20),y:o.y-rand(0,80),vx:rand(-20,20),vy:rand(-60,-20),l:0,m:rand(1,2),sz:rand(2,5),ph:rand(0,9)});}}
 /* ---------- practice final: 2 questions from every module, mixed ---------- */
 const EXAM_PER=2;
-function examPool(){const pool={};for(const [id,n] of Object.entries(NODES)){const m=/^m(\d+)-[a-z]+$/.exec(id);if(!m||n.sealed||!n.puzzles)continue;
+function examPool(){const pool={};for(const [id,n] of Object.entries(NODES)){const m=/^m(\d+)-[a-z]+$/.exec(id);if(!m||n.sealed||!n.puzzles||n.explain)continue;
   (pool[+m[1]]=pool[+m[1]]||[]).push(...n.puzzles.map((_,idx)=>({node:id,idx})));}return pool;}
 function openExam(){
   const pool=examPool(),mods=Object.keys(pool).map(Number).sort((a,b)=>a-b),N=mods.length*EXAM_PER,E=SAVE.exam;
   showCard(`<div class="kicker">Village exam hall</div><h2>Practice final</h2>
     <p class="say">${N} questions — ${EXAM_PER} from each of Modules ${mods[0]}–${mods[mods.length-1]}, drawn at random from the study stones and shuffled, with fresh numbers where a question uses data. The clock runs while you work.</p>
-    <p class="say">Your score is the number you get right <b>on the first try</b>. Items don’t work here, but the calculator does. Anything you miss is pinned to the review board.</p>
+    <p class="say"><b>Practice mode:</b> you see whether each answer is right and can try again; your score counts first tries. <b>Exam conditions:</b> one attempt per question, a countdown on each (75 s multiple choice, 2 min sorting, 2½ min calculations), and no feedback until the end — then you review every miss with its answer.</p>
+    <p class="meta">Items don’t work here; the calculator does. Misses go to the review board.</p>
     ${E?`<p class="meta">Best: <b>${E.best} / ${E.n}</b> · last: ${E.last} / ${E.n} in ${fmtClock(E.time)} · taken ${E.count} time${E.count>1?'s':''}</p>`:''}<div class="acts"></div>`);
-  const b=btn('Start the practice final','primary');card.querySelector('.acts').appendChild(b);b.focus();
-  b.onclick=()=>{const items=shuffle(mods.flatMap(m=>shuffle(pool[m]).slice(0,EXAM_PER)));
-    startSession('Practice final','Village exam hall',items,res=>examResult(res,mods),'exam');};
+  const draw=()=>shuffle(mods.flatMap(m=>shuffle(pool[m]).slice(0,EXAM_PER)));
+  const b=btn('Practice mode','sol'),c=btn('Exam conditions','primary');card.querySelector('.acts').append(b,c);c.focus();
+  b.onclick=()=>startSession('Practice final','Village exam hall',draw(),res=>examResult(res,mods,false),'exam');
+  c.onclick=()=>startSession('Practice final · exam conditions','Village exam hall',draw(),res=>examResult(res,mods,true),'examc');
 }
 setInterval(()=>{const c=document.getElementById('exClock');if(c&&run?.mode==='exam')c.textContent=fmtClock(Date.now()-run.t0);},500);
-function examResult(items,mods){
+function examResult(items,mods,strict){
   const n=items.length,score=items.filter(x=>!x.missed).length;
   const by=m=>items.filter(x=>+/^m(\d+)/.exec(x.node)[1]===m);
-  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};SAVE.examHist=[...(SAVE.examHist||[]),{s:score,n,t:examTime,ts:Date.now()}].slice(-12);persist();
+  const prev=SAVE.exam;SAVE.exam={best:Math.max(score,prev?.best||0),last:score,n,time:examTime,count:(prev?.count||0)+1};SAVE.examHist=[...(SAVE.examHist||[]),{s:score,n,t:examTime,ts:Date.now(),c:strict?1:0}].slice(-12);persist();
   const weak=mods.filter(m=>by(m).some(x=>x.missed));
   const rows=mods.map(m=>{const its=by(m),ok=its.filter(x=>!x.missed).length;return `<tr><td class="mod">Module ${m}</td><td class="n ${ok===its.length?'ok':'no'}">${ok} / ${its.length}</td><td>${[...new Set(its.filter(x=>x.missed).map(x=>esc(NODES[x.node].title)))].join(', ')||'—'}</td></tr>`;}).join('');
   setTimeout(()=>{showCard(`<div class="kicker">Village exam hall · results</div><h2>${score} / ${n} on the first try</h2>
     <p class="say">${score>=n*.9?'Excellent — exam-ready across the board.':score>=n*.75?'Solid. Tighten up the modules marked below.':score>=n*.5?'Getting there. Revisit the stones listed below, and do their waypoints if you skipped them.':'Plenty to review — work through the waypoints and stones listed below, then try again.'} Time: <b>${fmtClock(examTime)}</b>.${prev?` Best so far: ${SAVE.exam.best} / ${n}.`:''}</p>
     <table class="tb exres"><tr><th>Module</th><th class="n">Right first try</th><th>Revisit</th></tr>${rows}</table>
+    ${strict&&weak.length?`<details class="tools" open><summary>Review your ${n-score} miss${n-score>1?'es':''}</summary>${items.filter(x=>x.missed).map(x=>{const p=x.p,ans=p.type==='mc'?p.opts[p.a]:p.type==='num'?`${p.pre||''}${p.fmt?p.fmt(p.a):fmtNum(p.a,Math.abs(p.a)<10?3:2)}${p.unit?' '+p.unit:''}`:p.type==='order'?p.items.join(' → '):p.items.map(t=>`${t.t} → <i>${p.cats[t.c]}</i>`).join('<br>');
+      return `<div class="miss"><p class="q">${p.q}${x.timedOut?' <em>(time ran out)</em>':''}</p><p><b>Answer:</b> ${ans}</p>${p.solution?`<p class="meta">${p.solution}</p>`:''}<p class="meta">${p.why||''}</p></div>`;}).join('')}</details>`:''}
     ${weak.length?`<p class="meta">Missed questions are pinned to the review board by the fire.</p>`:''}<div class="acts"></div>`);
-    const a=btn('Take it again','primary'),c=btn('Close','sol');card.querySelector('.acts').append(a,c);a.onclick=openExam;c.onclick=closeCard;},60);
+    if(!SAVE.seen.barkExam){SAVE.seen.barkExam=1;quillSay('Your first practice final. Whatever the score, the misses are the gift — each one is now waiting on the review board.');}
+    chime('restore');const a=btn('Take it again','primary'),c=btn('Close','sol');card.querySelector('.acts').append(a,c);a.onclick=openExam;c.onclick=closeCard;},60);
 }
 let examTime=0;
+const reviewCount=()=>{const due=dueKeys().filter(k=>!SAVE.missed.some(m=>m.node+'|'+m.idx===k));return SAVE.missed.length+due.length;};
 function openReview(){
-  if(!SAVE.missed.length){showCard(`<div class="kicker">Review board</div><h2>Nothing to review</h2><p class="say">Questions you miss anywhere in the world are pinned here, so you can retry them with fresh numbers. The board is empty — nice work.</p>`);return;}
-  const pickN=shuffle(SAVE.missed).slice(0,6);
-  showCard(`<div class="kicker">Review board</div><h2>${SAVE.missed.length} pinned question${SAVE.missed.length>1?'s':''}</h2><p class="say">Here are ${pickN.length} of them, with fresh numbers where the question uses data. Answer one right on the first try and it comes off the board.</p><div class="acts"></div>`);
+  const miss=SAVE.missed.map(m=>({node:m.node,idx:m.idx})),due=dueKeys().filter(k=>!SAVE.missed.some(m=>m.node+'|'+m.idx===k)).map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};});
+  if(!miss.length&&!due.length){
+    const Q=SAVE.qs||{},next=Object.values(Q).filter(q=>q.box>0&&q.due).sort((a,b)=>a.due-b.due)[0];
+    showCard(`<div class="kicker">Review board</div><h2>Nothing due right now</h2><p class="say">Two kinds of questions come back here: ones you <b>missed</b>, and ones you got right that are due for a <b>spaced refresher</b> — after 1 day, then 3, 7, 16 and 35. Spacing reviews out like this is the most reliable way to remember material on exam day.</p>${next?`<p class="meta">Next refresher due ${new Date(next.due).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'})}.</p>`:''}`);return;}
+  const pickN=[...shuffle(miss).slice(0,6),...due].slice(0,8);
+  showCard(`<div class="kicker">Review board</div><h2>${miss.length} missed · ${due.length} due for a refresher</h2>
+    <p class="say">Here are ${pickN.length}, missed ones first, with fresh numbers where the question uses data. Get a missed question right first time and it comes off the board; get a refresher right and it comes back later, at a longer gap.</p><div class="acts"></div>`);
   const b=btn('Start review','primary');card.querySelector('.acts').appendChild(b);b.focus();
   b.onclick=()=>{startSession('Review board','Spaced review',pickN,items=>{
     let cleared=0;for(const it of items)if(!it.missed){SAVE.missed=SAVE.missed.filter(m=>!(m.node===it.node&&m.idx===it.idx));cleared++;}
-    persist();toast(`Review done · ${cleared} cleared · ${SAVE.missed.length} left`);},'review');};
+    persist();toast(`Review done · ${cleared} of ${items.length} right first time · ${reviewCount()} left`);},'review');};
 }
 function burst(){if(!FX.particles)return;for(let i=0;i<60;i++){const a=rand(0,TAU),v=rand(40,170);emit({t:'mote',warm:1,x:player.x+rand(-10,10),y:player.y-30,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,l:0,m:rand(.8,1.8),sz:rand(2,5),ph:rand(0,9)});}}
 
@@ -3445,7 +3598,8 @@ function renderMap(){
   let h=`<button class="close" id="mapClose" aria-label="Close">×</button><div class="kicker">Map of Frostmere</div><h2>Where to go, and what you’ll learn there</h2>${svg}`;
   h+=sec('hub','Frostmere Village','home base',`<ul>
     <li><i class="ic todo">?</i><span><b>Warden Quill</b> — your guide; replay his welcome at the sign</span></li>
-    <li><i class="ic ${SAVE.missed.length?'todo':'done'}">${SAVE.missed.length?'!':'✓'}</i><span><b>Review board</b> — retry questions you missed, with fresh numbers<em>${SAVE.missed.length} waiting</em></span></li>
+    <li><i class="ic ${reviewCount()?'todo':'done'}">${reviewCount()?'!':'✓'}</i><span><b>Review board</b> — missed questions, plus ones due for a spaced refresher<em>${SAVE.missed.length} missed · ${dueKeys().length} due</em></span></li>
+    <li><i class="ic todo">✎</i><span><b>Interpretation desk</b> — explain a result in your own words, then compare with a model answer</span></li>
     <li><i class="ic ${SAVE.exam?'done':'todo'}">${SAVE.exam?'✓':'!'}</i><span><b>Practice final</b> — 20 mixed questions from every area, with a clock<em>${SAVE.exam?`best ${SAVE.exam.best} / ${SAVE.exam.n}`:'not taken yet'}</em></span></li></ul>`,false)
 ;
   for(const r of R){const un=regionUnlocked(r.id),req=r.requires?regionById(r.requires).name:'';
@@ -3459,9 +3613,9 @@ function renderMap(){
   M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{M.classList.add('hidden');const to=b.dataset.go;travel(to,to==='hub'?('from'+here[0].toUpperCase()+here.slice(1)):'fromHub');});
   M.querySelectorAll('svg .rg').forEach(g=>g.onclick=()=>$('mr-'+g.dataset.r)?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
-function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');$('report').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
+function toggleMap(){const M=$('map');if(M.classList.contains('hidden')){$('log').classList.add('hidden');$('report').classList.add('hidden');$('notes').classList.add('hidden');renderMap();M.classList.remove('hidden');keys.clear();}else M.classList.add('hidden');}
 $('mapBtn').onclick=toggleMap;
-function toggleLog(){$('map').classList.add('hidden');$('report').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
+function toggleLog(){$('map').classList.add('hidden');$('report').classList.add('hidden');$('notes').classList.add('hidden');const L=$('log');if(L.classList.contains('hidden')){renderLog();L.classList.remove('hidden');keys.clear();}else L.classList.add('hidden');}
 $('logBtn').onclick=toggleLog;
 
 /* ---------- interaction + travel ---------- */
@@ -3471,8 +3625,8 @@ const readBtn=$('readBtn');
 function tapPick(wx,wy){let best=null,bd=1e9;for(const it of INTER){const dx=wx-it.x,dy=wy-(it.y-34);const d=Math.hypot(dx,dy*.7);if(d<48&&d<bd){bd=d;best=it;}}return best;}
 function tryRead(){if(nearI&&!uiOpen())nearI.act();}
 readBtn.onclick=tryRead;
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();if(k==='m'&&card.classList.contains('hidden'))toggleMap();
-  if(k==='escape'){closeCard();$('log').classList.add('hidden');$('map').classList.add('hidden');}
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();if(k==='m'&&card.classList.contains('hidden'))toggleMap();if(k==='n'&&card.classList.contains('hidden'))toggleNotes();
+  if(k==='escape'){closeCard();['log','map','notes'].forEach(x=>$(x).classList.add('hidden'));}
   if(k==='enter'&&!uiOpen())tryRead();});
 function travel(to,spawnKey){
   fading=true;const f=$('fade');f.classList.add('on');
@@ -3562,7 +3716,7 @@ syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openExam,toggleMap,toggleReport:()=>toggleReport(),practiceArea:m=>practiceArea(m),inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,openReview,openExam,toggleMap,openDaily:()=>openDaily(),openDesk:()=>openDesk(),toggleNotes:()=>toggleNotes(),quillSay:t=>quillSay(t),dueKeys:()=>dueKeys(),toggleReport:()=>toggleReport(),practiceArea:m=>practiceArea(m),inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });
 
@@ -3705,6 +3859,122 @@ function showCloudTip(){
   later.onclick=closeCard;go.onclick=()=>{closeCard();cloudSignIn();};
 }
 
+/* ==== js/09_extras.js ==== */
+/* ==========================================================================
+   Study extras: field notes (a formula & rules sheet that fills in as you
+   learn), the daily quest, Quill's text reactions, chimes, and text size.
+   ========================================================================== */
+
+/* ---------- field notes: one card per stone, unlocked by its first waypoint or by restoring it ---------- */
+var NOTES=[
+ ['m1-signs','Signs come from theory','Decide the <b>expected sign</b> of every coefficient <i>before</i> estimating. Theory gives direction; data give size. Substitutes (rival’s price) → +, own price → −, income → + for normal goods.'],
+ ['m1-cross','Correlation is not cause','Before reading a coefficient causally, rule out: a <b>third factor</b> driving both, <b>reverse causation</b>, and coincidence. Only a <b>design</b> (e.g. random assignment) earns the word “causes”.'],
+ ['m1-magic','Prediction and residual','<div class="fx">Ŷ = b₀ + b₁X &nbsp;·&nbsp; residual e = Y − Ŷ</div>Negative residual → the model <b>over</b>-predicted; positive → under-predicted. The error ε is unobservable; the residual e is what you can compute.'],
+ ['m1-units','Read coefficients in units','“A one-<b>unit</b> rise in X is associated with b₁ <b>units</b> of Y, holding the others constant.” Rescaling X changes the number, not the relationship. The intercept only means something if X = 0 is plausible and near the data.'],
+ ['m1-ledger','Reading Excel output — in order','1 · signs &amp; units → 2 · size → 3 · precision (SE, t, p, CI) → 4 · fit (R², adj. R²) &amp; residuals → 5 · is the whole specification plausible?'],
+ ['m2-ols','Least squares','<div class="fx">OLS minimizes Σe² &nbsp;·&nbsp; R² = SSR/SST = 1 − SSE/SST</div>Squaring stops misses cancelling and weights big misses more. With an intercept, residuals sum to zero.'],
+ ['m2-andy','Holding other factors constant','In Y = b₀ + b₁X₁ + b₂X₂, b₁ is X₁’s association with Y <b>with X₂ held fixed</b>. A one-variable model can mix in drivers that move with X₁.'],
+ ['m2-fit','R² versus adjusted R²','<div class="fx">adj. R² = 1 − (1 − R²)(n − 1)/(n − k − 1)</div>R² never falls when you add a variable; adjusted R² can. Only compare R² across models with the <b>same Y</b>. High R² ≠ causation.'],
+ ['m3-design','Six steps of applied regression','1 · question &amp; mechanism → 2 · variables &amp; expected signs → 3 · data → 4 · estimate → 5 · evaluate (signs, size, precision, residuals) → 6 · document. <b>Investigate</b> unusual observations; drop only proven errors.'],
+ ['m3-dummy','Dummy variables','A 0/1 dummy shifts the intercept: its coefficient = difference from the <b>base group</b>, others held constant. With <b>k</b> categories use <b>k − 1</b> dummies — all k plus an intercept is the <b>dummy-variable trap</b>.'],
+ ['m4-seven','The seven classical assumptions','1 linear in coefficients · 2 zero-mean error · 3 no endogeneity · 4 no serial correlation · 5 homoskedasticity · 6 no perfect multicollinearity · 7 normal errors (optional). 1–6 → OLS is <b>BLUE</b>. Breaking 3 → <b>bias</b>; breaking 4 or 5 → unreliable <b>standard errors</b>.'],
+ ['m4-plots','Residual plots &amp; outliers','<div class="fx">standardized residual = e / s &nbsp;·&nbsp; flag |value| &gt; 2</div>Even band = good. Spray / funnel / bow-tie = heteroskedasticity. A <b>curve</b> = wrong form or missing driver. Biased = aimed wrong; imprecise = aimed right but wide.'],
+ ['m5-tests','Setting up a test','Theory’s prediction goes in <b>Hₐ</b>. One-tailed if theory gives a direction, two-tailed if not. <b>Type I</b> = reject a true H₀ (false alarm, set by α); <b>Type II</b> = miss a real effect. Weigh which costs more.'],
+ ['m5-three','t, p, confidence interval, F','<div class="fx">t = b / SE &nbsp;·&nbsp; CI = b ± t<sub>c</sub>·SE &nbsp;·&nbsp; F = (SSR/k) / (SSE/(n − k − 1))</div>Reject H₀ if p ≤ α. F tests all slopes jointly. <b>Significant ≠ important</b>, and significant ≠ causal.'],
+ ['m6-trial','Experiments and causation','Random assignment balances everything except the treatment, so the comparison is a credible counterfactual. With one 0/1 treatment dummy: <b>b₀ = control mean</b>, <b>b₁ = treatment − control</b>.'],
+ ['m6-omit','Omitted-variable bias','<div class="fx">bias in b₁ = β₂ · α₁</div>Needs both: the omitted variable affects Y (β₂ ≠ 0) <b>and</b> moves with X₁ (α₁ ≠ 0). Same signs → overestimate. Omitting something relevant → <b>bias</b>; adding something irrelevant → <b>noise</b>.'],
+ ['m7-form','Functional forms','<div class="fx">linear: slope b₁ · elasticity b₁X̄/Ȳ<br>ln Y on ln X: b₁ = elasticity<br>Y on ln X: slope b₁/X<br>ln Y on X: slope b₁Y · elasticity b₁X<br>quadratic: slope b₁ + 2b₂X · peak X* = −b₁/(2b₂)</div>Pick the shape from the mechanism. Don’t extrapolate past the data.'],
+ ['m8-multi','Multicollinearity','<div class="fx">VIF = 1 / (1 − R²<sub>aux</sub>) &nbsp;·&nbsp; &gt;5 warning, &gt;10 serious</div>Unbiased but <b>imprecise</b>: bigger SEs, unstable signs. Classic sign: high R² + significant F, weak t-tests. Often do nothing; drop a variable only if theory says it’s redundant.'],
+ ['m9-serial','Serial correlation &amp; Durbin–Watson','<div class="fx">DW = Σ(eₜ − eₜ₋₁)² / Σeₜ² &nbsp;·&nbsp; ≈0 positive · ≈2 none · ≈4 negative</div>DW &lt; dL reject · DW &gt; dU don’t reject · between = inconclusive. Invalid with a lagged Y. SEs understated → p-values too optimistic. Check trend/seasonality/form first.'],
+ ['m10-hetero','Heteroskedasticity tests','<div class="fx">LM = n × R²<sub>aux</sub> ~ χ²(df) &nbsp;·&nbsp; 5% critical: df 2 → 5.99, df 5 → 11.07</div>Breusch–Pagan: e² on the Xs (narrow). White: adds squares &amp; cross-products (wide). Coefficients unbiased, SEs wrong. Fix the form first, then robust SEs.'],
+];
+const noteOpen=id=>!!(SAVE.done[id]||SAVE.lessons[id+'#L1']||SAVE.lessons[id+'#L2']);
+function checkNotes(quiet){
+  if(!NOTES||!SAVE.seen)return;const seen=SAVE.notesSeen||(SAVE.notesSeen=[]),fresh=NOTES.filter(n=>noteOpen(n[0])&&!seen.includes(n[0]));
+  if(!fresh.length)return;fresh.forEach(n=>seen.push(n[0]));
+  if(!quiet)setTimeout(()=>toast(`New field note: <b>${fresh.map(n=>n[1]).join('</b>, <b>')}</b> — open <b>Notes</b> to read it.`,3600),3300);
+}
+let notesAll=false;
+function renderNotes(){
+  const open=NOTES.filter(n=>noteOpen(n[0])).length;
+  let h=`<button class="close" id="notesClose" aria-label="Close">×</button><div class="kicker">Field notes</div><h2>Formulas and rules of thumb</h2>
+    <p class="meta">${open} of ${NOTES.length} collected. A note unlocks when you finish a stone’s first waypoint or restore the stone. <button class="lnk" id="notesAll">${notesAll?'Show only collected notes':'Show all (for exam review)'}</button></p>`;
+  for(let m=1;m<=10;m++){const ns=NOTES.filter(n=>+/^m(\d+)/.exec(n[0])[1]===m);
+    h+=`<section class="nsec"><h3>${esc(AREAS[m])}</h3>`;
+    for(const [id,t,body] of ns){const ok=notesAll||noteOpen(id);
+      h+=ok?`<div class="note"><b>${t}</b><div>${body}</div></div>`:`<div class="note locked"><b>${t}</b><div>Locked — finish a waypoint at <i>${esc(NODES[id]?.title||'')}</i>.</div></div>`;}
+    h+=`</section>`;}
+  const P=$('notes');P.innerHTML=h;$('notesClose').onclick=()=>P.classList.add('hidden');$('notesAll').onclick=()=>{notesAll=!notesAll;renderNotes();};
+}
+function toggleNotes(){const P=$('notes');if(P.classList.contains('hidden')){['log','map','report'].forEach(x=>$(x).classList.add('hidden'));renderNotes();P.classList.remove('hidden');keys.clear();}else P.classList.add('hidden');}
+$('notesBtn').onclick=toggleNotes;
+
+/* ---------- daily quest: five questions built around what's due and what's weak ---------- */
+const today=()=>new Date().toLocaleDateString('en-CA');
+function dailyReady(){return !!SAVE.qs&&Object.keys(SAVE.qs).length>=3&&SAVE.daily?.last!==today();}
+function openDaily(){
+  const Q=SAVE.qs||{},picked=[],add=k=>{if(k&&!picked.includes(k)&&NODES[k.split('|')[0]]&&!NODES[k.split('|')[0]].explain)picked.push(k);};
+  dueKeys().slice(0,2).forEach(add);
+  const R=computeReport(),weak=R.areas.filter(a=>a.mastery!==null).sort((a,b)=>a.mastery-b.mastery).slice(0,2);
+  for(const a of weak){const ks=areaQuestions(a.m).filter(k=>!picked.includes(k)).sort((x,y)=>((Q[x]?[...Q[x].h].reduce((s,c)=>s+ +c,0)/Q[x].h.length:.6)-(Q[y]?[...Q[y].h].reduce((s,c)=>s+ +c,0)/Q[y].h.length:.6))+Math.random()*.3-.15);add(ks[0]);}
+  const unseen=shuffle(Object.keys(NODES).filter(id=>/^m\d+-[a-z]+$/.test(id)&&!NODES[id].explain&&NODES[id].puzzles).flatMap(id=>NODES[id].puzzles.map((_,i)=>id+'|'+i)).filter(k=>!Q[k]));
+  while(picked.length<5&&unseen.length)add(unseen.pop());
+  const rest=shuffle(Object.keys(Q));while(picked.length<5&&rest.length)add(rest.pop());
+  const items=shuffle(picked).map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};});
+  startSession('Today’s quest','Daily quest · five questions',items,res=>{
+    const ok=res.filter(x=>!x.missed).length,d=SAVE.daily||{streak:0},y=new Date(Date.now()-864e5).toLocaleDateString('en-CA');
+    if(d.last!==today()){d.streak=d.last===y?d.streak+1:1;d.last=today();SAVE.daily=d;
+      const it=pick(['lens','feather','charm']);SAVE.inv[it]=(SAVE.inv[it]||0)+1;persist();chime('cache');
+      toast(`Daily quest done · ${ok} / ${res.length} first try · <b>${d.streak}-day streak</b> · reward: a ${ITEM[it].n}`,4200);
+      if(d.streak===3||d.streak===7||d.streak===14)quillSay(`${d.streak} days in a row. That rhythm — a little, often — is exactly how this material sticks.`);}
+    else toast(`Extra practice · ${ok} / ${res.length} on the first try`);
+    renderHud();},'focus');
+}
+
+/* ---------- Quill's text-only reactions (shown in the narration bar) ---------- */
+let sayT=0;
+function quillSay(text){
+  const bar=$('narr');if(typeof Narr!=='undefined'&&Narr.playing)return;
+  bar.querySelector('p').textContent=text;bar.classList.add('bark');bar.classList.remove('hidden','fadeIn');void bar.offsetWidth;bar.classList.add('fadeIn');
+  clearTimeout(sayT);sayT=setTimeout(()=>{bar.classList.add('hidden');bar.classList.remove('bark');},Math.max(5500,text.split(' ').length*380));
+}
+function quillOnce(key,text){if(SAVE.seen[key])return;SAVE.seen[key]=1;persist();setTimeout(()=>quillSay(text),700);}
+
+/* ---------- chimes: small synthesized cues for big moments ---------- */
+let chimeAC=null;
+function chime(kind){
+  const s=SAVE.sfx||{on:true,vol:.1};if(SAVE.muted||!s.on)return;
+  try{chimeAC=chimeAC||new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
+  const ac=chimeAC,t0=ac.currentTime+.02,out=ac.createGain();out.gain.value=Math.min(.5,Math.max(.12,s.vol*3.5));out.connect(ac.destination);
+  const hz=n=>440*2**((n-69)/12);
+  const SEQ={restore:[72,76,79,84],region:[67,72,76,79,84,88],thaw:[79,83,86],cache:[93,100,105],freeze:[88,83,79,76]};
+  (SEQ[kind]||SEQ.restore).forEach((n,i)=>{const o=ac.createOscillator(),g=ac.createGain(),st=t0+i*(kind==='freeze'?.07:.11);
+    o.type=kind==='freeze'?'sine':'triangle';o.frequency.value=hz(n);g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(.35,st+.01);g.gain.exponentialRampToValueAtTime(.001,st+(kind==='region'?1.6:1.1));
+    o.connect(g).connect(out);o.start(st);o.stop(st+1.7);});
+  if(kind==='freeze'){const len=ac.sampleRate*.5,b=ac.createBuffer(1,len,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len)**2;
+    const src=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();src.buffer=b;f.type='highpass';f.frequency.value=3000;g.gain.value=.25;src.connect(f).connect(g).connect(out);src.start(t0);}
+}
+
+/* ---------- text size ---------- */
+function applyTextSize(){const v=SAVE.textSize||1;document.documentElement.style.setProperty('--ts',v);const sel=$('tsSel');if(sel)sel.value=String(v);}
+$('tsSel').onchange=e=>{SAVE.textSize=+e.target.value;applyTextSize();persist();};
+applyTextSize();
+checkNotes(true);
+$('confOn').checked=SAVE.confOn!==false;$('confOn').onchange=e=>{SAVE.confOn=e.target.checked;persist();};
+
+/* ---------- interpretation desk: three "explain it" prompts, unseen and weakest areas first ---------- */
+function openDesk(){
+  const Q=SAVE.qs||{},all=Object.keys(NODES).filter(id=>NODES[id].explain).flatMap(id=>NODES[id].puzzles.map((_,i)=>id+'|'+i));
+  const sc=k=>Q[k]?[...Q[k].h].reduce((s,c)=>s+ +c,0)/Q[k].h.length+Math.random()*.3:Math.random()*.4;
+  const pickd=all.map(k=>[k,sc(k)]).sort((a,b)=>a[1]-b[1]).slice(0,3).map(x=>x[0]);
+  showCard(`<div class="kicker">Village · interpretation desk</div><h2>Explain it in your own words</h2>
+    <p class="say">Exams don’t just ask you to pick an answer — they ask you to <b>interpret</b> one. You’ll get three short prompts. Write two to four sentences for each, then compare with a model answer and tick the key points you covered. Covering two-thirds of them counts as a pass.</p>
+    <p class="meta">Prompts you haven’t tried, and areas where you’re weakest, come first. Ten areas, one prompt each.</p><div class="acts"></div>`);
+  const b=btn('Start','primary');card.querySelector('.acts').appendChild(b);b.focus();
+  b.onclick=()=>startSession('Interpretation desk','Explain it',pickd.map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};}),res=>{
+    toast(`Interpretation desk · ${res.filter(x=>!x.missed).length} / ${res.length} covered the key points`);quillOnce('barkDesk','Writing it out is harder than picking it — which is exactly why it works.');},'focus');
+}
+
 /* ==== js/09_narration.js ==== */
 /* ---------- Warden Quill's narrated intro ----------
    Plays once on the first visit (after the first click/key, since browsers block
@@ -3833,6 +4103,12 @@ function renderReport(){
     if(R.calc.n>=5&&R.con.n>=5&&Math.abs(R.calc.ok/R.calc.n-R.con.ok/R.con.n)>=.12)
       h+=`<p class="meta">You do noticeably better on ${R.calc.ok/R.calc.n<R.con.ok/R.con.n?'concept questions than calculations — slow down on the arithmetic and use the calculator':'calculations than concept questions — read the lessons’ “why” explanations closely'}.</p>`;
   }
+  // today's quest, spaced review, calibration
+  {const d=SAVE.daily||{},due=dueKeys().length,ready=dailyReady();
+   h+=`<div class="today"><div><b>${ready?'Today’s quest is ready':R.total<3?'Daily quest':'Today’s quest — done ✓'}</b><span>${R.total<3?'Unlocks after your first few questions.':ready?'Five questions picked from what’s due and your weakest areas. Finish it for a daily item.':'Come back tomorrow for a new one.'}${d.streak?` · <b>${d.streak}-day streak</b>`:''}</span></div>${ready?'<button class="go" id="dailyGo">Start</button>':''}</div>`;
+   if(due||SAVE.missed.length)h+=`<div class="today"><div><b>Review board: ${SAVE.missed.length} missed · ${due} due for a refresher</b><span>Spaced refreshers come back after 1, 3, 7, 16 and 35 days — the board by the village fire.</span></div></div>`;
+   const C=SAVE.cal,sw=Object.entries(SAVE.qs||{}).filter(([k,q])=>q.sw&&NODES[k.split('|')[0]]).map(([k])=>k);
+   if(C&&C.s.n+C.u.n>=5)h+=`<div class="today"><div><b>How well you know what you know</b><span>When you said <i>sure</i>: ${C.s.n?pct(C.s.ok/C.s.n):'—'} right (${C.s.n}) · when <i>not sure</i>: ${C.u.n?pct(C.u.ok/C.u.n):'—'} right (${C.u.n}).${sw.length?` <b>${sw.length} question${sw.length>1?'s':''} you were sure about but missed</b> — the riskiest gaps going into an exam.`:''}</span></div>${sw.length?'<button class="go" id="swGo">Practice these</button>':''}</div>`;}
   if(R.focus.length){
     h+=`<h3 class="rh">Focus next</h3><div class="focus">`;
     R.focus.forEach((a,i)=>{const why=a.mastery!==null?`${pct(a.mastery)} right on your recent tries${a.weakStone?` · weakest: ${esc(NODES[a.weakStone.id].title)}`:''}`:a.seen?`only ${a.seen} of ${a.total} questions tried so far`:'not started yet';
@@ -3849,6 +4125,9 @@ function renderReport(){
   h+=`<p class="meta">Mastery uses each question’s last three attempts, so improvement shows up quickly. Areas are rated after 3 different questions. ${mins?`About ${mins} min of question time so far.`:''}</p>`;
   const P=$('report');P.innerHTML=h;$('repClose').onclick=()=>P.classList.add('hidden');
   P.querySelectorAll('[data-pr]').forEach(b=>b.onclick=()=>{P.classList.add('hidden');practiceArea(+b.dataset.pr);});
+  $('dailyGo')&&($('dailyGo').onclick=()=>{P.classList.add('hidden');openDaily();});
+  $('swGo')&&($('swGo').onclick=()=>{P.classList.add('hidden');const ks=shuffle(Object.entries(SAVE.qs).filter(([k,q])=>q.sw&&NODES[k.split('|')[0]]).map(([k])=>k)).slice(0,8);
+    startSession('Sure — but missed','Calibration practice',ks.map(k=>{const [node,idx]=k.split('|');return {node,idx:+idx};}),res=>{toast(`${res.filter(x=>!x.missed).length} / ${res.length} right this time`);},'focus');});
 }
 /* six questions from one area: missed and least-practised first, a few fresh ones mixed in */
 function practiceArea(m){
@@ -3860,7 +4139,7 @@ function practiceArea(m){
   startSession(`Focused practice`,AREAS[m],items,res=>{const ok=res.filter(x=>!x.missed).length;
     toast(`Focused practice · ${ok} / ${res.length} on the first try`,3200);setTimeout(()=>{renderReport();$('report').classList.remove('hidden');},400);},'focus');
 }
-function toggleReport(){const P=$('report');if(P.classList.contains('hidden')){$('log').classList.add('hidden');$('map').classList.add('hidden');renderReport();P.classList.remove('hidden');keys.clear();}else P.classList.add('hidden');}
+function toggleReport(){const P=$('report');if(P.classList.contains('hidden')){$('log').classList.add('hidden');$('map').classList.add('hidden');$('notes').classList.add('hidden');renderReport();P.classList.remove('hidden');keys.clear();}else P.classList.add('hidden');}
 $('repBtn').onclick=toggleReport;
 addEventListener('keydown',e=>{if(e.key.toLowerCase()==='p'&&card.classList.contains('hidden')&&!(e.target instanceof HTMLInputElement))toggleReport();if(e.key==='Escape')$('report').classList.add('hidden');});
 

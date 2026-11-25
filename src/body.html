@@ -1,6 +1,6 @@
 <canvas id="game" aria-label="Frostmere Village game world"></canvas>
 <div id="hud" class="panel"><span class="t1" id="hName"></span><span class="t2" id="hSub"></span><div class="line" id="hLine"></div><div class="line inv hidden" id="hInv"></div></div>
-<div class="topbtns" id="topbtns"><button id="menuBtn" class="panel" aria-expanded="false" aria-controls="topbtns">☰ Menu</button><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="mapBtn" class="panel">Map <kbd>M</kbd></button><button id="repBtn" class="panel">Progress <kbd>P</kbd></button><button id="muteBtn" class="panel" aria-label="Mute music and ambience" aria-pressed="false">🔊</button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
+<div class="topbtns" id="topbtns"><button id="menuBtn" class="panel" aria-expanded="false" aria-controls="topbtns">☰ Menu</button><button id="logBtn" class="panel">Quests <kbd>Q</kbd></button><button id="mapBtn" class="panel">Map <kbd>M</kbd></button><button id="repBtn" class="panel">Progress <kbd>P</kbd></button><button id="notesBtn" class="panel">Notes <kbd>N</kbd></button><button id="muteBtn" class="panel" aria-label="Mute music and ambience" aria-pressed="false">🔊</button><button id="acctBtn" class="panel">Sign in</button><button id="fxBtn" class="panel">✦ Effects</button></div>
 <div id="fx" class="panel hidden">
   <div class="sub">Layers (code only)</div>
   <label><input type="checkbox" data-fx="light" checked> Lighting &amp; glow</label>
@@ -12,6 +12,8 @@
   <div class="sub">Sound</div>
   <label><input type="checkbox" id="musOn" checked> Music</label>
   <label><input type="checkbox" id="voiceOn" checked> Narration</label>
+  <label>Text size <select id="tsSel" aria-label="Text size"><option value="1">Normal</option><option value="1.12">Large</option><option value="1.25">Larger</option></select></label>
+  <label><input type="checkbox" id="confOn" checked> Ask “how sure?”</label>
   <label><input type="checkbox" id="sfxOn" checked> Ambient sounds</label>
   <label class="vol">Ambience <input type="range" id="sfxVol" min="0" max="100" value="10" aria-label="Ambient sound volume"></label>
   <label class="vol">Volume <input type="range" id="musVol" min="0" max="100" value="8" aria-label="Music volume"></label>
@@ -22,6 +24,7 @@
 <div id="log" class="panel hidden" role="dialog" aria-label="Quest log"></div>
 <div id="map" class="panel hidden" role="dialog" aria-label="Map of Frostmere"></div>
 <div id="report" class="panel hidden" role="dialog" aria-label="Study report"></div>
+<div id="notes" class="panel hidden" role="dialog" aria-label="Field notes"></div>
 <div id="hint" class="panel">WASD / arrows to move · Shift to jog · tap to walk · drag for joystick · E to interact</div>
 <button id="readBtn" class="panel hidden"><span></span> <kbd>E</kbd></button>
 <div id="card" class="panel hidden" role="dialog" aria-modal="true"></div>

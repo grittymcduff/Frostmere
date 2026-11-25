@@ -177,8 +177,12 @@ function buildHub(){
   const sign=(x,y,label,act,state)=>{addObj({kind:'sign',x,y,spr:SPR.sign,marker:{x,y,h:80,state}});colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,30);
     addLight(x,y-78,70,[255,205,110],.8,.1);INTER.push({x,y,r:60,label:()=>label,act});};
   sign(1090,1185,'Read the welcome sign',openWelcome,()=>SAVE.seen.welcome?'none':'todo');
-  sign(860,880,'Open the review board',openReview,()=>SAVE.missed.length?'todo':'none');
+  sign(860,880,'Open the review board',openReview,()=>reviewCount()?'todo':'none');
   addOwl(1120,700,COURSE.hubNpc);
+  // interpretation desk: explain-it questions
+  {const x=880,y=1040;addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>'none'}});
+   colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,26);addLight(x,y-60,80,[200,230,255],.65,.1);
+   INTER.push({x,y,r:52,label:()=>'Use the interpretation desk',act:()=>openDesk()});}
   // practice final: a lectern by the south path
   {const x=1130,y=1035;addObj({kind:'lectern',x,y,spr:SPR.lectern,marker:{x,y,h:72,state:()=>SAVE.exam?'none':'todo'}});
    colliders.push({t:'c',x,y:y-2,r:7});claim(x,y,26);addLight(x,y-60,80,[255,215,140],.75,.1);
