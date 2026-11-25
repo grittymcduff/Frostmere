@@ -42,7 +42,9 @@ cv.addEventListener('pointermove',e=>{
 const endPtr=e=>{
   if(!ptr||e.pointerId!==ptr.id)return;
   if(!joy.on&&performance.now()-ptr.t<400){
-    tapTarget={x:cam.x+(e.clientX-VW/2)/ZOOM,y:cam.y+(e.clientY-VH/2)/ZOOM};tapTime=0;
+    const wx=cam.x+(e.clientX-VW/2)/ZOOM,wy=cam.y+(e.clientY-VH/2)/ZOOM,it=tapPick(wx,wy);
+    tapTarget=it?{x:it.x,y:it.y+14,it}:{x:wx,y:wy};tapTime=0;
+    if(it&&Math.hypot(player.x-it.x,player.y-it.y)<it.r){tapTarget=null;if(!uiOpen())it.act();}
   }
   joy.on=false;joy.vx=joy.vy=joy.kx=joy.ky=0;ptr=null;
 };

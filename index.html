@@ -174,6 +174,8 @@
   <div class="sub">Sound</div>
   <label><input type="checkbox" id="musOn" checked> Music</label>
   <label><input type="checkbox" id="voiceOn" checked> Narration</label>
+  <label><input type="checkbox" id="sfxOn" checked> Ambient sounds</label>
+  <label class="vol">Ambience <input type="range" id="sfxVol" min="0" max="100" value="70" aria-label="Ambient sound volume"></label>
   <label class="vol">Volume <input type="range" id="musVol" min="0" max="100" value="50" aria-label="Music volume"></label>
   <div class="sub">Time of day</div>
   <div class="row" id="tod"><button data-t="day">Day</button><button data-t="dusk" class="on">Dusk</button><button data-t="night">Night</button></div>
@@ -714,7 +716,9 @@ cv.addEventListener('pointermove',e=>{
 const endPtr=e=>{
   if(!ptr||e.pointerId!==ptr.id)return;
   if(!joy.on&&performance.now()-ptr.t<400){
-    tapTarget={x:cam.x+(e.clientX-VW/2)/ZOOM,y:cam.y+(e.clientY-VH/2)/ZOOM};tapTime=0;
+    const wx=cam.x+(e.clientX-VW/2)/ZOOM,wy=cam.y+(e.clientY-VH/2)/ZOOM,it=tapPick(wx,wy);
+    tapTarget=it?{x:it.x,y:it.y+14,it}:{x:wx,y:wy};tapTime=0;
+    if(it&&Math.hypot(player.x-it.x,player.y-it.y)<it.r){tapTarget=null;if(!uiOpen())it.act();}
   }
   joy.on=false;joy.vx=joy.vy=joy.kx=joy.ky=0;ptr=null;
 };
@@ -814,6 +818,7 @@ function updatePlayer(dt,t){
 function onStep(side,s,sp){
   const p=player,ang=Math.atan2(p.vy,p.vx),nx=-Math.sin(ang),ny=Math.cos(ang);
   const fx=p.x+nx*side*4,fy=p.y+ny*side*4;
+  Sfx.step(s,sp,side);
   if(s!==2){prints.push({x:fx,y:fy,a:ang,l:0,deep:s===0});if(prints.length>260)prints.shift();}
   if(!FX.particles||s===2)return;
   const n=s===0?3+(sp>200?2:0):1;
@@ -1478,6 +1483,7 @@ function setScene(id,spawnKey){
   SPAWNS=id==='hub'?buildHub():buildWild(reg);
   curScene=id;
   if(typeof Music!=='undefined')Music.setRegion(id);
+  Sfx.setRegion(id);
   const sp=SPAWNS[spawnKey]||SPAWNS.start;
   Object.assign(player,{x:sp.x,y:sp.y,vx:0,vy:0});
   playerLight=addLight(player.x,player.y,125,[255,196,120],.95,.08);
@@ -1633,11 +1639,11 @@ const Music=(()=>{
       next+=beat/2;step+=2;
     }
   }
-  function level(){if(!ac)return;const target=on?vol*2.4*(ducked?.35:1):0;master.gain.cancelScheduledValues(ac.currentTime);master.gain.setTargetAtTime(target,ac.currentTime,.8);}
+  function level(tc=.8){if(!ac)return;const target=on?vol*2.4*(ducked?.35:1):0;master.gain.cancelScheduledValues(ac.currentTime);master.gain.setTargetAtTime(target,ac.currentTime,tc);}
   return {
     start(){if(started)return;started=true;init();next=ac.currentTime+.2;timer=setInterval(schedule,250);schedule();level();},
     setRegion(id){if(id===region)return;region=id;if(ac){master.gain.setTargetAtTime(0,ac.currentTime,.4);setTimeout(()=>{step=0;next=Math.max(next,ac.currentTime+.6);level();},1400);}},
-    set(onV,volV){on=onV;vol=volV;if(ac&&ac.state==='suspended')ac.resume();level();},
+    set(onV,volV,tc){on=onV;vol=volV;if(ac&&ac.state==='suspended')ac.resume();level(tc);},
     duck(v){if(ducked===!!v)return;ducked=!!v;level();},
     get started(){return started;},
   };
@@ -2814,7 +2820,7 @@ CACHE('m6-omit','feather',{make:r=>{const est=round(rr(r,1.5,3.5),2),b2=round(rr
 /* ==== js/08_game.js ==== */
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5},tod:'dusk',voice:true,stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5,settled:false},sfx:{on:true,vol:.7},tod:'dusk',voice:true,stats:{answered:0,first:0}});
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
@@ -2977,6 +2983,8 @@ $('logBtn').onclick=toggleLog;
 /* ---------- interaction + travel ---------- */
 let nearI=null,fading=false;
 const readBtn=$('readBtn');
+// which interactable (if any) a tap at world point (wx,wy) is aimed at: its sprite body, above the anchor
+function tapPick(wx,wy){let best=null,bd=1e9;for(const it of INTER){const dx=wx-it.x,dy=wy-(it.y-34);const d=Math.hypot(dx,dy*.7);if(d<48&&d<bd){bd=d;best=it;}}return best;}
 function tryRead(){if(nearI&&!uiOpen())nearI.act();}
 readBtn.onclick=tryRead;
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();
@@ -3000,6 +3008,8 @@ function updateWorldLogic(dt){
   // stone lights follow quest state
   for(const L of lights)if(L.node){const s=nodeState(L.node);L.col=s==='done'?[120,230,150]:s==='sealed'?[110,125,190]:s==='frozen'?[140,205,255]:[255,205,120];L.i=s==='sealed'?.45:.85;}
   for(const o of objects)if(o.cache&&!SAVE.caches[o.cache+'#C']&&FX.particles&&Math.hypot(player.x-o.x,player.y-o.y)<380&&R()<dt*5)emit({t:'spark',x:o.x+rand(-12,12),y:o.y-rand(4,22),vx:rand(-6,6),vy:rand(-22,-8),l:0,m:rand(.6,1.2),sz:rand(2,4)});
+  // tapped an object from afar: use it once we're close enough
+  if(tapTarget?.it&&Math.hypot(player.x-tapTarget.it.x,player.y-tapTarget.it.y)<tapTarget.it.r){const it=tapTarget.it;tapTarget=null;if(!uiOpen())it.act();}
   // nearest interactable
   let best=null,bd=1e9;for(const it of INTER){const d=Math.hypot(player.x-it.x,player.y-it.y);if(d<it.r&&d<bd){bd=d;best=it;}}
   if(best!==nearI){nearI=best;readBtn.classList.toggle('hidden',!best);}
@@ -3041,6 +3051,7 @@ function frame(now){
   if(shake>0){shake-=dt;const k=shake*14;cam.x+=rand(-k,k);cam.y+=rand(-k,k);}
   updateParticles(dt,t);
   updateWorldLogic(dt);
+  Sfx.tick(dt);
   render(t);
   hintT+=dt;if(hintT>10&&hint.style.opacity!=='0')hint.style.opacity='0';
   fpsAcc+=dt;fpsN++;if(fpsAcc>.5){fpsEl.textContent=`${Math.round(fpsN/fpsAcc)} fps · ${parts.length} particles`;fpsAcc=0;fpsN=0;}
@@ -3055,11 +3066,12 @@ initSprites();
 applyArt();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
+if(SAVE.seen.intro&&!SAVE.music.settled)settleMusic(true);
 syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });
 
@@ -3212,7 +3224,7 @@ const Narr=(()=>{
   }
   function stop(finished){
     playing=false;clearTimeout(timer);if(au){au.onended=null;au.pause();}au=null;i=-1;
-    bar.classList.add('hidden');Music.duck(false);SAVE.seen.intro=true;persist();
+    bar.classList.add('hidden');Music.duck(false);SAVE.seen.intro=true;settleMusic();persist();
   }
   function syncMute(){muteB.textContent=voiceOn()?'🔊':'🔇';muteB.title=voiceOn()?'Turn the narrator voice off (subtitles continue)':'Turn the narrator voice on';
     const v=$('voiceOn');if(v)v.checked=voiceOn();}
@@ -3232,6 +3244,68 @@ const Narr=(()=>{
    if(!SAVE.seen.intro&&curScene==='hub')setTimeout(()=>{if(!Narr.playing&&!SAVE.seen.intro)Narr.play();},400);};
  addEventListener('pointerdown',go);addEventListener('keydown',go);}
 $('voiceOn').onchange=e=>Narr.setVoice(e.target.checked);
+// after the intro the score steps back: music settles to 30% of its level (once; the slider can raise it again)
+function settleMusic(now){if(SAVE.music.settled)return;SAVE.music.settled=true;SAVE.music.vol=Math.round(SAVE.music.vol*.3*100)/100;
+  musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on,SAVE.music.vol,now?.1:4);}
+
+/* ==== js/09_sfx.js ==== */
+/* ---------- ambient sound + footsteps (Web Audio, from recorded clips) ----------
+   - Footsteps: one crunch per step from a sprite of 10 slices per surface
+     (snow / gravel on paths and the plaza; none while gliding on ice), pitch and
+     level varied a little so it never sounds like a loop; louder when jogging.
+   - Wind: two seamless wind/room-tone loops layered; level per region.
+   - Birds: an occasional distant bird call in the woods, hollow and village,
+     not at night or under the aurora.
+   Controlled by "Ambient sounds" in the Effects panel (saved). */
+const Sfx=(()=>{
+  let ac=null,master=null,started=false,on=true,vol=.7,lastSlot=-1,birdT=0,region='hub';
+  const B={};const SLOT=.4,NSLOT=10;
+  const FILES={snow:'sfx_steps_snow.mp3',gravel:'sfx_steps_gravel.mp3',wind1:'amb_wind_1.mp3',wind2:'amb_wind_2.mp3',
+               birds1:'amb_birds_1.mp3',birds2:'amb_birds_2.mp3',birds3:'amb_birds_3.mp3'};
+  const WIND={hub:[.55,.35],woods:[.6,.5],hollow:[.4,.3],reach:[.75,.6]};
+  const BIRDS={hub:.5,woods:.8,hollow:.6,reach:0};
+  const wind=[];
+  async function load(k){try{const r=await fetch(ART.base+FILES[k]);B[k]=await ac.decodeAudioData(await r.arrayBuffer());}catch(e){}}
+  function startWind(){for(const [i,k] of ['wind1','wind2'].entries()){if(!B[k]||wind[i])continue;
+    const s=ac.createBufferSource(),g=ac.createGain();s.buffer=B[k];s.loop=true;g.gain.value=0;s.connect(g).connect(master);
+    s.start(0,i*7.3);wind[i]=g;}setRegion(region,true);}
+  function setRegion(id,force){if(id===region&&!force)return;region=id;if(!ac)return;
+    const w=WIND[id]||WIND.hub;wind.forEach((g,i)=>g&&g.gain.setTargetAtTime(w[i],ac.currentTime,2.5));}
+  function level(){if(master)master.gain.setTargetAtTime(on?vol:0,ac.currentTime,.3);}
+  function tick(dt){
+    if(!ac||!on)return;birdT-=dt;
+    if(birdT<=0){birdT=25+Math.random()*45;
+      const g=BIRDS[region]||0,dark=todKey==='night'||todKey==='aurora',ks=['birds1','birds2','birds3'].filter(k=>B[k]);
+      if(g&&!dark&&ks.length){const k=ks[Math.floor(Math.random()*ks.length)],s=ac.createBufferSource(),gn=ac.createGain(),p=ac.createStereoPanner();
+        s.buffer=B[k];gn.gain.value=g*(.6+Math.random()*.4);p.pan.value=Math.random()*1.4-.7;s.connect(gn).connect(p).connect(master);
+        const off=Math.random()*Math.max(0,s.buffer.duration-12);s.start(0,off,10+Math.random()*6);
+        gn.gain.setValueAtTime(0,ac.currentTime);gn.gain.linearRampToValueAtTime(g,ac.currentTime+1.5);
+        gn.gain.setTargetAtTime(0,ac.currentTime+8,1.5);}}
+  }
+  return{
+    async start(){if(started)return;started=true;
+      ac=new (window.AudioContext||window.webkitAudioContext)();master=ac.createGain();master.gain.value=0;master.connect(ac.destination);level();
+      birdT=8+Math.random()*10;
+      await Promise.all(Object.keys(FILES).map(load));startWind();},
+    step(surface,speed,side){
+      if(!ac||!on||surface===2)return;const k=surface===1?'gravel':'snow',b=B[k];if(!b)return;
+      let slot=Math.floor(Math.random()*NSLOT);if(slot===lastSlot)slot=(slot+1)%NSLOT;lastSlot=slot;
+      const s=ac.createBufferSource(),g=ac.createGain(),p=ac.createStereoPanner();
+      s.buffer=b;s.playbackRate.value=.9+Math.random()*.18+(speed>200?.06:0);
+      g.gain.value=(surface===1?.3:.45)*Math.min(1,.45+speed/260)*(.85+Math.random()*.3);p.pan.value=side*.12;
+      s.connect(g).connect(p).connect(master);s.start(0,slot*SLOT,SLOT-.02);},
+    set(o,v){on=o;vol=v;if(ac&&ac.state==='suspended')ac.resume();level();},
+    setRegion,tick,get started(){return started;},
+  };
+})();
+const sfxOn=$('sfxOn'),sfxVol=$('sfxVol');
+function syncSfx(){const s=SAVE.sfx||{on:true,vol:.7};sfxOn.checked=s.on;sfxVol.value=Math.round(s.vol*100);Sfx.set(s.on,s.vol);}
+sfxOn.onchange=()=>{SAVE.sfx={...(SAVE.sfx||{}),on:sfxOn.checked};Sfx.start();syncSfx();persist();};
+sfxVol.oninput=()=>{SAVE.sfx={...(SAVE.sfx||{}),vol:sfxVol.value/100};Sfx.start();syncSfx();};
+sfxVol.onchange=persist;
+{const go=()=>{removeEventListener('pointerdown',go);removeEventListener('keydown',go);Sfx.start();syncSfx();Sfx.setRegion(curScene||'hub');};
+ addEventListener('pointerdown',go);addEventListener('keydown',go);}
+syncSfx();
 
 }
 </script>

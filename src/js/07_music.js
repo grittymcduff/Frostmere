@@ -66,11 +66,11 @@ const Music=(()=>{
       next+=beat/2;step+=2;
     }
   }
-  function level(){if(!ac)return;const target=on?vol*2.4*(ducked?.35:1):0;master.gain.cancelScheduledValues(ac.currentTime);master.gain.setTargetAtTime(target,ac.currentTime,.8);}
+  function level(tc=.8){if(!ac)return;const target=on?vol*2.4*(ducked?.35:1):0;master.gain.cancelScheduledValues(ac.currentTime);master.gain.setTargetAtTime(target,ac.currentTime,tc);}
   return {
     start(){if(started)return;started=true;init();next=ac.currentTime+.2;timer=setInterval(schedule,250);schedule();level();},
     setRegion(id){if(id===region)return;region=id;if(ac){master.gain.setTargetAtTime(0,ac.currentTime,.4);setTimeout(()=>{step=0;next=Math.max(next,ac.currentTime+.6);level();},1400);}},
-    set(onV,volV){on=onV;vol=volV;if(ac&&ac.state==='suspended')ac.resume();level();},
+    set(onV,volV,tc){on=onV;vol=volV;if(ac&&ac.state==='suspended')ac.resume();level(tc);},
     duck(v){if(ducked===!!v)return;ducked=!!v;level();},
     get started(){return started;},
   };

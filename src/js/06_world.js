@@ -322,6 +322,7 @@ function setScene(id,spawnKey){
   SPAWNS=id==='hub'?buildHub():buildWild(reg);
   curScene=id;
   if(typeof Music!=='undefined')Music.setRegion(id);
+  Sfx.setRegion(id);
   const sp=SPAWNS[spawnKey]||SPAWNS.start;
   Object.assign(player,{x:sp.x,y:sp.y,vx:0,vy:0});
   playerLight=addLight(player.x,player.y,125,[255,196,120],.95,.08);

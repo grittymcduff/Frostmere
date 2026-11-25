@@ -35,7 +35,7 @@ const Narr=(()=>{
   }
   function stop(finished){
     playing=false;clearTimeout(timer);if(au){au.onended=null;au.pause();}au=null;i=-1;
-    bar.classList.add('hidden');Music.duck(false);SAVE.seen.intro=true;persist();
+    bar.classList.add('hidden');Music.duck(false);SAVE.seen.intro=true;settleMusic();persist();
   }
   function syncMute(){muteB.textContent=voiceOn()?'🔊':'🔇';muteB.title=voiceOn()?'Turn the narrator voice off (subtitles continue)':'Turn the narrator voice on';
     const v=$('voiceOn');if(v)v.checked=voiceOn();}
@@ -55,3 +55,6 @@ const Narr=(()=>{
    if(!SAVE.seen.intro&&curScene==='hub')setTimeout(()=>{if(!Narr.playing&&!SAVE.seen.intro)Narr.play();},400);};
  addEventListener('pointerdown',go);addEventListener('keydown',go);}
 $('voiceOn').onchange=e=>Narr.setVoice(e.target.checked);
+// after the intro the score steps back: music settles to 30% of its level (once; the slider can raise it again)
+function settleMusic(now){if(SAVE.music.settled)return;SAVE.music.settled=true;SAVE.music.vol=Math.round(SAVE.music.vol*.3*100)/100;
+  musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on,SAVE.music.vol,now?.1:4);}

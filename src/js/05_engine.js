@@ -61,6 +61,7 @@ function updatePlayer(dt,t){
 function onStep(side,s,sp){
   const p=player,ang=Math.atan2(p.vy,p.vx),nx=-Math.sin(ang),ny=Math.cos(ang);
   const fx=p.x+nx*side*4,fy=p.y+ny*side*4;
+  Sfx.step(s,sp,side);
   if(s!==2){prints.push({x:fx,y:fy,a:ang,l:0,deep:s===0});if(prints.length>260)prints.shift();}
   if(!FX.particles||s===2)return;
   const n=s===0?3+(sp>200?2:0):1;

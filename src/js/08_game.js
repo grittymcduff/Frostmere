@@ -1,6 +1,6 @@
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5},tod:'dusk',voice:true,stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5,settled:false},sfx:{on:true,vol:.7},tod:'dusk',voice:true,stats:{answered:0,first:0}});
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
@@ -163,6 +163,8 @@ $('logBtn').onclick=toggleLog;
 /* ---------- interaction + travel ---------- */
 let nearI=null,fading=false;
 const readBtn=$('readBtn');
+// which interactable (if any) a tap at world point (wx,wy) is aimed at: its sprite body, above the anchor
+function tapPick(wx,wy){let best=null,bd=1e9;for(const it of INTER){const dx=wx-it.x,dy=wy-(it.y-34);const d=Math.hypot(dx,dy*.7);if(d<48&&d<bd){bd=d;best=it;}}return best;}
 function tryRead(){if(nearI&&!uiOpen())nearI.act();}
 readBtn.onclick=tryRead;
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='q'&&card.classList.contains('hidden'))toggleLog();
@@ -186,6 +188,8 @@ function updateWorldLogic(dt){
   // stone lights follow quest state
   for(const L of lights)if(L.node){const s=nodeState(L.node);L.col=s==='done'?[120,230,150]:s==='sealed'?[110,125,190]:s==='frozen'?[140,205,255]:[255,205,120];L.i=s==='sealed'?.45:.85;}
   for(const o of objects)if(o.cache&&!SAVE.caches[o.cache+'#C']&&FX.particles&&Math.hypot(player.x-o.x,player.y-o.y)<380&&R()<dt*5)emit({t:'spark',x:o.x+rand(-12,12),y:o.y-rand(4,22),vx:rand(-6,6),vy:rand(-22,-8),l:0,m:rand(.6,1.2),sz:rand(2,4)});
+  // tapped an object from afar: use it once we're close enough
+  if(tapTarget?.it&&Math.hypot(player.x-tapTarget.it.x,player.y-tapTarget.it.y)<tapTarget.it.r){const it=tapTarget.it;tapTarget=null;if(!uiOpen())it.act();}
   // nearest interactable
   let best=null,bd=1e9;for(const it of INTER){const d=Math.hypot(player.x-it.x,player.y-it.y);if(d<it.r&&d<bd){bd=d;best=it;}}
   if(best!==nearI){nearI=best;readBtn.classList.toggle('hidden',!best);}
@@ -227,6 +231,7 @@ function frame(now){
   if(shake>0){shake-=dt;const k=shake*14;cam.x+=rand(-k,k);cam.y+=rand(-k,k);}
   updateParticles(dt,t);
   updateWorldLogic(dt);
+  Sfx.tick(dt);
   render(t);
   hintT+=dt;if(hintT>10&&hint.style.opacity!=='0')hint.style.opacity='0';
   fpsAcc+=dt;fpsN++;if(fpsAcc>.5){fpsEl.textContent=`${Math.round(fpsN/fpsAcc)} fps · ${parts.length} particles`;fpsAcc=0;fpsN=0;}
@@ -241,10 +246,11 @@ initSprites();
 applyArt();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
+if(SAVE.seen.intro&&!SAVE.music.settled)settleMusic(true);
 syncMusic();
 renderHud();
 cloudInit();
 {const reg=regionById(curScene);banner(reg?reg.name:COURSE.hubName,reg?reg.sub:COURSE.hubSub);}
-window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
+window.__game={get run(){return run;},Music,openCache,Calc,objs:()=>objects,openLesson,player,cam,FX,SAVE:()=>SAVE,setTod:k=>{todKey=k;},travel,keys,NODES,Stats,openNode,regionDone,inter:()=>INTER,tap:()=>tapTarget,zoom:()=>ZOOM,Sfx,freezeFx,thawFx,crackFx,openWelcome,Narr:()=>Narr,CLOUD,mergeSaves,cloudPull,cloudPush,persist};
 requestAnimationFrame(frame);
 });
