@@ -1,9 +1,9 @@
 /* ---------- save ---------- */
 const SAVE_KEY='frostmere-save-v1';
-const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.5,settled:false},sfx:{on:true,vol:.7},tod:'dusk',voice:true,stats:{answered:0,first:0}});
+const blankSave=()=>({v:1,scene:'hub',done:{},missed:[],seen:{},lessons:{},locked:{},caches:{},inv:{lens:0,feather:0,charm:0},music:{on:true,vol:.08,settled:true},sfx:{on:true,vol:.1},muted:false,audioV:2,tod:'dusk',voice:true,stats:{answered:0,first:0}});
 const FREEZE_AT=2; // misses on a stone attempt that freeze it
 let SAVE=blankSave();
-function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})}};}catch(e){}}
+function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.v===1)SAVE={...blankSave(),...s,inv:{...blankSave().inv,...(s.inv||{})},audioV:s.audioV};}catch(e){}}
 function persist(){SAVE.scene=curScene||'hub';SAVE.tod=todKey;SAVE.t=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}renderHud();cloudQueue();}
 
 /* ---------- progress rules ---------- */
@@ -205,7 +205,7 @@ document.querySelectorAll('#tod button').forEach(b=>b.onclick=()=>{todKey=b.data
 
 /* ---------- music controls ---------- */
 const musOn=$('musOn'),musVol=$('musVol');
-function syncMusic(){musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on,SAVE.music.vol);}
+function syncMusic(){musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on&&!SAVE.muted,SAVE.music.vol);}
 musOn.onchange=()=>{SAVE.music.on=musOn.checked;Music.start();syncMusic();persist();};
 musVol.oninput=()=>{SAVE.music.vol=musVol.value/100;Music.start();syncMusic();};
 musVol.onchange=persist;
@@ -246,7 +246,9 @@ initSprites();
 applyArt();
 resize();
 setScene(regionById(SAVE.scene)&&regionUnlocked(SAVE.scene)?SAVE.scene:'hub','start');
-if(SAVE.seen.intro&&!SAVE.music.settled)settleMusic(true);
+// one-time move of older saves to the quieter defaults (music 8%, ambience 10%)
+function migrateAudio(){if(SAVE.audioV===2)return false;SAVE.music={...SAVE.music,vol:.08,settled:true};SAVE.sfx={...(SAVE.sfx||{on:true}),vol:.1};SAVE.audioV=2;return true;}
+migrateAudio();
 syncMusic();
 renderHud();
 cloudInit();

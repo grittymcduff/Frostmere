@@ -65,10 +65,10 @@ async function cloudPull(first){
     const d=await CLOUD.fb.get(CLOUD.user.uid);
     const remote=d?.save?JSON.parse(d.save):null;
     if(remote&&remote.v===1){
-      const before=saveKey(SAVE),m=mergeSaves(SAVE,{...blankSave(),...remote});
-      if(saveKey(m)!==before){SAVE={...blankSave(),...m,inv:{...blankSave().inv,...(m.inv||{})}};
+      const before=saveKey(SAVE),m=mergeSaves(SAVE,{...blankSave(),...remote,audioV:remote.audioV});
+      if(saveKey(m)!==before){SAVE={...blankSave(),...m,inv:{...blankSave().inv,...(m.inv||{})}};migrateAudio();
         try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}
-        syncMusic();renderHud();if(!$('log').classList.contains('hidden'))renderLog();
+        syncMusic();syncSfx();renderHud();if(!$('log').classList.contains('hidden'))renderLog();
         if(first)toast('Cloud progress loaded.');}
       if(saveKey(m)!==saveKey(remote))await cloudPush();else{CLOUD.last=Date.now();CLOUD.err='';}
     }else await cloudPush();                                   // first sign-in: upload this device's progress
@@ -78,7 +78,7 @@ async function cloudPull(first){
 
 /* ---- UI: top-bar button + account panel inside the quest log ---- */
 function renderAcct(){
-  const b=$('acctBtn');if(b){const u=CLOUD.user;b.textContent=u?(u.displayName||'Signed in').split(' ')[0]+' ☁':'Sign in';b.title=u?'Signed in — progress saves to your account':'Sign in to save progress to your Google account';}
+  const b=$('acctBtn');if(b){const u=CLOUD.user;b.textContent=u?'Signed In':'Sign in';b.title=u?'Signed in — progress saves to your account':'Sign in to save progress to your Google account';}
   const box=$('acctBox');if(!box)return;
   if(!CLOUD_OK){box.innerHTML=`<p class="meta">Cloud saves work on the <a href="${PLAY_URL}" target="_blank" rel="noopener">main game site</a>. Here, progress saves in this browser only.</p>`;return;}
   if(CLOUD.user){

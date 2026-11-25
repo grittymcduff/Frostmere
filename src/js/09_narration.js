@@ -56,5 +56,6 @@ const Narr=(()=>{
  addEventListener('pointerdown',go);addEventListener('keydown',go);}
 $('voiceOn').onchange=e=>Narr.setVoice(e.target.checked);
 // after the intro the score steps back: music settles to 30% of its level (once; the slider can raise it again)
-function settleMusic(now){if(SAVE.music.settled)return;SAVE.music.settled=true;SAVE.music.vol=Math.round(SAVE.music.vol*.3*100)/100;
-  musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on,SAVE.music.vol,now?.1:4);}
+// (music now starts at 8%, so there is nothing to settle; kept for saves that still carry settled:false)
+function settleMusic(now){if(SAVE.music.settled)return;SAVE.music.settled=true;SAVE.music.vol=Math.min(SAVE.music.vol,.08);
+  musOn.checked=SAVE.music.on;musVol.value=Math.round(SAVE.music.vol*100);Music.set(SAVE.music.on&&!SAVE.muted,SAVE.music.vol,now?.1:4);}

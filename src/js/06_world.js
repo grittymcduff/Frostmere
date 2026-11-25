@@ -153,7 +153,7 @@ function buildHub(){
   buildSurface();paintGround();
   claim(PLAZA.x,PLAZA.y,PLAZA.r);
   addCampfire(PLAZA.x,PLAZA.y);
-  const cabins=[[740,640],[1255,625],[690,1040],[1240,350],[600,420]];
+  const cabins=[[740,640],[1580,735],[690,1040],[1240,350],[600,420]];
   cabins.forEach(([x,y],i)=>{
     const spr=SPR.cabins[i%SPR.cabins.length],w=spr.info.w;
     addObj({kind:'cabin',x,y,spr,occ:[-w/2-16,w/2+16,-spr.info.bodyH-spr.info.roofH-6,-70]});
@@ -167,7 +167,7 @@ function buildHub(){
     addLight(x,y-30*s,150*s+30,[110,200,255],.8,.12);});
   for(const [x,y] of [[945,1250],[1060,1010],[940,560],[1062,300],[810,830],[470,735],[1245,850],[1400,950],[1350,560],[260,735],[955,110],[1820,480]])addLamp(x,y);
   prop(SPR.crate,880,662,13);prop(SPR.crate,905,676,13);prop(SPR.barrel,868,690,10);
-  prop(SPR.barrel,1370,640,10);prop(SPR.barrel,1392,652,10);prop(SPR.crate,1150,650,13);
+  prop(SPR.barrel,1470,750,10);prop(SPR.barrel,1490,764,10);prop(SPR.crate,1150,650,13);
   prop(SPR.crate,800,1066,13);prop(SPR.barrel,580,1070,10);
   prop(SPR.snowman,1150,905,14,'snowman');
   for(const [x,y,len] of [[560,1100,110],[700,1100,60],[1170,420,130],[470,470,90],[1310,690,80]]){

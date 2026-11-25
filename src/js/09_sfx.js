@@ -48,7 +48,11 @@ const Sfx=(()=>{
   };
 })();
 const sfxOn=$('sfxOn'),sfxVol=$('sfxVol');
-function syncSfx(){const s=SAVE.sfx||{on:true,vol:.7};sfxOn.checked=s.on;sfxVol.value=Math.round(s.vol*100);Sfx.set(s.on,s.vol);}
+function syncSfx(){const s=SAVE.sfx||{on:true,vol:.1};sfxOn.checked=s.on;sfxVol.value=Math.round(s.vol*100);Sfx.set(s.on&&!SAVE.muted,s.vol);syncMute();}
+// quick mute for music + ambience (top bar); narration has its own switch
+const muteBtn=$('muteBtn');
+function syncMute(){muteBtn.textContent=SAVE.muted?'🔇':'🔊';muteBtn.title=SAVE.muted?'Sound is muted — click to unmute music and ambience':'Mute music and ambience';muteBtn.setAttribute('aria-pressed',SAVE.muted?'true':'false');}
+muteBtn.onclick=()=>{SAVE.muted=!SAVE.muted;Music.start();Sfx.start();syncMusic();syncSfx();persist();toast(SAVE.muted?'Music and ambience muted.':'Sound on.');};
 sfxOn.onchange=()=>{SAVE.sfx={...(SAVE.sfx||{}),on:sfxOn.checked};Sfx.start();syncSfx();persist();};
 sfxVol.oninput=()=>{SAVE.sfx={...(SAVE.sfx||{}),vol:sfxVol.value/100};Sfx.start();syncSfx();};
 sfxVol.onchange=persist;
